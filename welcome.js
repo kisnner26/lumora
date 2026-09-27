@@ -11,7 +11,7 @@ function setSt(id, state, text) {
 async function welcomeTick() {
   if (mode !== 'panel') return;
   const s = ext.st;
-  if (!location.protocol.startsWith('http')) setSt('stMusic', 'warn', 'abre verso desde http://127.0.0.1:8888');
+  if (!location.protocol.startsWith('http')) setSt('stMusic', 'warn', 'abre lumora desde http://127.0.0.1:8888');
   else if (!s.bridge) setSt('stMusic', 'warn', 'puente apagado: ejecuta python3 bridge.py');
   else if (s.state === 'playing') setSt('stMusic', 'ok', (s.src === 'spotify' ? 'Spotify' : 'Música') + ' · sonando');
   else if (s.state === 'paused') setSt('stMusic', 'ok', (s.src === 'spotify' ? 'Spotify' : 'Música') + ' · en pausa');

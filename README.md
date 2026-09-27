@@ -1,8 +1,8 @@
-# verso
+# lumora
 
-lyric videos en vivo para lo que suena en tu mac. le das play en apple music o spotify y verso arma el video solo: letra sincronizada letra por letra, escenarios procedurales, tipografía cinética y subtítulos traducidos. antes de empezar, claude lee la canción completa y decide qué se ve en cada verso, para que las imágenes tengan que ver con lo que dice la letra y no sean decoración al azar.
+lyric videos en vivo para lo que suena en tu mac. le das play en apple music o spotify y lumora arma el video solo: letra sincronizada letra por letra, escenarios procedurales, tipografía cinética y subtítulos traducidos. antes de empezar, claude lee la canción completa y decide qué se ve en cada verso, para que las imágenes tengan que ver con lo que dice la letra y no sean decoración al azar.
 
-página del producto: **https://kisnner26.github.io/verso**
+página del producto: **https://kisnner26.github.io/lumora**
 
 ![palabra gigante en el remate del verso, con el escenario elegido por claude](docs/img/cambio.jpg)
 
@@ -62,14 +62,14 @@ apple music / spotify ─► bridge.py (osascript) ─► http://127.0.0.1:8888
 
 - macos 26 o más nuevo (el traductor en el dispositivo lo necesita)
 - apple music o spotify de escritorio
-- claude: tu suscripción vía [claude code](https://claude.com/claude-code) (`claude` en el terminal, con sesión iniciada) o una clave de api en `~/.config/taxicab/anthropic_key`
+- claude: tu suscripción vía [claude code](https://claude.com/claude-code) (`claude` en el terminal, con sesión iniciada) o una clave de api en `~/.config/lumora/anthropic_key`
 - xcode command line tools para compilar las herramientas nativas
 
 ## instalación
 
 ```sh
-git clone https://github.com/kisnner26/verso.git
-cd verso
+git clone https://github.com/kisnner26/lumora.git
+cd lumora
 ./build.sh
 python3 bridge.py
 ```
@@ -78,6 +78,6 @@ abre `http://127.0.0.1:8888/index.html` y dale play a cualquier canción. `,` ab
 
 ## licencia
 
-[polyform noncommercial 1.0.0](LICENSE.md): puedes usarlo, estudiarlo y modificarlo para uso personal y sin fines comerciales. para uso comercial (streams monetizados, eventos, integrarlo en un producto) hace falta una licencia comercial: [pídela aquí](https://github.com/kisnner26/verso/issues/new?title=licencia%20comercial).
+[polyform noncommercial 1.0.0](LICENSE.md): puedes usarlo, estudiarlo y modificarlo para uso personal y sin fines comerciales. para uso comercial (streams monetizados, eventos, integrarlo en un producto) hace falta una licencia comercial: [pídela aquí](https://github.com/kisnner26/lumora/issues/new?title=licencia%20comercial).
 
-las letras, carátulas, logos y fotos que muestra la app pertenecen a sus dueños; verso no las incluye, las consulta en vivo.
+las letras, carátulas, logos y fotos que muestra la app pertenecen a sus dueños; lumora no las incluye, las consulta en vivo.

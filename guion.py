@@ -17,8 +17,8 @@ MODEL = 'claude-sonnet-5'                                         # con la suscr
 EFFORT = 'medium'
 CLAUDE_BIN = shutil.which('claude') or '/opt/homebrew/bin/claude'
 VERSION = 'g4'                                                   # cambia si cambia el prompt: invalida la memoria
-KEY_FILE = os.path.expanduser('~/.config/taxicab/anthropic_key')
-CACHE_FILE = os.path.expanduser('~/Library/Caches/taxicab-guiones.json')
+KEY_FILE = next((p for p in map(os.path.expanduser, ('~/.config/lumora/anthropic_key', '~/.config/taxicab/anthropic_key')) if os.path.exists(p)), os.path.expanduser('~/.config/lumora/anthropic_key'))
+CACHE_FILE = os.path.expanduser('~/Library/Caches/lumora-guiones.json')
 
 # ---------- lo que la app sabe dibujar ----------
 SCENES = {

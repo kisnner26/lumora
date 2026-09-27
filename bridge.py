@@ -11,7 +11,7 @@ from urllib.parse import urlparse, parse_qs
 
 PORT = 8888
 ROOT = os.path.dirname(os.path.abspath(__file__))
-ART = os.path.join(tempfile.gettempdir(), 'taxicab-art.bin')
+ART = os.path.join(tempfile.gettempdir(), 'lumora-art.bin')
 
 # un solo proceso osascript que vive en bucle (lanzar uno por lectura hacía parpadear el Dock)
 WATCH_JXA = r'''
@@ -62,7 +62,7 @@ return "ok"
 
 # ---------- letras sincronizadas (LRCLIB, API pública) ----------
 LYR_CACHE = {}
-UA = 'taxi-cab-visual/1.0 (https://github.com/kisnner26/music-visualizer)'
+UA = 'lumora/1.0 (https://github.com/kisnner26/lumora)'
 
 
 def get_json(url, timeout=8):
@@ -149,7 +149,7 @@ def fetch_bpm(artist, title, dur):
 
 # ---------- traducción en el dispositivo (traductor de Apple, tools/traducir) ----------
 TR_BIN = os.path.join(ROOT, 'tools', 'traducir')
-TR_FILE = os.path.expanduser('~/Library/Caches/taxicab-traducciones.json')
+TR_FILE = os.path.expanduser('~/Library/Caches/lumora-traducciones.json')
 try:
     TR_CACHE = json.load(open(TR_FILE))
 except Exception:
