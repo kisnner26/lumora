@@ -29,6 +29,10 @@ la bienvenida se escribe con luz: mientras espera muestra frases que se enciende
 
 <img src="docs/img/ajustes.jpg" alt="ajustes: canales numerados, teclas con led, faders y selectores" width="49%"> <img src="docs/img/color.jpg" alt="ajustes de color con muestras reales de cada paleta" width="49%">
 
+![consola de reproducción: carátula, escena actual, origen del guion, controles, herramientas y barra con las estrofas marcadas](docs/img/reproductor.jpg)
+
+la consola de reproducción aparece centrada abajo al mover el mouse: la escena que suena y de dónde sale el guion, los controles, herramientas (traducción, letra, modo autor, luces, grabar, carátula, pantalla completa, ajustes, inicio) y una barra con cada estrofa marcada.
+
 los ajustes funcionan como una consola de luces: canales numerados, teclas con led, faders con escala y la paleta con muestras reales.
 
 ## modo autor
