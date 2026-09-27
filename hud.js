@@ -10,6 +10,7 @@ const hudDur = () => (mode === 'proc' ? proc.dur : 0) || ext.st.dur || 0;
 // las herramientas disparan el mismo atajo que su tecla
 $('hudTools').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
+  if (b.hasAttribute('data-cover')) { if (!ext.artUrl) return hudMsg('esta canción no tiene carátula'); return toggleCover(true); }
   if (b.id === 'hudLights') return hudLights();
   if (b.id === 'recFmt') {
     if (REC.on) return hudMsg('termina la grabación para cambiar el formato');

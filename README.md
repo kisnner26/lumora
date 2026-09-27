@@ -33,6 +33,10 @@ la bienvenida se escribe con luz: mientras espera muestra frases que se enciende
 
 la consola de reproducción aparece centrada abajo al mover el mouse: la escena que suena y de dónde sale el guion, los controles, herramientas (traducción, letra, modo autor, luces, grabar en 16:9 o 9:16, carátula, pantalla completa, ajustes, inicio) y una barra con cada estrofa marcada.
 
+![modo carátula con estilo vinilo: el disco asoma detrás de la portada y gira mientras suena](docs/img/caratula.jpg)
+
+el modo carátula pone la portada de protagonista: cuatro fondos (difuminado, ambiente con los colores de la portada, vinilo que gira, mínimo), la letra en vivo con su traducción, controles propios y la portada latiendo con el ritmo. se abre con la tecla .
+
 los ajustes funcionan como una consola de luces: canales numerados, teclas con led, faders con escala y la paleta con muestras reales.
 
 ## modo autor
