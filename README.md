@@ -6,7 +6,7 @@ página del producto: **https://kisnner26.github.io/lumora**
 
 [![demo de lumora: cuando la letra nombra a magic johnson aparece su foto](docs/img/demo.gif)](https://kisnner26.github.io/lumora/#demo)
 
-**[ver la demo completa (51 s)](https://kisnner26.github.io/lumora/#demo)** · grabada con obs, sin audio por los derechos de la canción.
+**[ver la demo completa (51 s)](https://kisnner26.github.io/lumora/#demo)** · grabada con obs, con sonido.
 
 ![una canción de amor: la pareja, los corazones y la palabra que remata el verso, elegidos por claude](docs/img/estreno.jpg)
 
