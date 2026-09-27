@@ -35,7 +35,7 @@ la consola de reproducción aparece centrada abajo al mover el mouse: la escena 
 
 ![modo carátula con estilo vinilo: el disco asoma detrás de la portada y gira mientras suena](docs/img/caratula.jpg)
 
-el modo carátula pone la portada de protagonista: cuatro fondos (difuminado, ambiente con los colores de la portada, vinilo que gira, mínimo), la letra en vivo con su traducción, controles propios y la portada latiendo con el ritmo. se abre con la tecla `c`.
+el modo carátula pone la portada de protagonista: cuatro fondos (difuminado, ambiente con los colores de la portada, vinilo que gira, mínimo), la letra en una línea o completa al lado de la portada (avanza sola y un clic salta a ese verso), tamaño de portada, latido con el ritmo y reloj. los controles van en una barra flotante que se oculta sola; las opciones, en un menú que sale de ella. se abre con la tecla `c`.
 
 los ajustes funcionan como una consola de luces: canales numerados, teclas con led, faders con escala y la paleta con muestras reales.
 
