@@ -10,39 +10,39 @@
 <meta property="og:image" content="https://kisnner26.github.io/lumora/img/cambio.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Anybody:ital,wdth,wght@0,50..150,100..900;1,50..150,100..900&family=Martian+Mono:wdth,wght@75..112.5,300..500&display=swap" rel="stylesheet">
 <style>
-  :root { --bg:#07070b; --panel:#0f0f16; --line:rgba(243,236,223,.1); --text:#f3ecdf; --dim:rgba(243,236,223,.62); --faint:rgba(243,236,223,.4); --accent:#b9a4ff; }
+  :root { --bg:#07070b; --panel:#0f0f16; --line:rgba(243,236,223,.1); --text:#f3ecdf; --dim:rgba(243,236,223,.62); --faint:rgba(243,236,223,.4); --accent:#f4c983; }
   * { box-sizing:border-box; margin:0; }
   html { background:var(--bg); }
-  body { background:var(--bg); color:var(--text); font:400 16px/1.6 Inter, system-ui, sans-serif; -webkit-font-smoothing:antialiased; }
+  body { background:var(--bg); color:var(--text); font:400 16px/1.6 'Anybody', sans-serif; font-variation-settings:'wdth' 96; -webkit-font-smoothing:antialiased; }
   a { color:inherit; }
   .wrap { max-width:1120px; margin:0 auto; padding:0 24px; }
   nav { display:flex; justify-content:space-between; align-items:center; padding:22px 0; }
-  .logo { font:italic 400 28px/1 'Instrument Serif', serif; letter-spacing:.01em; text-decoration:none; }
+  .logo { font:250 26px/1 'Anybody', sans-serif; font-variation-settings:'wdth' 150; letter-spacing:.04em; text-decoration:none; }
   nav .links { display:flex; gap:22px; font-size:14px; color:var(--dim); }
   nav .links a { text-decoration:none; } nav .links a:hover { color:var(--text); }
 
   .hero { padding:56px 0 40px; text-align:center; }
-  .kicker { font-size:11px; letter-spacing:.32em; text-transform:uppercase; color:var(--faint); }
-  h1 { font:400 clamp(44px, 8vw, 96px)/1 'Instrument Serif', serif; margin:18px 0 20px; letter-spacing:-.01em; }
-  h1 em { color:var(--accent); }
+  .kicker { font:400 10.5px 'Martian Mono', monospace; letter-spacing:.28em; text-transform:uppercase; color:#f4c983; }
+  h1 { font:800 clamp(52px, 9vw, 124px)/.9 'Anybody', sans-serif; font-variation-settings:'wdth' 58; margin:18px 0 22px; letter-spacing:-.01em; }
+  h1 em { color:#f4c983; font-weight:200; font-variation-settings:'wdth' 120; text-shadow:0 0 40px rgba(255,179,107,.45); }
   .lead { max-width:640px; margin:0 auto; color:var(--dim); font-size:18px; }
   .cta { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:30px; }
   .btn { display:inline-block; padding:12px 22px; border-radius:999px; font-size:14px; font-weight:500; text-decoration:none; border:1px solid var(--line); transition:background .2s, border-color .2s; }
-  .btn.main { background:var(--text); color:var(--bg); border-color:var(--text); }
+  .btn.main { background:linear-gradient(180deg,#fbe2b8,#f4c983); color:#1a1109; border-color:#f4c983; }
   .btn.main:hover { background:#fff; }
   .btn:not(.main):hover { border-color:rgba(243,236,223,.35); }
-  .shot { margin:48px auto 0; border-radius:14px; overflow:hidden; border:1px solid var(--line); box-shadow:0 40px 120px rgba(120,90,255,.12); }
+  .shot { margin:48px auto 0; border-radius:14px; overflow:hidden; border:1px solid var(--line); box-shadow:0 40px 120px rgba(255,170,90,.14); }
   .shot img { display:block; width:100%; height:auto; }
 
   section { padding:84px 0 0; }
-  h2 { font:400 clamp(32px, 4.5vw, 48px)/1.1 'Instrument Serif', serif; margin-bottom:14px; }
+  h2 { font:300 clamp(30px, 4.2vw, 46px)/1.05 'Anybody', sans-serif; font-variation-settings:'wdth' 130; margin-bottom:14px; }
   .sub { color:var(--dim); max-width:620px; }
 
   .steps { display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; margin-top:34px; }
   .step { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:24px; }
-  .step b { display:block; font:italic 400 34px/1 'Instrument Serif', serif; color:var(--accent); margin-bottom:12px; }
+  .step b { display:block; font:400 12px/1 'Martian Mono', monospace; color:#f4c983; margin-bottom:16px; }
   .step h3 { font-size:16px; font-weight:600; margin-bottom:6px; }
   .step p { color:var(--dim); font-size:14px; }
 
@@ -65,8 +65,8 @@
 
   .license { margin-top:34px; display:grid; grid-template-columns:1fr 1fr; gap:16px; }
   .card { border:1px solid var(--line); border-radius:14px; padding:28px; background:var(--panel); }
-  .card.pro { border-color:rgba(185,164,255,.45); background:linear-gradient(180deg, rgba(185,164,255,.08), var(--panel)); }
-  .card h3 { font:400 30px/1.1 'Instrument Serif', serif; margin-bottom:6px; }
+  .card.pro { border-color:rgba(244,201,131,.45); background:linear-gradient(180deg, rgba(244,201,131,.08), var(--panel)); }
+  .card h3 { font:800 30px/1 'Anybody', sans-serif; font-variation-settings:'wdth' 62; margin-bottom:6px; }
   .card .tag { font-size:11px; letter-spacing:.24em; text-transform:uppercase; color:var(--faint); }
   .card ul { margin:16px 0 22px; padding-left:18px; color:var(--dim); font-size:14px; display:grid; gap:6px; }
 
