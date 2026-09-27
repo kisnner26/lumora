@@ -201,5 +201,5 @@ addEventListener('keydown', e => { if (e.key === ',' && !/TEXTAREA|INPUT/.test(d
 // botones del engranaje: en la cápsula y en el panel principal
 const GEAR = '<svg viewBox="0 0 24 24"><path d="M19.4 13a7.5 7.5 0 0 0 0-2l2-1.6-2-3.4-2.4 1a7.6 7.6 0 0 0-1.7-1L15 3.4h-4l-.4 2.6a7.6 7.6 0 0 0-1.7 1l-2.4-1-2 3.4 2 1.6a7.5 7.5 0 0 0 0 2l-2 1.6 2 3.4 2.4-1a7.6 7.6 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7.6 7.6 0 0 0 1.7-1l2.4 1 2-3.4zM13 15.5A3.5 3.5 0 1 1 13 8.5a3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg>';
 { const b = document.createElement('button'); b.title = 'ajustes (,)'; b.innerHTML = GEAR; b.addEventListener('click', () => toggleSettings()); $('hudCtl').appendChild(b); }
-{ const b = document.createElement('button'); b.textContent = 'ajustes'; b.addEventListener('click', () => toggleSettings(true)); document.querySelector('.actions').appendChild(b); }
+$('openSettings')?.addEventListener('click', () => toggleSettings(true));
 applyAll();

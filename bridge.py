@@ -590,4 +590,5 @@ if __name__ == '__main__':
     threading.Thread(target=lambda: (translate(['hello'], 'en', 'es'), translate(['hola'], 'es', 'en')), daemon=True).start()   # precalienta ambas direcciones
     print(f'abre http://127.0.0.1:{PORT}/index.html')
     ThreadingHTTPServer.daemon_threads = True
+    ThreadingHTTPServer.request_queue_size = 128                     # la página pide ~25 scripts a la vez; con la cola por defecto (5) se perdían
     ThreadingHTTPServer(('127.0.0.1', PORT), Handler).serve_forever()

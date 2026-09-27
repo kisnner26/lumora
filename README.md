@@ -15,6 +15,8 @@ página del producto: **https://kisnner26.github.io/verso**
 
 todas salen de la app corriendo con canciones reales, sin retoques.
 
+![bienvenida: estado del reproductor, de claude y de las luces](docs/img/bienvenida.jpg)
+
 ## qué hace
 
 **el guion**
@@ -39,6 +41,7 @@ todas salen de la app corriendo con canciones reales, sin retoques.
 - grabar clips en mp4 de la duración que quieras
 - modo grabación para obs (30 fps estables)
 - panel de ajustes con todo lo de arriba, calidad automática según tu mac
+- modo autor: taxi cab de twenty one pilots, un video hecho a mano escena por escena que reemplaza al generado cuando suena esa canción
 
 <img src="docs/img/ajustes.jpg" alt="panel de ajustes" width="300"> <img src="docs/img/reproductor.jpg" alt="controles de reproducción" width="480">
 
