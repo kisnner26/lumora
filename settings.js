@@ -8,7 +8,7 @@ const CFG_DEFAULT = {
   intensity: 1, camera: true, cameraAmt: 1, transitions: 'todas', flashes: true,
   lyricSize: 1, typo: 'variada', letterAnim: true, trMode: 'ambas', kinetic: true,
   instruments: true, cards: true, symbols: true, echo: true, np: true,
-  palette: 'auto', variation: 'nueva', ai: true,
+  palette: 'auto', variation: 'nueva', ai: true, recFormat: 'horizontal',
 };
 const CFG = window.CFG = (() => { try { return { ...CFG_DEFAULT, ...JSON.parse(localStorage.getItem('tc_cfg') || '{}') }; } catch (e) { return { ...CFG_DEFAULT }; } })();
 const saveCfg = () => { try { localStorage.setItem('tc_cfg', JSON.stringify(CFG)); } catch (e) {} };
@@ -163,6 +163,7 @@ const OPTS = [
   ['imagen', [
     ['quality', 'Calidad', 'seg', [['auto', 'auto'], ['alta', 'alta'], ['media', 'media'], ['baja', 'baja']], 'auto baja la resolución y los efectos si hay tirones'],
     ['rec', 'Modo grabación', 'sw', null, '30 fps estables y menos carga para grabar con OBS'],
+    ['recFormat', 'Formato de los clips', 'seg', [['horizontal', '16:9'], ['vertical', '9:16']], 'horizontal para YouTube y pantallas; vertical para historias y TikTok'],
     ['fps', 'Mostrar FPS', 'sw'],
   ]],
   ['efectos', [

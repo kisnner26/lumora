@@ -31,7 +31,7 @@ la bienvenida se escribe con luz: mientras espera muestra frases que se enciende
 
 ![consola de reproducción: carátula, escena actual, origen del guion, controles, herramientas y barra con las estrofas marcadas](docs/img/reproductor.jpg)
 
-la consola de reproducción aparece centrada abajo al mover el mouse: la escena que suena y de dónde sale el guion, los controles, herramientas (traducción, letra, modo autor, luces, grabar, carátula, pantalla completa, ajustes, inicio) y una barra con cada estrofa marcada.
+la consola de reproducción aparece centrada abajo al mover el mouse: la escena que suena y de dónde sale el guion, los controles, herramientas (traducción, letra, modo autor, luces, grabar en 16:9 o 9:16, carátula, pantalla completa, ajustes, inicio) y una barra con cada estrofa marcada.
 
 los ajustes funcionan como una consola de luces: canales numerados, teclas con led, faders con escala y la paleta con muestras reales.
 
@@ -64,7 +64,7 @@ un editor para armar el video de cualquier canción a mano y al detalle. el vide
 - sincronía automática con apple music y spotify, sin cuentas ni apis de pago
 - letras de lrclib; bpm de deezer; traducción en↔es y pt→es con el traductor de apple en el dispositivo
 - luces govee por red local: color por compás, pulso en cada golpe, destello en los drops y brillo que sigue la intensidad de la canción
-- grabar clips en mp4 de la duración que quieras
+- grabar clips en mp4 de la duración que quieras, en horizontal 16:9 o vertical 9:16
 - modo grabación para obs (30 fps estables)
 - ajustes para todo lo de arriba, calidad automática según tu mac
 
