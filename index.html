@@ -343,17 +343,20 @@
       <div class="keys">
         <span><kbd>,</kbd>ajustes</span><span><kbd>f</kbd>pantalla completa</span><span><kbd>c</kbd>carátula</span>
         <span><kbd>l</kbd>letra</span><span><kbd>t</kbd>traducción</span><span><kbd>[</kbd><kbd>]</kbd>ajustar letra</span>
-        <span><kbd>r</kbd>grabar clip</span><span><kbd>esc</kbd>este panel</span>
+        <span><kbd>e</kbd>modo autor</span><span><kbd>r</kbd>grabar clip</span><span><kbd>esc</kbd>este panel</span>
       </div>
     </section>
 
     <section data-sec="autor">
       <div class="w-kicker">modo autor</div>
-      <h2>taxi cab<br><em>twenty one pilots</em></h2>
-      <p class="note">un video hecho a mano, escena por escena. pega la letra (48 líneas), márcala una vez con espacio y queda sincronizada; cuando suene la canción, este video reemplaza al generado.</p>
+      <h2>tu video,<br><em>a mano y al detalle</em></h2>
+      <p class="note">un editor para armar el video de cualquier canción: una línea de tiempo con cada estrofa y cada verso, y un inspector para elegir escenario, objetos, ánimo, energía, color, transición, la palabra clave y cuándo va en gigante. ves el resultado en vivo mientras suena, puedes partir del guion de Claude o de cero, y se guarda solo: la próxima vez que suene esa canción, manda tu versión.</p>
+      <div class="row"><button id="openAutorBtn" class="w-pill solid">abrir el editor</button><span>o tecla <kbd>e</kbd> con el video abierto</span></div>
+      <div class="w-kicker" style="margin-top:34px">ejemplo · taxi cab</div>
+      <p class="note">lo que se puede lograr a mano: el video de taxi cab de twenty one pilots, hecho escena por escena. pega la letra (48 líneas), márcala una vez con espacio y cuando suene la canción este video reemplaza al generado.</p>
       <div class="blockhead"><span class="label">letra</span><span class="chip" id="lyrState">vacía</span></div>
       <textarea id="src" spellcheck="false" placeholder="pega aquí las 48 líneas de la letra, sin encabezados"></textarea>
-      <div class="row"><button id="play" class="w-pill solid">ver video</button><button id="sync" class="w-pill">sincronizar</button></div>
+      <div class="row"><button id="play" class="w-pill">ver video</button><button id="sync" class="w-pill">sincronizar</button></div>
     </section>
 
     <section data-sec="fuentes">
@@ -1928,5 +1931,6 @@ requestAnimationFrame(frame);
 <script src="story.js"></script>
 <script src="settings.js"></script>
 <script src="welcome.js"></script>
+<script src="autor.js"></script>
 </body>
 </html>

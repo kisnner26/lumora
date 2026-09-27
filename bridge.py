@@ -372,6 +372,25 @@ def to_mp4(data):
 
 
 LOG_LAST = {}
+# ---------- modo autor: los videos armados a mano, por canción ----------
+AUTOR_FILE = os.path.expanduser('~/Library/Application Support/lumora/autor.json')
+AUTOR = {'data': {}}
+try:
+    AUTOR['data'] = json.load(open(AUTOR_FILE))
+except Exception:
+    pass
+
+
+def save_autor():
+    try:
+        os.makedirs(os.path.dirname(AUTOR_FILE), exist_ok=True)
+        tmp = AUTOR_FILE + '.tmp'
+        json.dump(AUTOR['data'], open(tmp, 'w'), ensure_ascii=False)
+        os.replace(tmp, AUTOR_FILE)
+    except Exception:
+        pass
+
+
 state = {'state': 'off', 'pos': 0, 'name': '', 'artist': '', 'album': '', 'dur': 0, 'at': 0, 'art': 0}
 lock = threading.Lock()
 
@@ -450,7 +469,13 @@ class Handler(SimpleHTTPRequestHandler):
         path = urlparse(self.path).path
         if path == '/story':
             import guion
+            if parse_qs(urlparse(self.path).query).get('catalog'):
+                return self.send_json({'scenes': guion.SCENES, 'objects': guion.OBJECTS, 'moods': guion.MOODS, 'times': guion.TIMES,
+                                       'colors': guion.COLORS, 'transitions': guion.TRANSITIONS})
             return self.send_json({'ready': guion.available(), 'model': guion.MODEL})
+        if path == '/autor':                                    # el video que el usuario armó a mano para esta canción
+            k = parse_qs(urlparse(self.path).query).get('key', [''])[0]
+            return self.send_json(AUTOR['data'].get(k) or {})
         if path == '/now':
             with lock:
                 snap = dict(state)
@@ -524,6 +549,18 @@ class Handler(SimpleHTTPRequestHandler):
             msg = self.rfile.read(min(n, 2000)).decode('utf-8', 'replace')
             if msg != LOG_LAST.get('m'):
                 LOG_LAST['m'] = msg; print('[página]', msg, flush=True)
+            return self.send_json({'ok': True})
+        if u.path == '/autor':
+            n = int(self.headers.get('Content-Length') or 0)
+            body = json.loads(self.rfile.read(min(n, 4_000_000)) or b'{}')
+            k = str(body.get('key') or '')
+            if not k:
+                return self.send_json({'error': 'falta la canción'}, 400)
+            if body.get('delete'):
+                AUTOR['data'].pop(k, None)
+            else:
+                AUTOR['data'][k] = {**body.get('project', {}), 'saved': time.time()}
+            save_autor()
             return self.send_json({'ok': True})
         if u.path == '/story':                                 # guion completo de la canción, escrito por Claude
             n = int(self.headers.get('Content-Length') or 0)

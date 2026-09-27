@@ -116,3 +116,6 @@ for (const [sel, d] of [['.w-top', 0], ['.w-eyebrow', 150], ['.w-lede', 900], ['
   const el = document.querySelector(sel);
   el?.animate([{ opacity: 0, transform: 'translateY(14px)' }, { opacity: 1, transform: 'none' }], { duration: 1000, delay: d, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'backwards' });
 }
+
+// modo autor: abre el editor desde su panel
+$('openAutorBtn')?.addEventListener('click', async () => { closeDrawer(); if (!(await openAutor())) openDrawer('autor'); });

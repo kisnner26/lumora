@@ -9,6 +9,7 @@
 // ============================================================
 
 const SEM = { plans: [], key: '', busy: false, blockNow: -1 };
+const autorKey = () => (ext.st.name || '') + '|' + (ext.st.artist || '');
 // el guion verso a verso: por índice de verso y por texto (el mismo verso del coro se reconoce igual)
 const STORY = { on: false, text: '', lines: {}, byText: new Map(),
   reset() { this.on = false; this.text = ''; this.lines = {}; this.byText.clear(); },
@@ -86,7 +87,12 @@ async function planSong() {
     return fetch('/story', { method: 'POST', body: body(n > 1 ? range : null, i === 0) }).then(r => r.json()).catch(() => ({ error: 'sin conexión con el puente' }))
       .then(v => { if (i && !v.error && !v.cached && k >= 4) try { localStorage.setItem('tc_story_rate', Math.max(.6, ((performance.now() - t) / 1000 - OVH) / k * .5 + rate * .5).toFixed(2)); } catch (e) {}
         return v; }); };
-  const reqs = segs.map(ask), req = reqs[0], rest = reqs.slice(1);
+  // si el usuario armó esta canción a mano (modo autor), manda su versión y Claude no lee nada
+  let own = null;
+  try { own = await fetch('/autor?key=' + encodeURIComponent(autorKey())).then(r => r.json()); } catch (e) {}
+  if (SEM.key !== key) return;
+  if (!(own && own.blocks && own.cuts && own.cuts.length === IN.cuts.length)) own = null;
+  const reqs = own ? [Promise.resolve({ ...own, cached: true, autor: true })] : segs.map(ask), req = reqs[0], rest = reqs.slice(1);
   let r = null; req.then(v => r = v);
   const esperaGi = GENS.findIndex(g => g.name === 'espera');
   const planned = IN.blockGen ? [...IN.blockGen] : [];                  // el guion por género queda de respaldo
@@ -117,7 +123,7 @@ async function planSong() {
   };
   useStory(r);
   diversify();
-  const label = v => v.error ? 'Claude: ' + v.error : 'guion de Claude' + (v.cached ? ' (de memoria)' : '');
+  const label = v => v.error ? 'Claude: ' + v.error : v.autor ? 'guion del autor' : 'guion de Claude' + (v.cached ? ' (de memoria)' : '');
   let left = rest.length;
   IN.aiState = label(r) + (left && !r.error ? ' · leyendo el resto' : '');
   for (const q of rest) q.then(v => { if (SEM.key !== key) return; useStory(v); left--;

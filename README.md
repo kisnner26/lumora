@@ -31,6 +31,14 @@ la bienvenida se escribe con luz: mientras espera muestra frases que se enciende
 
 los ajustes funcionan como una consola de luces: canales numerados, teclas con led, faders con escala y la paleta con muestras reales.
 
+## modo autor
+
+![modo autor: vista previa en vivo, línea de tiempo con estrofas y versos, e inspector](docs/img/modo-autor.jpg)
+
+un editor para armar el video de cualquier canción a mano y al detalle. el video corre en vivo mientras editas: abajo una línea de tiempo con cada estrofa y cada verso; a la derecha un inspector para elegir, por estrofa, escenario, escenario secundario, objetos, ambiente, energía, ánimo, color, hora y transición, y por verso, la palabra clave (se elige tocándola), si va en gigante, sus objetos y una persona famosa. se parte del guion de claude o de cero, con deshacer ilimitado; se guarda solo y la próxima vez que suene esa canción manda tu versión. taxi cab de twenty one pilots queda como ejemplo de lo que se puede lograr a mano. se abre con la tecla `e`.
+
+![modo autor: inspector del verso con la palabra clave elegida](docs/img/modo-autor-verso.jpg)
+
 ## qué hace
 
 **el guion**
@@ -55,7 +63,6 @@ los ajustes funcionan como una consola de luces: canales numerados, teclas con l
 - grabar clips en mp4 de la duración que quieras
 - modo grabación para obs (30 fps estables)
 - ajustes para todo lo de arriba, calidad automática según tu mac
-- modo autor: taxi cab de twenty one pilots, un video hecho a mano escena por escena que reemplaza al generado cuando suena esa canción
 
 
 ## cómo funciona
