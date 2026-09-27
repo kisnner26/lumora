@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>verso · lyric videos en vivo</title>
+<meta name="description" content="lyric videos en vivo para lo que suena en tu mac. claude lee la canción antes de empezar y decide qué se ve en cada verso.">
+<meta property="og:title" content="verso · lyric videos en vivo">
+<meta property="og:description" content="claude lee la canción antes de empezar y decide qué se ve en cada verso.">
+<meta property="og:image" content="https://kisnner26.github.io/verso/img/cambio.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#07070b; --panel:#0f0f16; --line:rgba(243,236,223,.1); --text:#f3ecdf; --dim:rgba(243,236,223,.62); --faint:rgba(243,236,223,.4); --accent:#b9a4ff; }
+  * { box-sizing:border-box; margin:0; }
+  html { background:var(--bg); }
+  body { background:var(--bg); color:var(--text); font:400 16px/1.6 Inter, system-ui, sans-serif; -webkit-font-smoothing:antialiased; }
+  a { color:inherit; }
+  .wrap { max-width:1120px; margin:0 auto; padding:0 24px; }
+  nav { display:flex; justify-content:space-between; align-items:center; padding:22px 0; }
+  .logo { font:italic 400 28px/1 'Instrument Serif', serif; letter-spacing:.01em; text-decoration:none; }
+  nav .links { display:flex; gap:22px; font-size:14px; color:var(--dim); }
+  nav .links a { text-decoration:none; } nav .links a:hover { color:var(--text); }
+
+  .hero { padding:56px 0 40px; text-align:center; }
+  .kicker { font-size:11px; letter-spacing:.32em; text-transform:uppercase; color:var(--faint); }
+  h1 { font:400 clamp(44px, 8vw, 96px)/1 'Instrument Serif', serif; margin:18px 0 20px; letter-spacing:-.01em; }
+  h1 em { color:var(--accent); }
+  .lead { max-width:640px; margin:0 auto; color:var(--dim); font-size:18px; }
+  .cta { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:30px; }
+  .btn { display:inline-block; padding:12px 22px; border-radius:999px; font-size:14px; font-weight:500; text-decoration:none; border:1px solid var(--line); transition:background .2s, border-color .2s; }
+  .btn.main { background:var(--text); color:var(--bg); border-color:var(--text); }
+  .btn.main:hover { background:#fff; }
+  .btn:not(.main):hover { border-color:rgba(243,236,223,.35); }
+  .shot { margin:48px auto 0; border-radius:14px; overflow:hidden; border:1px solid var(--line); box-shadow:0 40px 120px rgba(120,90,255,.12); }
+  .shot img { display:block; width:100%; height:auto; }
+
+  section { padding:84px 0 0; }
+  h2 { font:400 clamp(32px, 4.5vw, 48px)/1.1 'Instrument Serif', serif; margin-bottom:14px; }
+  .sub { color:var(--dim); max-width:620px; }
+
+  .steps { display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; margin-top:34px; }
+  .step { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:24px; }
+  .step b { display:block; font:italic 400 34px/1 'Instrument Serif', serif; color:var(--accent); margin-bottom:12px; }
+  .step h3 { font-size:16px; font-weight:600; margin-bottom:6px; }
+  .step p { color:var(--dim); font-size:14px; }
+
+  .gallery { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:34px; }
+  .gallery figure { border-radius:12px; overflow:hidden; border:1px solid var(--line); background:var(--panel); }
+  .gallery img { display:block; width:100%; height:auto; }
+  .gallery figcaption { padding:12px 16px; font-size:13px; color:var(--dim); }
+
+  .features { display:grid; grid-template-columns:repeat(3, 1fr); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:14px; overflow:hidden; margin-top:34px; }
+  .feat { background:var(--bg); padding:24px; }
+  .feat h3 { font-size:15px; font-weight:600; margin-bottom:6px; }
+  .feat p { color:var(--dim); font-size:14px; }
+
+  .split { display:grid; grid-template-columns:320px 1fr; gap:40px; align-items:start; margin-top:34px; }
+  .split img { width:100%; border-radius:12px; border:1px solid var(--line); display:block; }
+  .req { list-style:none; padding:0; display:grid; gap:12px; }
+  .req li { padding:14px 18px; border:1px solid var(--line); border-radius:10px; color:var(--dim); font-size:14px; }
+  .req li strong { color:var(--text); font-weight:500; }
+  pre { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:16px 18px; font:13px/1.7 ui-monospace, SFMono-Regular, Menlo, monospace; color:var(--text); overflow-x:auto; margin-top:12px; }
+
+  .license { margin-top:34px; display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .card { border:1px solid var(--line); border-radius:14px; padding:28px; background:var(--panel); }
+  .card.pro { border-color:rgba(185,164,255,.45); background:linear-gradient(180deg, rgba(185,164,255,.08), var(--panel)); }
+  .card h3 { font:400 30px/1.1 'Instrument Serif', serif; margin-bottom:6px; }
+  .card .tag { font-size:11px; letter-spacing:.24em; text-transform:uppercase; color:var(--faint); }
+  .card ul { margin:16px 0 22px; padding-left:18px; color:var(--dim); font-size:14px; display:grid; gap:6px; }
+
+  footer { padding:84px 0 48px; color:var(--faint); font-size:13px; display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+
+  @media (max-width: 820px) {
+    .steps, .features, .license, .gallery { grid-template-columns:1fr; }
+    .split { grid-template-columns:1fr; }
+    .split img { max-width:320px; }
+    nav .links { gap:14px; }
+    .hero { padding-top:28px; }
+  }
+  @media (max-width: 480px) { .wrap { padding:0 16px; } nav .links a:not(:last-child) { display:none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <a class="logo" href="#">verso</a>
+    <div class="links"><a href="#como">cómo funciona</a><a href="#que">qué hace</a><a href="#licencia">licencia</a><a href="https://github.com/kisnner26/verso">github</a></div>
+  </nav>
+
+  <header class="hero">
+    <div class="kicker">lyric videos en vivo · macos</div>
+    <h1>tu música, con su <em>video oficial</em></h1>
+    <p class="lead">le das play en apple music o spotify y verso arma el video solo. antes de empezar, claude lee la canción completa y decide qué se ve en cada verso: nada de decoración al azar.</p>
+    <div class="cta">
+      <a class="btn main" href="https://github.com/kisnner26/verso">descargar en github</a>
+      <a class="btn" href="#licencia">licencia comercial</a>
+    </div>
+    <div class="shot"><img src="img/cambio.jpg" alt="captura real: palabra gigante sobre el escenario que eligió claude para ese verso" width="1920" height="1080"></div>
+  </header>
+
+  <section id="como">
+    <h2>lee la canción antes de filmarla</h2>
+    <p class="sub">la diferencia con un visualizador: verso entiende la historia. el guion sale de la letra entera, con contexto, no de palabras sueltas.</p>
+    <div class="steps">
+      <div class="step"><b>1</b><h3>suena algo</h3><p>detecta la canción en apple music o spotify, trae la letra sincronizada y el bpm, y empieza a traducirla.</p></div>
+      <div class="step"><b>2</b><h3>claude escribe el guion</h3><p>escenario, objetos, ánimo, energía, color y transición por estrofa; qué aparece y qué palabra va en grande por verso. en tramos paralelos: el primero en segundos.</p></div>
+      <div class="step"><b>3</b><h3>el video sigue la letra</h3><p>cada verso trae lo que nombra. el coro que vuelve repite sus imágenes. las luces del cuarto siguen la energía.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>capturas reales</h2>
+    <p class="sub">todas salen de la app corriendo con canciones reales, sin retoques.</p>
+    <div class="gallery">
+      <figure><img src="img/tipografia.jpg" alt="tipografía cinética sobre auroras" loading="lazy" width="1920" height="1080"><figcaption>tipografía cinética y subtítulo traducido</figcaption></figure>
+      <figure><img src="img/escenario-sistema.jpg" alt="escenario de sistema con chip y circuitos" loading="lazy" width="1920" height="1080"><figcaption>escenario elegido por el guion para ese verso</figcaption></figure>
+      <figure><img src="img/ciudad.jpg" alt="ciudad de noche con bocinas" loading="lazy" width="1920" height="1080"><figcaption>la calle cuando la letra habla de la calle</figcaption></figure>
+      <figure><img src="img/telefono.jpg" alt="teléfono y mirada" loading="lazy" width="1920" height="1080"><figcaption>objetos que aparecen justo en su verso</figcaption></figure>
+    </div>
+  </section>
+
+  <section id="que">
+    <h2>qué hace</h2>
+    <div class="features">
+      <div class="feat"><h3>20 escenarios procedurales</h3><p>calle, playa, club, cielo, habitación, estadio, sistema, nebulosa, túnel, auroras y más, con más de 80 objetos animados.</p></div>
+      <div class="feat"><h3>tipografía de lyric video</h3><p>10 composiciones, letra que entra letra por letra y palabra gigante en ganchos, coros y drops.</p></div>
+      <div class="feat"><h3>profundidad real</h3><p>capas con parallax, cámara que respira con el beat y más de 35 transiciones según el carácter del cambio.</p></div>
+      <div class="feat"><h3>subtítulos traducidos</h3><p>inglés ↔ español y portugués → español con el traductor de apple, en tu mac.</p></div>
+      <div class="feat"><h3>el mundo real</h3><p>banderas, marcas con su logo oficial y fotos de las personas famosas que nombra la letra.</p></div>
+      <div class="feat"><h3>por artista y género</h3><p>48 perfiles de artista y estilos para r&amp;b, pop, rap, reguetón y electrónica, incluso sin letra.</p></div>
+      <div class="feat"><h3>luces govee</h3><p>color por compás, pulso en cada golpe, destello en los drops y brillo que sigue la intensidad.</p></div>
+      <div class="feat"><h3>clips en mp4</h3><p>graba la duración que quieras; modo obs con 30 fps estables para streams.</p></div>
+      <div class="feat"><h3>sin cuentas de música</h3><p>se sincroniza con apple music y spotify de escritorio, sin apis de pago ni premium.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>todo se ajusta</h2>
+    <div class="split">
+      <img src="img/ajustes.jpg" alt="panel de ajustes de verso" loading="lazy" width="394" height="1080">
+      <div>
+        <p class="sub">calidad automática según tu mac, intensidad de capas, cámara, transiciones, destellos, tamaño y composición de la letra, traducción, guion con claude, instrumentos, fotos, banderas y marcas. se abre con la tecla coma.</p>
+        <ul class="req" style="margin-top:24px">
+          <li><strong>macos 26 o más nuevo</strong> · apple music o spotify de escritorio</li>
+          <li><strong>claude</strong> · tu suscripción vía claude code, o una clave de api</li>
+          <li><strong>xcode command line tools</strong> · para compilar el traductor y la escucha de audio</li>
+        </ul>
+        <pre>git clone https://github.com/kisnner26/verso.git
+cd verso &amp;&amp; ./build.sh
+python3 bridge.py</pre>
+      </div>
+    </div>
+  </section>
+
+  <section id="licencia">
+    <h2>licencia</h2>
+    <p class="sub">el código es visible. el uso personal es libre; el uso comercial necesita licencia.</p>
+    <div class="license">
+      <div class="card">
+        <div class="tag">personal</div>
+        <h3>gratis</h3>
+        <ul><li>uso personal y sin fines comerciales</li><li>estudiarlo y modificarlo</li><li>polyform noncommercial 1.0.0</li></ul>
+        <a class="btn" href="https://github.com/kisnner26/verso">ir al repositorio</a>
+      </div>
+      <div class="card pro">
+        <div class="tag">comercial</div>
+        <h3>licencia comercial</h3>
+        <ul><li>streams y videos monetizados</li><li>eventos, bares, pantallas</li><li>integrarlo en otro producto</li></ul>
+        <a class="btn main" href="https://github.com/kisnner26/verso/issues/new?title=licencia%20comercial">pedir licencia</a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>verso · hecho por <a href="https://github.com/kisnner26">kisnner26</a></span>
+    <span>las letras, carátulas, logos y fotos pertenecen a sus dueños; verso no las incluye, las consulta en vivo.</span>
+  </footer>
+</div>
+</body>
+</html>
