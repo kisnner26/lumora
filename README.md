@@ -15,7 +15,7 @@ página del producto: **https://kisnner26.github.io/lumora**
 
 todas salen de la app corriendo con canciones reales, sin retoques.
 
-![bienvenida: estado del reproductor, de claude y de las luces](docs/img/bienvenida.jpg)
+![bienvenida de lumora: la frase se escribe con luz mientras espera una canción](docs/img/bienvenida.jpg)
 
 ## qué hace
 
