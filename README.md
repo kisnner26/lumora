@@ -4,18 +4,28 @@ lyric videos en vivo para lo que suena en tu mac. le das play en apple music o s
 
 página del producto: **https://kisnner26.github.io/lumora**
 
-![palabra gigante en el remate del verso, con el escenario elegido por claude](docs/img/cambio.jpg)
+![una canción de amor: la pareja, los corazones y la palabra que remata el verso, elegidos por claude](docs/img/estreno.jpg)
 
 ## capturas reales
 
 | | |
 |---|---|
-| ![tipografía cinética sobre auroras, con subtítulo en español](docs/img/tipografia.jpg) | ![escenario de sistema: chip, circuitos, bola de disco y figura](docs/img/escenario-sistema.jpg) |
-| ![ciudad de noche con bocinas y ondas, en un verso sobre la calle](docs/img/ciudad.jpg) | ![teléfono y mirada en un verso sobre mensajes](docs/img/telefono.jpg) |
+| ![palabra gigante en el gancho del verso](docs/img/palabra-gigante.jpg) | ![composición tipográfica con la palabra que se repite](docs/img/composicion.jpg) |
+| ![la pareja en el estadio, en el verso donde le pide que no se vaya](docs/img/estadio.jpg) | ![subtítulos traducidos con la palabra clave resaltada](docs/img/subtitulos.jpg) |
 
 todas salen de la app corriendo con canciones reales, sin retoques.
 
-![bienvenida de lumora: la frase se escribe con luz mientras espera una canción](docs/img/bienvenida.jpg)
+## la interfaz
+
+![bienvenida con una canción sonando: el título se vuelve el titular y la carátula va en la barra](docs/img/sonando.jpg)
+
+la bienvenida se escribe con luz: mientras espera muestra frases que se encienden letra por letra; cuando suena algo, el título de la canción pasa a ser el titular. el estado del sistema (música, claude, luces) cabe en una línea, y lo secundario vive en paneles laterales.
+
+![panel de cómo funciona abierto sobre la bienvenida](docs/img/como-funciona.jpg)
+
+<img src="docs/img/ajustes.jpg" alt="ajustes: canales numerados, teclas con led, faders y selectores" width="49%"> <img src="docs/img/color.jpg" alt="ajustes de color con muestras reales de cada paleta" width="49%">
+
+los ajustes funcionan como una consola de luces: canales numerados, teclas con led, faders con escala y la paleta con muestras reales.
 
 ## qué hace
 
@@ -40,10 +50,9 @@ todas salen de la app corriendo con canciones reales, sin retoques.
 - luces govee por red local: color por compás, pulso en cada golpe, destello en los drops y brillo que sigue la intensidad de la canción
 - grabar clips en mp4 de la duración que quieras
 - modo grabación para obs (30 fps estables)
-- panel de ajustes con todo lo de arriba, calidad automática según tu mac
+- ajustes para todo lo de arriba, calidad automática según tu mac
 - modo autor: taxi cab de twenty one pilots, un video hecho a mano escena por escena que reemplaza al generado cuando suena esa canción
 
-<img src="docs/img/ajustes.jpg" alt="panel de ajustes" width="300"> <img src="docs/img/reproductor.jpg" alt="controles de reproducción" width="480">
 
 ## cómo funciona
 
