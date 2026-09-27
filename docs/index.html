@@ -6,170 +6,258 @@
 <title>lumora · tu música, hecha luz</title>
 <meta name="description" content="lyric videos en vivo para lo que suena en tu mac. claude lee la canción antes de empezar y decide qué se ve en cada verso.">
 <meta property="og:title" content="lumora · tu música, hecha luz">
-<meta property="og:description" content="claude lee la canción antes de empezar y decide qué se ve en cada verso.">
+<meta property="og:description" content="lyric videos en vivo: claude lee la canción antes de empezar y decide qué se ve en cada verso.">
 <meta property="og:image" content="https://kisnner26.github.io/lumora/img/estreno.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0a0806">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anybody:ital,wdth,wght@0,50..150,100..900;1,50..150,100..900&family=Martian+Mono:wdth,wght@75..112.5,300..500&display=swap" rel="stylesheet">
 <style>
-  :root { --bg:#07070b; --panel:#0f0f16; --line:rgba(243,236,223,.1); --text:#f3ecdf; --dim:rgba(243,236,223,.62); --faint:rgba(243,236,223,.4); --accent:#f4c983; }
+  :root { --bg:#0a0806; --panel:#120e0b; --gold:#f4c983; --gold2:#ffb36b; --paper:#f6eee2; --mute:rgba(246,238,226,.6); --faint:rgba(246,238,226,.34); --rule:rgba(246,238,226,.1); }
   * { box-sizing:border-box; margin:0; }
-  html { background:var(--bg); }
-  body { background:var(--bg); color:var(--text); font:400 16px/1.6 'Anybody', sans-serif; font-variation-settings:'wdth' 96; -webkit-font-smoothing:antialiased; }
+  html { background:var(--bg); scroll-behavior:smooth; }
+  body { background:var(--bg); color:var(--paper); font:400 17px/1.6 'Anybody', sans-serif; font-variation-settings:'wdth' 96; -webkit-font-smoothing:antialiased; overflow-x:hidden; }
   a { color:inherit; }
-  .wrap { max-width:1120px; margin:0 auto; padding:0 24px; }
-  nav { display:flex; justify-content:space-between; align-items:center; padding:22px 0; }
-  .logo { font:250 26px/1 'Anybody', sans-serif; font-variation-settings:'wdth' 150; letter-spacing:.04em; text-decoration:none; }
-  nav .links { display:flex; gap:22px; font-size:14px; color:var(--dim); }
-  nav .links a { text-decoration:none; } nav .links a:hover { color:var(--text); }
+  img { display:block; max-width:100%; height:auto; }
+  .mono { font-family:'Martian Mono', monospace; font-size:11px; letter-spacing:.2em; text-transform:uppercase; }
+  .wrap { max-width:1180px; margin:0 auto; padding:0 28px; }
 
-  .hero { padding:56px 0 40px; text-align:center; }
-  .kicker { font:400 10.5px 'Martian Mono', monospace; letter-spacing:.28em; text-transform:uppercase; color:#f4c983; }
-  h1 { font:800 clamp(52px, 9vw, 124px)/.9 'Anybody', sans-serif; font-variation-settings:'wdth' 58; margin:18px 0 22px; letter-spacing:-.01em; }
-  h1 em { color:#f4c983; font-weight:200; font-variation-settings:'wdth' 120; text-shadow:0 0 40px rgba(255,179,107,.45); }
-  .lead { max-width:640px; margin:0 auto; color:var(--dim); font-size:18px; }
-  .cta { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:30px; }
-  .btn { display:inline-block; padding:12px 22px; border-radius:999px; font-size:14px; font-weight:500; text-decoration:none; border:1px solid var(--line); transition:background .2s, border-color .2s; }
-  .btn.main { background:linear-gradient(180deg,#fbe2b8,#f4c983); color:#1a1109; border-color:#f4c983; }
-  .btn.main:hover { background:#fff; }
-  .btn:not(.main):hover { border-color:rgba(243,236,223,.35); }
-  .shot { margin:48px auto 0; border-radius:14px; overflow:hidden; border:1px solid var(--line); box-shadow:0 40px 120px rgba(255,170,90,.14); }
-  .shot img { display:block; width:100%; height:auto; }
+  /* ---------- portada ---------- */
+  .hero { position:relative; min-height:100svh; display:grid; grid-template-rows:auto 1fr auto; isolation:isolate; overflow:hidden; }
+  #light { position:absolute; inset:0; width:100%; height:100%; z-index:-2; }
+  .hero::after { content:''; position:absolute; inset:0; z-index:-1; background:linear-gradient(180deg, rgba(10,8,6,.2), transparent 40%, rgba(10,8,6,.9)); }
+  .grain { position:fixed; inset:-50%; z-index:50; pointer-events:none; opacity:.07; mix-blend-mode:overlay;
+           background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+           animation:grain 1.2s steps(6) infinite; }
+  @keyframes grain { 0%{transform:translate(0,0)} 25%{transform:translate(-3%,2%)} 50%{transform:translate(2%,-3%)} 75%{transform:translate(-2%,-1%)} 100%{transform:translate(0,0)} }
+  nav { display:flex; align-items:center; gap:24px; padding:28px 0; }
+  .logo { font:250 26px/1 'Anybody', sans-serif; font-variation-settings:'wdth' 150; letter-spacing:.04em; text-decoration:none; display:flex; gap:3px; }
+  .logo i { width:6px; height:6px; border-radius:50%; background:var(--gold); box-shadow:0 0 12px var(--gold2); margin-top:1px; animation:beat 1.6s ease-in-out infinite; }
+  @keyframes beat { 50% { transform:scale(.55); opacity:.6; } }
+  nav .links { margin-left:auto; display:flex; gap:22px; }
+  nav .links a { text-decoration:none; color:var(--mute); transition:color .2s; }
+  nav .links a:hover { color:var(--paper); }
+  .hero-body { align-self:center; padding:40px 0 60px; }
+  .kicker { color:var(--gold); display:flex; align-items:center; gap:14px; margin-bottom:26px; }
+  .kicker::before { content:''; width:34px; height:1px; background:var(--gold); opacity:.7; }
+  h1 { font:800 clamp(64px, 12vw, 190px)/.84 'Anybody', sans-serif; font-variation-settings:'wdth' 58; letter-spacing:-.01em; margin:0; }
+  h1 .ln { display:block; white-space:nowrap; }
+  h1 .ln + .ln { font-style:italic; font-weight:200; padding-left:clamp(20px, 7vw, 130px); }
+  h1 .c { display:inline-block; opacity:0; filter:blur(12px); font-variation-settings:'wdth' 150; animation:cin 1.1s cubic-bezier(.2,.75,.2,1) forwards; }
+  h1 .ln + .ln .c { animation-name:cin2; }
+  h1 .k { color:var(--gold); font-weight:900; text-shadow:0 0 40px rgba(255,179,107,.55), 0 0 100px rgba(255,150,80,.25); }
+  @keyframes cin { to { opacity:1; filter:blur(0); font-variation-settings:'wdth' 58; } }
+  @keyframes cin2 { to { opacity:1; filter:blur(0); font-variation-settings:'wdth' 120; } }
+  .lead { max-width:50ch; margin-top:34px; font-size:19px; color:var(--mute); font-weight:300; }
+  .cta { display:flex; gap:12px; flex-wrap:wrap; margin-top:34px; }
+  .btn { display:inline-flex; align-items:center; gap:10px; padding:15px 24px; border-radius:14px; text-decoration:none; font:700 15px 'Anybody', sans-serif; font-variation-settings:'wdth' 120;
+         border:1px solid var(--rule); transition:transform .25s, box-shadow .25s, border-color .25s; }
+  .btn:hover { border-color:rgba(246,238,226,.35); }
+  .btn.main { background:linear-gradient(180deg,#fbe2b8,var(--gold)); color:#1a1109; border-color:var(--gold); box-shadow:0 10px 40px rgba(255,170,90,.28), inset 0 1px 0 rgba(255,255,255,.6); }
+  .btn.main:hover { transform:translateY(-1px); box-shadow:0 14px 50px rgba(255,170,90,.42), inset 0 1px 0 rgba(255,255,255,.6); }
+  .btn svg { width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+  .scroll { padding-bottom:28px; color:var(--faint); display:flex; justify-content:space-between; }
 
-  section { padding:84px 0 0; }
-  h2 { font:300 clamp(30px, 4.2vw, 46px)/1.05 'Anybody', sans-serif; font-variation-settings:'wdth' 130; margin-bottom:14px; }
-  .sub { color:var(--dim); max-width:620px; }
+  /* ---------- secciones ---------- */
+  section { padding:130px 0 0; }
+  .head { display:grid; grid-template-columns:120px 1fr; gap:24px; align-items:baseline; margin-bottom:46px; }
+  .head .num { color:var(--gold); }
+  h2 { font:800 clamp(40px, 6vw, 84px)/.9 'Anybody', sans-serif; font-variation-settings:'wdth' 62; letter-spacing:-.01em; }
+  h2 em { display:block; font-style:italic; font-weight:200; font-variation-settings:'wdth' 125; color:var(--mute); }
+  .sub { color:var(--mute); max-width:56ch; margin-top:18px; font-weight:300; }
+  .frame { border-radius:18px; overflow:hidden; border:1px solid var(--rule); box-shadow:0 50px 140px rgba(255,160,80,.12); background:var(--panel); }
+  .frame + .cap, figure figcaption { font-family:'Martian Mono', monospace; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--faint); margin-top:14px; }
 
-  .steps { display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; margin-top:34px; }
-  .step { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:24px; }
-  .step b { display:block; font:400 12px/1 'Martian Mono', monospace; color:#f4c983; margin-bottom:16px; }
-  .step h3 { font-size:16px; font-weight:600; margin-bottom:6px; }
-  .step p { color:var(--dim); font-size:14px; }
+  .steps { display:grid; grid-template-columns:repeat(3, 1fr); border-top:1px solid var(--rule); }
+  .step { padding:30px 30px 34px 0; border-right:1px solid var(--rule); }
+  .step + .step { padding-left:30px; } .step:last-child { border-right:0; }
+  .step .mono { color:var(--gold); }
+  .step h3 { font:700 26px/1.1 'Anybody', sans-serif; font-variation-settings:'wdth' 110; margin:16px 0 10px; }
+  .step p { color:var(--mute); font-size:15.5px; font-weight:300; }
+  .facts { display:grid; grid-template-columns:repeat(3, 1fr); gap:1px; background:var(--rule); border:1px solid var(--rule); border-radius:16px; overflow:hidden; margin-top:42px; }
+  .fact { background:var(--bg); padding:26px 28px; }
+  .fact b { display:block; font:800 54px/1 'Anybody', sans-serif; font-variation-settings:'wdth' 60; color:var(--gold); }
+  .fact span { display:block; margin-top:10px; color:var(--mute); font-size:14.5px; font-weight:300; }
 
-  .gallery { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:34px; }
-  .gallery figure { border-radius:12px; overflow:hidden; border:1px solid var(--line); background:var(--panel); }
-  .gallery img { display:block; width:100%; height:auto; }
-  .gallery figcaption { padding:12px 16px; font-size:13px; color:var(--dim); }
+  .gallery { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:18px; }
+  .gallery figure { margin:0; }
+  .gallery .frame { box-shadow:none; }
 
-  .features { display:grid; grid-template-columns:repeat(3, 1fr); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:14px; overflow:hidden; margin-top:34px; }
-  .feat { background:var(--bg); padding:24px; }
-  .feat h3 { font-size:15px; font-weight:600; margin-bottom:6px; }
-  .feat p { color:var(--dim); font-size:14px; }
+  .ui { display:grid; grid-template-columns:1.25fr 1fr; gap:18px; align-items:start; }
+  .ui .stack { display:grid; gap:18px; }
 
-  .split { display:grid; grid-template-columns:360px 1fr; gap:40px; align-items:start; margin-top:34px; }
-  .split img { width:100%; border-radius:12px; border:1px solid var(--line); display:block; }
-  .req { list-style:none; padding:0; display:grid; gap:12px; }
-  .req li { padding:14px 18px; border:1px solid var(--line); border-radius:10px; color:var(--dim); font-size:14px; }
-  .req li strong { color:var(--text); font-weight:500; }
-  pre { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:16px 18px; font:13px/1.7 ui-monospace, SFMono-Regular, Menlo, monospace; color:var(--text); overflow-x:auto; margin-top:12px; }
+  .console { display:grid; grid-template-columns:480px 1fr; gap:56px; align-items:center; }
+  .console .pair { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .console ul { list-style:none; padding:0; margin-top:28px; display:grid; gap:0; border-top:1px solid var(--rule); }
+  .console li { display:grid; grid-template-columns:120px 1fr; gap:16px; padding:15px 0; border-bottom:1px solid var(--rule); color:var(--mute); font-size:15px; font-weight:300; }
+  .console li b { font-family:'Martian Mono', monospace; font-weight:400; font-size:10.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--gold); padding-top:4px; }
 
-  .license { margin-top:34px; display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-  .card { border:1px solid var(--line); border-radius:14px; padding:28px; background:var(--panel); }
-  .card.pro { border-color:rgba(244,201,131,.45); background:linear-gradient(180deg, rgba(244,201,131,.08), var(--panel)); }
-  .card h3 { font:800 30px/1 'Anybody', sans-serif; font-variation-settings:'wdth' 62; margin-bottom:6px; }
-  .card .tag { font-size:11px; letter-spacing:.24em; text-transform:uppercase; color:var(--faint); }
-  .card ul { margin:16px 0 22px; padding-left:18px; color:var(--dim); font-size:14px; display:grid; gap:6px; }
+  .feats { list-style:none; padding:0; counter-reset:f; display:grid; grid-template-columns:1fr 1fr; column-gap:60px; border-top:1px solid var(--rule); }
+  .feats li { counter-increment:f; display:grid; grid-template-columns:54px 1fr; padding:22px 0; border-bottom:1px solid var(--rule); }
+  .feats li::before { content:counter(f, decimal-leading-zero); font:400 11px 'Martian Mono', monospace; color:var(--gold); padding-top:6px; }
+  .feats h3 { font:700 19px/1.2 'Anybody', sans-serif; font-variation-settings:'wdth' 108; margin-bottom:5px; }
+  .feats p { color:var(--mute); font-size:15px; font-weight:300; }
 
-  footer { padding:84px 0 48px; color:var(--faint); font-size:13px; display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+  .install { display:grid; grid-template-columns:1fr 1fr; gap:40px; }
+  .req { list-style:none; padding:0; border-top:1px solid var(--rule); }
+  .req li { padding:16px 0; border-bottom:1px solid var(--rule); color:var(--mute); font-size:15px; font-weight:300; }
+  .req li b { color:var(--paper); font-weight:600; }
+  pre { background:var(--panel); border:1px solid var(--rule); border-radius:14px; padding:22px 24px; font:400 13px/1.9 'Martian Mono', monospace; color:var(--paper); overflow-x:auto; }
+  pre .p { color:var(--gold); user-select:none; }
 
-  @media (max-width: 820px) {
-    .steps, .features, .license, .gallery { grid-template-columns:1fr; }
-    .split { grid-template-columns:1fr; }
-    .split img { max-width:320px; }
-    nav .links { gap:14px; }
-    .hero { padding-top:28px; }
+  .license { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  .card { border:1px solid var(--rule); border-radius:18px; padding:32px; background:var(--panel); }
+  .card.pro { border-color:rgba(244,201,131,.4); background:radial-gradient(120% 80% at 100% 0%, rgba(244,201,131,.12), transparent 60%), var(--panel); }
+  .card .mono { color:var(--faint); }
+  .card h3 { font:800 38px/1 'Anybody', sans-serif; font-variation-settings:'wdth' 62; margin:14px 0 4px; }
+  .card ul { list-style:none; padding:0; margin:20px 0 28px; color:var(--mute); font-size:15px; font-weight:300; display:grid; gap:8px; }
+  .card ul li::before { content:'—'; color:var(--gold); margin-right:10px; }
+
+  footer { padding:120px 0 48px; display:flex; justify-content:space-between; gap:20px; flex-wrap:wrap; color:var(--faint); font-size:13.5px; }
+
+  .reveal { opacity:0; transform:translateY(24px); transition:opacity 1s cubic-bezier(.2,.8,.2,1), transform 1s cubic-bezier(.2,.8,.2,1); }
+  .reveal.in { opacity:1; transform:none; }
+
+  @media (max-width: 900px) {
+    .head { grid-template-columns:1fr; gap:10px; }
+    .steps, .facts, .gallery, .ui, .console, .feats, .install, .license { grid-template-columns:1fr; }
+    .step, .step + .step { padding:26px 0; border-right:0; border-bottom:1px solid var(--rule); }
+    .console .pair { max-width:560px; }
+    h1 .ln { white-space:normal; } h1 .ln + .ln { padding-left:0; }
+    nav .links a:not(:last-child) { display:none; }
+    section { padding-top:96px; }
   }
-  @media (max-width: 480px) { .wrap { padding:0 16px; } nav .links a:not(:last-child) { display:none; } }
+  @media (max-width: 480px) { .wrap { padding:0 18px; } .console li { grid-template-columns:1fr; gap:4px; } }
+  @media (prefers-reduced-motion: reduce) { .grain, .logo i { animation:none; } h1 .c { animation-duration:.01s; } .reveal { opacity:1; transform:none; transition:none; } }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <nav>
-    <a class="logo" href="#">lumora</a>
-    <div class="links"><a href="#como">cómo funciona</a><a href="#que">qué hace</a><a href="#licencia">licencia</a><a href="https://github.com/kisnner26/lumora">github</a></div>
-  </nav>
+<div class="grain"></div>
 
-  <header class="hero">
-    <div class="kicker">lyric videos en vivo · macos</div>
-    <h1>tu música, <em>hecha luz</em></h1>
-    <p class="lead">le das play en apple music o spotify y lumora arma el video solo. antes de empezar, claude lee la canción completa y decide qué se ve en cada verso: nada de decoración al azar.</p>
+<header class="hero">
+  <canvas id="light"></canvas>
+  <div class="wrap"><nav>
+    <a class="logo" href="#">lumora<i></i></a>
+    <div class="links mono"><a href="#como">cómo funciona</a><a href="#interfaz">interfaz</a><a href="#licencia">licencia</a><a href="https://github.com/kisnner26/lumora">github</a></div>
+  </nav></div>
+  <div class="wrap hero-body">
+    <div class="kicker mono">lyric videos en vivo · macos</div>
+    <h1 id="title" aria-label="tu música, hecha luz"></h1>
+    <p class="lead">le das play en Apple Music o Spotify y lumora arma el video solo. antes de empezar, Claude lee la canción completa y decide qué se ve en cada verso: nada de decoración al azar.</p>
     <div class="cta">
-      <a class="btn main" href="https://github.com/kisnner26/lumora">descargar en github</a>
+      <a class="btn main" href="https://github.com/kisnner26/lumora">descargar en github<svg viewBox="0 0 24 24"><path d="M5 12h12m-5-6 6 6-6 6"/></svg></a>
       <a class="btn" href="#licencia">licencia comercial</a>
     </div>
-    <div class="shot"><img src="img/estreno.jpg" alt="captura real: en una canción de amor, la pareja, los corazones y la palabra que remata el verso" width="1920" height="1080"></div>
-  </header>
+  </div>
+  <div class="wrap scroll mono"><span>desliza</span><span>macos · apple music · spotify</span></div>
+</header>
+
+<main class="wrap">
+  <section style="padding-top:40px">
+    <div class="frame reveal"><img src="img/estreno.jpg" alt="captura real: en una canción de amor, la pareja, los corazones y la palabra que remata el verso" width="1920" height="1080"></div>
+    <p class="cap">captura real · una canción de amor: la pareja, los corazones y la palabra que remata el verso</p>
+  </section>
 
   <section id="como">
-    <h2>lee la canción antes de filmarla</h2>
-    <p class="sub">la diferencia con un visualizador: lumora entiende la historia. el guion sale de la letra entera, con contexto, no de palabras sueltas.</p>
-    <div class="steps">
-      <div class="step"><b>1</b><h3>suena algo</h3><p>detecta la canción en apple music o spotify, trae la letra sincronizada y el bpm, y empieza a traducirla.</p></div>
-      <div class="step"><b>2</b><h3>claude escribe el guion</h3><p>escenario, objetos, ánimo, energía, color y transición por estrofa; qué aparece y qué palabra va en grande por verso. en tramos paralelos: el primero en segundos.</p></div>
-      <div class="step"><b>3</b><h3>el video sigue la letra</h3><p>cada verso trae lo que nombra. el coro que vuelve repite sus imágenes. las luces del cuarto siguen la energía.</p></div>
+    <div class="head reveal"><span class="num mono">01</span><div><h2>lee la canción<em>antes de filmarla</em></h2><p class="sub">la diferencia con un visualizador: lumora entiende la historia. el guion sale de la letra entera, con contexto, no de palabras sueltas.</p></div></div>
+    <div class="steps reveal">
+      <div class="step"><span class="mono">escucha</span><h3>suena algo</h3><p>detecta la canción en Apple Music o Spotify, trae la letra sincronizada y el tempo, y la traduce en tu Mac.</p></div>
+      <div class="step"><span class="mono">lee</span><h3>Claude escribe el guion</h3><p>escenario, objetos, ánimo, energía, color y transición por estrofa; qué aparece y qué palabra va en grande en cada verso.</p></div>
+      <div class="step"><span class="mono">filma</span><h3>el video sigue la letra</h3><p>cada verso trae lo que nombra, el coro que vuelve repite sus imágenes y las luces del cuarto siguen la energía.</p></div>
+    </div>
+    <div class="facts reveal">
+      <div class="fact"><b>~9 s</b><span>tarda el primer tramo del guion; la intro suena mientras tanto y la música solo espera si hace falta</span></div>
+      <div class="fact"><b>6</b><span>lecturas en paralelo como máximo: cada tramo termina antes de que la canción llegue a él</span></div>
+      <div class="fact"><b>1 vez</b><span>se analiza cada canción; la próxima vez el video arranca al instante</span></div>
     </div>
   </section>
 
   <section>
-    <h2>capturas reales</h2>
-    <p class="sub">todas salen de la app corriendo con canciones reales, sin retoques.</p>
-    <div class="shot" style="margin:34px 0 14px"><img src="img/sonando.jpg" alt="bienvenida de lumora con una canción sonando: el título se vuelve el titular" loading="lazy" width="1920" height="1080"></div>
+    <div class="head reveal"><span class="num mono">02</span><div><h2>así se ve<em>canciones reales</em></h2><p class="sub">todas salen de la app corriendo, sin retoques.</p></div></div>
     <div class="gallery">
-      <figure><img src="img/palabra-gigante.jpg" alt="palabra gigante en el gancho del verso" loading="lazy" width="1920" height="1080"><figcaption>la palabra gigante en el gancho del verso</figcaption></figure>
-      <figure><img src="img/estadio.jpg" alt="la pareja en el estadio" loading="lazy" width="1920" height="1080"><figcaption>el escenario que el guion eligió para ese verso</figcaption></figure>
-      <figure><img src="img/composicion.jpg" alt="composición tipográfica" loading="lazy" width="1920" height="1080"><figcaption>composiciones tipográficas que cambian verso a verso</figcaption></figure>
-      <figure><img src="img/subtitulos.jpg" alt="subtítulos traducidos" loading="lazy" width="1920" height="1080"><figcaption>subtítulos traducidos con la palabra clave resaltada</figcaption></figure>
+      <figure class="reveal"><div class="frame"><img src="img/palabra-gigante.jpg" alt="palabra gigante en el gancho del verso" loading="lazy" width="1920" height="1080"></div><figcaption>la palabra gigante en el gancho</figcaption></figure>
+      <figure class="reveal"><div class="frame"><img src="img/estadio.jpg" alt="la pareja en el estadio" loading="lazy" width="1920" height="1080"></div><figcaption>el escenario que el guion eligió</figcaption></figure>
+      <figure class="reveal"><div class="frame"><img src="img/composicion.jpg" alt="composición tipográfica" loading="lazy" width="1920" height="1080"></div><figcaption>composiciones que cambian verso a verso</figcaption></figure>
+      <figure class="reveal"><div class="frame"><img src="img/subtitulos.jpg" alt="subtítulos traducidos" loading="lazy" width="1920" height="1080"></div><figcaption>subtítulos traducidos con la palabra clave</figcaption></figure>
+    </div>
+  </section>
+
+  <section id="interfaz">
+    <div class="head reveal"><span class="num mono">03</span><div><h2>una bienvenida<em>que ya es un video</em></h2><p class="sub">mientras espera, las frases se escriben con luz. cuando suena algo, el título de la canción pasa a ser el titular y la carátula baja a la barra. el estado del sistema cabe en una línea; lo demás vive en paneles laterales.</p></div></div>
+    <div class="ui">
+      <figure class="reveal"><div class="frame"><img src="img/sonando.jpg" alt="bienvenida con una canción sonando" loading="lazy" width="1920" height="1080"></div><figcaption>con una canción sonando</figcaption></figure>
+      <div class="stack">
+        <figure class="reveal"><div class="frame"><img src="img/bienvenida.jpg" alt="bienvenida esperando una canción" loading="lazy" width="1920" height="1080"></div><figcaption>esperando una canción</figcaption></figure>
+        <figure class="reveal"><div class="frame"><img src="img/como-funciona.jpg" alt="panel de cómo funciona" loading="lazy" width="1920" height="1080"></div><figcaption>el panel de cómo funciona</figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="console">
+      <div class="pair reveal">
+        <div class="frame"><img src="img/ajustes.jpg" alt="ajustes: canales numerados, teclas con led y faders" loading="lazy" width="600" height="1080"></div>
+        <div class="frame"><img src="img/color.jpg" alt="paletas con muestras de color reales" loading="lazy" width="600" height="1080"></div>
+      </div>
+      <div class="reveal">
+        <span class="num mono" style="color:var(--gold)">04</span>
+        <h2 style="margin-top:18px">ajustes<em>como una consola de luces</em></h2>
+        <ul>
+          <li><b>canales</b>seis secciones numeradas que se encienden al pasar: imagen, efectos, letra, contenido, color y luces</li>
+          <li><b>teclas</b>cada opción es una tecla con un led que se prende en dorado</li>
+          <li><b>faders</b>intensidad, cámara y tamaño con escala y el valor exacto</li>
+          <li><b>paletas</b>14 muestras de color reales; auto sale de la carátula</li>
+        </ul>
+      </div>
     </div>
   </section>
 
   <section id="que">
-    <h2>qué hace</h2>
-    <div class="features">
-      <div class="feat"><h3>20 escenarios procedurales</h3><p>calle, playa, club, cielo, habitación, estadio, sistema, nebulosa, túnel, auroras y más, con más de 80 objetos animados.</p></div>
-      <div class="feat"><h3>tipografía de lyric video</h3><p>10 composiciones, letra que entra letra por letra y palabra gigante en ganchos, coros y drops.</p></div>
-      <div class="feat"><h3>profundidad real</h3><p>capas con parallax, cámara que respira con el beat y más de 35 transiciones según el carácter del cambio.</p></div>
-      <div class="feat"><h3>subtítulos traducidos</h3><p>inglés ↔ español y portugués → español con el traductor de apple, en tu mac.</p></div>
-      <div class="feat"><h3>el mundo real</h3><p>banderas, marcas con su logo oficial y fotos de las personas famosas que nombra la letra.</p></div>
-      <div class="feat"><h3>por artista y género</h3><p>48 perfiles de artista y estilos para r&amp;b, pop, rap, reguetón y electrónica, incluso sin letra.</p></div>
-      <div class="feat"><h3>luces govee</h3><p>color por compás, pulso en cada golpe, destello en los drops y brillo que sigue la intensidad.</p></div>
-      <div class="feat"><h3>clips en mp4</h3><p>graba la duración que quieras; modo obs con 30 fps estables para streams.</p></div>
-      <div class="feat"><h3>sin cuentas de música</h3><p>se sincroniza con apple music y spotify de escritorio, sin apis de pago ni premium.</p></div>
-    </div>
+    <div class="head reveal"><span class="num mono">05</span><div><h2>qué hace<em>todo lo demás</em></h2></div></div>
+    <ul class="feats reveal">
+      <li><div><h3>20 escenarios procedurales</h3><p>calle, playa, club, cielo, habitación, estadio, sistema, nebulosa, túnel, auroras y más, con más de 80 objetos animados.</p></div></li>
+      <li><div><h3>tipografía de lyric video</h3><p>10 composiciones, letra que entra letra por letra y palabra gigante en ganchos, coros y drops.</p></div></li>
+      <li><div><h3>profundidad real</h3><p>capas con parallax, cámara que respira con el beat y más de 35 transiciones según el carácter del cambio.</p></div></li>
+      <li><div><h3>subtítulos traducidos</h3><p>inglés ↔ español y portugués → español con el traductor de Apple, en tu Mac.</p></div></li>
+      <li><div><h3>el mundo real</h3><p>banderas, marcas con su logo oficial y fotos de las personas famosas que nombra la letra.</p></div></li>
+      <li><div><h3>por artista y género</h3><p>48 perfiles de artista y estilos para r&amp;b, pop, rap, reguetón y electrónica, incluso sin letra.</p></div></li>
+      <li><div><h3>luces Govee</h3><p>color por compás, pulso en cada golpe, destello en los drops y brillo que sigue la intensidad.</p></div></li>
+      <li><div><h3>clips en mp4</h3><p>graba la duración que quieras; modo OBS con 30 fps estables para streams.</p></div></li>
+      <li><div><h3>sin cuentas de música</h3><p>se sincroniza con Apple Music y Spotify de escritorio, sin APIs de pago ni premium.</p></div></li>
+      <li><div><h3>modo autor</h3><p>Taxi Cab de twenty one pilots: un video hecho a mano escena por escena que reemplaza al generado.</p></div></li>
+    </ul>
   </section>
 
   <section>
-    <h2>todo se ajusta</h2>
-    <div class="split">
-      <img src="img/ajustes.jpg" alt="ajustes de lumora: canales numerados, teclas con led y faders" loading="lazy" width="600" height="1080">
-      <div>
-        <p class="sub">calidad automática según tu mac, intensidad de capas, cámara, transiciones, destellos, tamaño y composición de la letra, traducción, guion con claude, instrumentos, fotos, banderas y marcas. se abre con la tecla coma.</p>
-        <ul class="req" style="margin-top:24px">
-          <li><strong>macos 26 o más nuevo</strong> · apple music o spotify de escritorio</li>
-          <li><strong>claude</strong> · tu suscripción vía claude code, o una clave de api</li>
-          <li><strong>xcode command line tools</strong> · para compilar el traductor y la escucha de audio</li>
-        </ul>
-        <pre>git clone https://github.com/kisnner26/lumora.git
-cd lumora &amp;&amp; ./build.sh
-python3 bridge.py</pre>
-      </div>
+    <div class="head reveal"><span class="num mono">06</span><div><h2>instalación<em>en tu mac</em></h2></div></div>
+    <div class="install reveal">
+      <ul class="req">
+        <li><b>macOS 26 o más nuevo</b> · Apple Music o Spotify de escritorio</li>
+        <li><b>Claude</b> · tu suscripción vía Claude Code, o una clave de API</li>
+        <li><b>Xcode Command Line Tools</b> · para compilar el traductor y la escucha de audio</li>
+      </ul>
+      <pre><span class="p">$ </span>git clone https://github.com/kisnner26/lumora.git
+<span class="p">$ </span>cd lumora &amp;&amp; ./build.sh
+<span class="p">$ </span>python3 bridge.py
+<span class="p"># </span>abre 127.0.0.1:8888 y dale play</pre>
     </div>
   </section>
 
   <section id="licencia">
-    <h2>licencia</h2>
-    <p class="sub">el código es visible. el uso personal es libre; el uso comercial necesita licencia.</p>
-    <div class="license">
+    <div class="head reveal"><span class="num mono">07</span><div><h2>licencia<em>código visible</em></h2><p class="sub">el uso personal es libre; el uso comercial necesita licencia.</p></div></div>
+    <div class="license reveal">
       <div class="card">
-        <div class="tag">personal</div>
+        <span class="mono">personal</span>
         <h3>gratis</h3>
-        <ul><li>uso personal y sin fines comerciales</li><li>estudiarlo y modificarlo</li><li>polyform noncommercial 1.0.0</li></ul>
+        <ul><li>uso personal y sin fines comerciales</li><li>estudiarlo y modificarlo</li><li>PolyForm Noncommercial 1.0.0</li></ul>
         <a class="btn" href="https://github.com/kisnner26/lumora">ir al repositorio</a>
       </div>
       <div class="card pro">
-        <div class="tag">comercial</div>
+        <span class="mono">comercial</span>
         <h3>licencia comercial</h3>
         <ul><li>streams y videos monetizados</li><li>eventos, bares, pantallas</li><li>integrarlo en otro producto</li></ul>
-        <a class="btn main" href="https://github.com/kisnner26/lumora/issues/new?title=licencia%20comercial">pedir licencia</a>
+        <a class="btn main" href="https://github.com/kisnner26/lumora/issues/new?title=licencia%20comercial">pedir licencia<svg viewBox="0 0 24 24"><path d="M5 12h12m-5-6 6 6-6 6"/></svg></a>
       </div>
     </div>
   </section>
@@ -178,6 +266,66 @@ python3 bridge.py</pre>
     <span>lumora · hecho por <a href="https://github.com/kisnner26">kisnner26</a></span>
     <span>las letras, carátulas, logos y fotos pertenecen a sus dueños; lumora no las incluye, las consulta en vivo.</span>
   </footer>
-</div>
+</main>
+
+<script>
+// el titular se escribe con luz, como en la app
+(() => {
+  const el = document.getElementById('title'); let n = 0;
+  for (const [txt, key] of [['tu música,', ''], ['hecha luz', 'luz']]) {
+    const row = document.createElement('span'); row.className = 'ln'; row.setAttribute('aria-hidden', 'true');
+    for (const word of txt.split(/(\s+)/)) {
+      const w = document.createElement('span'); w.style.whiteSpace = 'nowrap';
+      for (const ch of word) { const c = document.createElement('span'); c.className = 'c' + (key && word === key ? ' k' : ''); c.textContent = ch === ' ' ? ' ' : ch; c.style.animationDelay = (250 + n++ * 45) + 'ms'; w.appendChild(c); }
+      row.appendChild(w);
+    }
+    el.appendChild(row);
+  }
+})();
+
+// la luz de fondo: sigue al cursor, haces que giran y polvo que brilla al cruzarla
+(() => {
+  const cv = document.getElementById('light'), x = cv.getContext('2d'), still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let W, H, D; const m = { x: .66, y: .32 }, L = { x: .66, y: .32 };
+  const dust = Array.from({ length: 140 }, () => ({ x: Math.random(), y: Math.random(), z: .3 + Math.random() * .7, ph: Math.random() * 6.28, v: .004 + Math.random() * .01 }));
+  const size = () => { D = Math.min(devicePixelRatio || 1, 1.5); W = cv.clientWidth; H = cv.clientHeight; cv.width = W * D; cv.height = H * D; };
+  addEventListener('resize', size); size();
+  addEventListener('pointermove', e => { m.x = e.clientX / innerWidth; m.y = Math.min(1, e.clientY / innerHeight); });
+  const glow = (cx, cy, r, c, a) => { const g = x.createRadialGradient(cx, cy, 0, cx, cy, r); g.addColorStop(0, `rgba(${c},${a})`); g.addColorStop(1, `rgba(${c},0)`); x.fillStyle = g; x.fillRect(cx - r, cy - r, r * 2, r * 2); };
+  let last = performance.now();
+  function frame(now) {
+    const t = now / 1000, dt = Math.min(.05, (now - last) / 1000); last = now;
+    L.x += (m.x * .5 + .38 - L.x) * .03; L.y += (m.y * .45 + .12 - L.y) * .03;
+    const S = Math.min(W, H), br = .5 + .5 * Math.sin(t * Math.PI * 2 * 72 / 60 / 4), lx = L.x * W, ly = L.y * H;
+    x.setTransform(D, 0, 0, D, 0, 0); x.globalCompositeOperation = 'source-over';
+    const bg = x.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, '#0a0705'); bg.addColorStop(1, '#0d0907'); x.fillStyle = bg; x.fillRect(0, 0, W, H);
+    x.globalCompositeOperation = 'lighter';
+    glow(lx, ly, S * (1.05 + br * .06), '255,170,95', .24 + br * .05);
+    glow(lx, ly, S * .36, '255,214,160', .2 + br * .06);
+    glow(W * .05, H * 1.05, S * .9, '120,70,160', .1);
+    x.save(); x.translate(lx, ly);
+    for (let i = 0; i < 7; i++) {
+      const a = t * .03 * (i % 2 ? 1 : -1) + i * .9, len = Math.hypot(W, H), w = .03 + (i % 3) * .018;
+      x.save(); x.rotate(a); const g = x.createLinearGradient(0, 0, len, 0);
+      g.addColorStop(0, `rgba(255,205,150,${.07 + br * .03})`); g.addColorStop(1, 'rgba(255,205,150,0)');
+      x.fillStyle = g; x.beginPath(); x.moveTo(0, 0); x.lineTo(len, -len * w); x.lineTo(len, len * w); x.closePath(); x.fill(); x.restore();
+    }
+    x.restore();
+    for (const d of dust) {
+      d.y -= d.v * dt * d.z; d.x += Math.sin(t * .3 + d.ph) * .0004; if (d.y < -.02) { d.y = 1.02; d.x = Math.random(); }
+      const px = d.x * W, py = d.y * H, near = Math.max(0, 1 - Math.hypot(px - lx, py - ly) / (S * .75)), a = (.08 + near * .75) * (.6 + .4 * Math.sin(t * 2 + d.ph)) * d.z;
+      if (a < .02) continue; x.fillStyle = `rgba(255,226,185,${a})`; x.beginPath(); x.arc(px, py, .6 + d.z * 1.5, 0, 6.2832); x.fill();
+    }
+    if (!still) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+
+// las secciones entran al aparecer
+(() => {
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: .15 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+})();
+</script>
 </body>
 </html>
