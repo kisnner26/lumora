@@ -4,6 +4,10 @@ lyric videos en vivo para lo que suena en tu mac. le das play en apple music o s
 
 página del producto: **https://kisnner26.github.io/lumora**
 
+[![demo de lumora: cuando la letra nombra a magic johnson aparece su foto](docs/img/demo.gif)](https://kisnner26.github.io/lumora/#demo)
+
+**[ver la demo completa (51 s)](https://kisnner26.github.io/lumora/#demo)** · grabada con obs, sin audio por los derechos de la canción.
+
 ![una canción de amor: la pareja, los corazones y la palabra que remata el verso, elegidos por claude](docs/img/estreno.jpg)
 
 ## capturas reales
