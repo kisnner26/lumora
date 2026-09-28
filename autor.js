@@ -363,13 +363,37 @@ async function openAutor() {
   if (!AUT.cat) try { AUT.cat = await fetch('/story?catalog=1').then(r => r.json()); } catch (e) { toast('el puente no responde'); return false; }
   stage(); AUT.open = true; document.body.classList.add('autor');
   AUT.P = fromCurrent(); AUT.hist = []; AUT.fut = [];
+  AUT.base = /guion de Claude/.test(IN.aiState || '') ? JSON.parse(JSON.stringify(AUT.P)) : null;   // solo se aprende de lo que cambias sobre el guion de Claude
   const pos = ext.now(); AUT.sel = { kind: 'block', i: Math.max(0, IN.cuts.findLastIndex(c => c <= pos)) };
   $('autSong').innerHTML = `<b>${esc(ext.st.name)}</b> · ${esc(ext.st.artist)}`;
   $('autSaved').textContent = 'sin cambios'; $('autSaved').className = '';
   fitStage(); render(); scrollToSel();
   return true;
 }
+// tu estilo de director: qué cambiaste respecto al guion de Claude, para que los próximos guiones salgan a tu gusto
+function learnStyle() {
+  const B = AUT.base, P = AUT.P; if (!B || !AUT.hist.length) return;
+  const d = { scene_in: {}, scene_out: {}, color_in: {}, color_out: {}, mood_in: {}, trans_in: {}, obj_in: {}, obj_out: {}, big_delta: 0, energy_delta: 0, blocks: 0 };
+  const inc = (k, v) => { d[k][v] = (d[k][v] || 0) + 1; };
+  P.blocks.forEach((b, i) => {
+    const a = B.blocks[i]; if (!a) return; let touched = false;
+    if (a.scene !== b.scene) { inc('scene_out', a.scene); inc('scene_in', b.scene); touched = true; }
+    if (a.color !== b.color) { inc('color_out', a.color); inc('color_in', b.color); touched = true; }
+    if (a.mood !== b.mood) { inc('mood_in', b.mood); touched = true; }
+    if (a.transition !== b.transition) { inc('trans_in', b.transition); touched = true; }
+    for (const o of b.objects) if (!a.objects.includes(o)) { inc('obj_in', o); touched = true; }
+    for (const o of a.objects) if (!b.objects.includes(o)) { inc('obj_out', o); touched = true; }
+    if (a.energy !== b.energy) { d.energy_delta += (b.energy - a.energy); touched = true; }
+    if (touched) d.blocks++;
+  });
+  const bigs = L => Object.values(L).filter(e => e.big).length;
+  d.big_delta = bigs(P.lines) - bigs(B.lines);
+  if (!d.blocks && !d.big_delta) return;
+  fetch('/prefs', { method: 'POST', body: JSON.stringify(d) }).catch(() => {});
+  AUT.base = JSON.parse(JSON.stringify(P));                                       // si vuelves a abrir, no se cuenta dos veces
+}
 function closeAutor(silent) {
+  if (!silent) learnStyle();                                                      // si descartaste tu versión, no se aprende de ella
   AUT.open = false; document.body.classList.remove('autor');
   if (AUT.wrap) AUT.wrap.style.transform = '';
   if (!silent && AUT.hist.length) toast('tu versión quedó guardada para esta canción');

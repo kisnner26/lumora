@@ -5,13 +5,13 @@
 // una barra fija abajo con los controles. Todo se recuerda.
 // Se abre con la carátula de la consola o la tecla c; se cierra con esc o c.
 // ============================================================
-const CV_DEF = { style: 'difuminado', lyr: 'linea', size: 'm', beat: true, clock: false, pin: false };
+const CV_DEF = { style: 'difuminado', lyr: 'linea', size: 'm', beat: true, clock: false, pin: false, react: true };
 const CV = (() => { try { return { ...CV_DEF, ...JSON.parse(localStorage.getItem('lm_cover2') || '{}') }; } catch (e) { return { ...CV_DEF }; } })();
 CV.art = ''; CV.listKey = '';
 const cvSave = () => { try { const { art, listKey, cur, pp, ...keep } = CV; localStorage.setItem('lm_cover2', JSON.stringify(keep)); } catch (e) {} };
 const cvEsc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const CV_OPTS = {
-  style: [['difuminado', 'difuminado'], ['ambiente', 'ambiente'], ['vinilo', 'vinilo'], ['minimo', 'mínimo']],
+  style: [['difuminado', 'difuminado'], ['ambiente', 'ambiente'], ['escena', 'escena'], ['minimo', 'mínimo'], ['vinilo', 'vinilo'], ['cassette', 'cassette'], ['cd', 'cd']],
   lyr: [['linea', 'línea'], ['completa', 'completa'], ['no', 'oculta']],
   size: [['s', 's'], ['m', 'm'], ['l', 'l']],
 };
@@ -132,6 +132,60 @@ const CV_OPTS = {
   .cv-foot button { flex:1; padding:9px 0; border-radius:10px; border:1px solid var(--rule); font:400 10px 'Martian Mono',monospace; letter-spacing:.1em; text-transform:uppercase; color:var(--mute); transition:all .2s; }
   .cv-foot button:hover { color:var(--paper); border-color:rgba(246,238,226,.3); }
   body.idle #cover { cursor:none; }
+
+  /* escena: el video de lumora corre detrás, desenfocado */
+  #cover[data-style=escena] { background:transparent; backdrop-filter:blur(26px) brightness(.55) saturate(1.25); -webkit-backdrop-filter:blur(26px) brightness(.55) saturate(1.25); }
+  #cover[data-style=escena] .coverbg { opacity:0; }
+  /* formatos que asoman detrás de la portada: vinilo, cassette y cd */
+  .cv-cd, .cv-cass { position:absolute; opacity:0; translate:0 0; transition:translate .9s cubic-bezier(.2,.8,.2,1), opacity .5s; }
+  .cv-cd { inset:4%; border-radius:50%; box-shadow:0 30px 90px rgba(0,0,0,.6);
+           background:radial-gradient(circle, #0b0907 0 7%, rgba(255,255,255,.55) 7.5% 9%, rgba(210,210,220,.35) 9.5% 16%, transparent 16.5%),
+                      conic-gradient(from 0deg, #d9dce4, #f7c6e0, #c4e7ff, #fff3b8, #c9ffd9, #d8c6ff, #ffd2c2, #d9dce4); }
+  .cv-cd::after { content:''; position:absolute; inset:0; border-radius:50%; background:repeating-radial-gradient(circle, rgba(255,255,255,.07) 0 1px, transparent 1px 4px); }
+  .cv-cd.spin { animation:cvSpin 1.1s linear infinite; }
+  #cover[data-style=cd] .cv-cd { opacity:1; translate:40% 0; }
+  #cover[data-style=cd] .cv-art { translate:-18% 0; }
+  .cv-cass { left:8%; right:8%; top:50%; aspect-ratio:1.58; margin-top:-26%; border-radius:12px; background:linear-gradient(180deg,#2a2521,#161311); box-shadow:0 30px 80px rgba(0,0,0,.6), inset 0 0 0 2px rgba(255,255,255,.05); }
+  .cv-cass .lab { position:absolute; left:7%; right:7%; top:8%; height:36%; border-radius:6px; background:linear-gradient(180deg, var(--gold), #e2a860); opacity:.9; }
+  .cv-cass .win { position:absolute; left:22%; right:22%; top:50%; height:30%; border-radius:30px; background:#0a0908; box-shadow:inset 0 0 0 2px rgba(255,255,255,.06); }
+  .cv-cass .reel { position:absolute; top:52%; width:22%; aspect-ratio:1; border-radius:50%; background:repeating-conic-gradient(#e9e4dc 0 10deg, #3a342f 10deg 60deg); box-shadow:0 0 0 5px #0a0908; }
+  .cv-cass .reel::after { content:''; position:absolute; inset:34%; border-radius:50%; background:#0a0908; }
+  .cv-cass .reel.l { left:24%; } .cv-cass .reel.r { right:24%; }
+  .cv-cass.spin .reel { animation:cvSpin 2.4s linear infinite; }
+  #cover[data-style=cassette] .cv-cass { opacity:1; translate:46% 0; }
+  #cover[data-style=cassette] .cv-art { translate:-20% 0; }
+  #cover[data-style=cd][data-lyr=completa] .cv-art, #cover[data-style=cassette][data-lyr=completa] .cv-art { translate:0 0; }
+  /* la portada sigue la canción: brillo en el coro, apagada en lo triste, se parte en el drop */
+  .cv-art #coverImg { filter:saturate(var(--sat,1)) brightness(var(--bri,1)); box-shadow:0 40px 120px rgba(0,0,0,.6), 0 0 var(--glowR,0px) var(--glowC,transparent); transition:filter .6s; }
+  .cv-shards { position:absolute; inset:0; z-index:2; pointer-events:none; display:grid; grid-template-columns:repeat(4,1fr); grid-template-rows:repeat(4,1fr); }
+  .cv-shards i { background-image:var(--artbg); background-size:400% 400%; animation:cvShard 1.25s cubic-bezier(.2,.8,.2,1) forwards; }
+  @keyframes cvShard { 0% { transform:none; opacity:1; } 35% { transform:translate(var(--dx), var(--dy)) rotate(var(--r)) scale(.92); opacity:1; } 100% { transform:none; opacity:0; } }
+  /* a continuación */
+  .cv-next { position:absolute; right:28px; bottom:96px; display:flex; align-items:center; gap:12px; padding:10px 14px 10px 10px; border-radius:16px; z-index:3;
+             background:rgba(16,12,10,.78); border:1px solid var(--rule); backdrop-filter:blur(20px); opacity:0; transform:translateY(10px); transition:opacity .6s, transform .6s cubic-bezier(.2,.8,.2,1); pointer-events:none; max-width:340px; }
+  .cv-next.on { opacity:1; transform:none; }
+  .cv-next img { width:48px; height:48px; border-radius:8px; object-fit:cover; background:rgba(246,238,226,.08); }
+  .cv-next small { display:block; font:400 9.5px 'Martian Mono',monospace; letter-spacing:.16em; text-transform:uppercase; color:var(--gold); }
+  .cv-next b { display:block; font:600 14px/1.2 'Anybody',sans-serif; color:var(--paper); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .cv-next span { display:block; font-size:12px; color:var(--mute); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  /* me gusta y avisos */
+  .cv-tools #cvLike svg { stroke-width:1.9; }
+  .cv-tools #cvLike.on { color:#ff6b81; } .cv-tools #cvLike.on svg { fill:#ff6b81; stroke:#ff6b81; }
+  .cv-tools #cvLike.pop { animation:cvPop .5s cubic-bezier(.2,.8,.2,1); } @keyframes cvPop { 40% { transform:scale(1.3); } }
+  .cv-msg { position:absolute; left:50%; bottom:calc(100% + 12px); transform:translate(-50%,6px); padding:9px 14px; border-radius:11px; white-space:nowrap; background:rgba(20,16,12,.94);
+            border:1px solid var(--rule); color:var(--paper); font:400 12.5px 'Anybody',sans-serif; opacity:0; transition:opacity .3s, transform .3s; pointer-events:none; }
+  .cv-msg.on { opacity:1; transform:translate(-50%,0); }
+  #cover.menu .cv-msg { opacity:0; }
+  body.cover-open #hud { display:none !important; }
+  /* interruptores con aire */
+  .cv-toggles { gap:4px !important; }
+  .cv-sw { padding:10px 2px !important; gap:14px; line-height:1.3; }
+  .cv-sw small { margin-top:3px; }
+  .cv-tiles { grid-template-columns:repeat(4,1fr) !important; row-gap:12px !important; }
+  .cv-tiles i.t-escena { background:linear-gradient(135deg, #2b1f45, #0f2a3d 50%, #3d1f2c); } .cv-tiles i.t-escena::after { content:''; position:absolute; inset:0; background:radial-gradient(circle at 40% 45%, rgba(244,201,131,.55), transparent 45%); filter:blur(4px); }
+  .cv-tiles i.t-cd { background:#1a1512; } .cv-tiles i.t-cd::before { content:''; position:absolute; left:36%; top:18%; width:58%; aspect-ratio:1; border-radius:50%; background:radial-gradient(circle, #1a1512 0 10%, transparent 11%), conic-gradient(#d9dce4, #f7c6e0, #c4e7ff, #fff3b8, #c9ffd9, #d9dce4); }
+  .cv-tiles i.t-cd::after, .cv-tiles i.t-cassette::after { content:''; position:absolute; left:10%; top:18%; width:56%; aspect-ratio:1; border-radius:4px; background:var(--artbg) center/cover, #444; }
+  .cv-tiles i.t-cassette { background:#1a1512; } .cv-tiles i.t-cassette::before { content:''; position:absolute; left:40%; top:30%; width:56%; height:38%; border-radius:4px; background:linear-gradient(180deg, var(--gold) 0 40%, #2a2521 40%); }
   @media (max-width:900px) { #cover[data-lyr=completa] .cv-main { flex-direction:column; } .cv-full { width:90vw; height:30vh; } .cv-prog span { display:none; } .cv-menu { width:min(340px, calc(100vw - 32px)); } }
 `; document.head.appendChild(st); }
 
@@ -145,7 +199,9 @@ const cvSeg = k => `<div class="cv-seg">${CV_OPTS[k].map(([v, t]) => `<button da
   const left = document.createElement('div'); left.className = 'cv-left';
   const art = document.createElement('div'); art.className = 'cv-art';
   const vinyl = document.createElement('div'); vinyl.className = 'cv-vinyl';
-  art.append(vinyl, img);
+  const cd = document.createElement('div'); cd.className = 'cv-cd';
+  const cass = document.createElement('div'); cass.className = 'cv-cass'; cass.innerHTML = '<i class="lab"></i><i class="win"></i><i class="reel l"></i><i class="reel r"></i>';
+  art.append(vinyl, cd, cass, img);
   const line = document.createElement('div'); line.className = 'cv-line'; line.innerHTML = '<b id="cvLine"></b><span id="cvTr"></span>';
   left.append(art, meta, line);
   const full = document.createElement('div'); full.className = 'cv-full'; full.innerHTML = '<div class="cv-list" id="cvList"></div>';
@@ -159,7 +215,7 @@ const cvSeg = k => `<div class="cv-seg">${CV_OPTS[k].map(([v, t]) => `<button da
       <section><h5>fondo</h5><div class="cv-tiles">${CV_OPTS.style.map(tile).join('')}</div></section>
       <section><h5>letra</h5>${segs('lyr')}</section>
       <section><h5>portada</h5>${segs('size')}</section>
-      <section class="cv-toggles">${sw('cvBeat', 'latido', 'la portada late con el ritmo')}${sw('cvClockBtn', 'reloj', 'la hora en pantalla')}${sw('cvPin', 'fijar la barra', 'que no se oculte al quedarse quieto')}</section>
+      <section class="cv-toggles">${sw('cvBeat', 'latido', 'la portada late con el ritmo')}${sw('cvClockBtn', 'reloj', 'la hora en pantalla')}${sw('cvReact', 'la portada sigue la canción', 'brilla en el coro, se apaga en lo triste, se parte en el drop')}${sw('cvPin', 'fijar la barra', 'que no se oculte al quedarse quieto')}</section>
       <div class="cv-foot"><button id="cvFs">pantalla completa</button></div>
     </div>
     <div class="cv-player">
@@ -167,10 +223,12 @@ const cvSeg = k => `<div class="cv-seg">${CV_OPTS[k].map(([v, t]) => `<button da
         <button data-c="playpause" class="big" title="reproducir / pausa (espacio)" id="cvPP">${cvIco('M7 5h4v14H7zM13 5h4v14h-4z')}</button>
         <button data-c="next" title="siguiente">${cvIco('M16 5h2v14h-2zM4 5v14l11-7z')}</button></div>
       <div class="cv-prog"><span id="cvT0">0:00</span><div class="cv-bar" id="cvBar"><i id="cvFill"></i></div><span id="cvT1">0:00</span></div>
-      <div class="cv-tools"><button id="cvMenuBtn" title="opciones"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button>
+      <div class="cv-tools"><button id="cvLike" title="me gusta"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-9.2-8.6C1.3 8.5 3 5 6.4 5c2 0 3.3 1.1 4 2.3h3.2C14.3 6.1 15.6 5 17.6 5 21 5 22.7 8.5 21.2 11.4 19 15.6 12 20 12 20z" stroke-linejoin="round"/></svg></button><button id="cvMenuBtn" title="opciones"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button>
         <button id="cvBack" title="volver al video (esc)"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
     </div>`;
-  cover.append(main, float, clock);
+  const next = document.createElement('div'); next.className = 'cv-next'; next.innerHTML = '<img id="cvNextArt" alt=""><div style="min-width:0"><small>a continuación</small><b id="cvNextName"></b><span id="cvNextArtist"></span></div>';
+  const msg = document.createElement('div'); msg.className = 'cv-msg'; msg.id = 'cvMsg'; float.appendChild(msg);
+  cover.append(main, float, clock, next);
   // nada dentro de la carátula la cierra por accidente: todo pasa por aquí
   cover.addEventListener('click', e => {
     e.stopImmediatePropagation();
@@ -188,6 +246,8 @@ const cvSeg = k => `<div class="cv-seg">${CV_OPTS[k].map(([v, t]) => `<button da
     if (b.id === 'cvBeat') { CV.beat = !CV.beat; cvSave(); return cvPaint(); }
     if (b.id === 'cvClockBtn') { CV.clock = !CV.clock; cvSave(); return cvPaint(); }
     if (b.id === 'cvPin') { CV.pin = !CV.pin; cvSave(); return cvPaint(); }
+    if (b.id === 'cvReact') { CV.react = !CV.react; cvSave(); return cvPaint(); }
+    if (b.id === 'cvLike') return cvLike();
     if (b.id === 'cvFs') return document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.();
     if (b.id === 'cvBack') { cover.classList.remove('menu'); $('cvMenuBtn').classList.remove('on'); return toggleCover(false); }
   }, true);
@@ -199,7 +259,7 @@ function cvPaint() {
   cover.dataset.style = CV.style; cover.dataset.size = CV.size; cover.dataset.lyr = hasLyr ? CV.lyr : 'no';
   cover.dataset.beat = CV.beat ? '1' : '0'; cover.dataset.clock = CV.clock ? '1' : '0'; cover.dataset.pin = CV.pin ? '1' : '0';
   for (const k of Object.keys(CV_OPTS)) for (const b of cover.querySelectorAll(`[data-${k}]`)) b.classList.toggle('on', b.dataset[k] === CV[k]);
-  $('cvBeat').classList.toggle('on', CV.beat); $('cvClockBtn').classList.toggle('on', CV.clock); $('cvPin').classList.toggle('on', CV.pin);
+  $('cvBeat').classList.toggle('on', CV.beat); $('cvClockBtn').classList.toggle('on', CV.clock); $('cvPin').classList.toggle('on', CV.pin); $('cvReact').classList.toggle('on', CV.react);
   const url = ext.artUrl || '';
   if (url && url !== CV.art && typeof artImg !== 'undefined' && artImg) {
     CV.art = url;
@@ -208,6 +268,7 @@ function cvPaint() {
     cover.querySelector('.cv-vinyl').style.setProperty('--label', `url("${url}")`);
     const m = $('cvMenu'); m.style.setProperty('--artbg', `url("${url}")`);
     pal.slice(0, 3).forEach((p, i) => m.style.setProperty('--a' + (i + 1), `hsl(${p.h} ${Math.max(p.s, 55)}% ${Math.min(Math.max(p.l, 40), 60)}%)`));
+    const g = pal[0]; cover.querySelector('.cv-art').style.setProperty('--glowC', g ? `hsla(${g.h} ${Math.max(g.s, 60)}% 60% / .55)` : 'rgba(255,190,120,.5)');
   }
 }
 // la letra completa: se arma una vez por canción (y al llegar traducciones)
@@ -226,7 +287,8 @@ function cvBuildList() {
     $('cvT0').textContent = f(pos); $('cvT1').textContent = f(dur); $('cvFill').style.width = (dur ? clamp(pos / dur) * 100 : 0) + '%';
     const playing = ext.st.state === 'playing';
     if (CV.pp !== playing) { CV.pp = playing; $('cvPP').innerHTML = cvIco(playing ? 'M7 5h4v14H7zM13 5h4v14h-4z' : 'M8 5v14l11-7z'); }
-    $('cover').querySelector('.cv-vinyl').classList.toggle('spin', playing);
+    for (const el of $('cover').querySelectorAll('.cv-vinyl, .cv-cd, .cv-cass')) el.classList.toggle('spin', playing);
+    cvReactFrame(pos, dur);
     $('cover').style.setProperty('--beat', CV.beat && mode === 'proc' ? (IN.beat || 0).toFixed(3) : 0);
     if (CV.clock) { const d = new Date(); $('cvClock').textContent = d.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' }); $('cvDate').textContent = d.toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' }); }
     if (mode === 'proc') {
@@ -248,7 +310,68 @@ function cvBuildList() {
   }
   requestAnimationFrame(cvLoop);
 })();
-{ const _toggleCover = toggleCover; toggleCover = function (on) { _toggleCover(on); if (coverOpen) { CV.art = ''; CV.listKey = ''; CV.cur = -2; cvPaint(); } }; }
+{ const _toggleCover = toggleCover; toggleCover = function (on) { _toggleCover(on); document.body.classList.toggle('cover-open', coverOpen); if (coverOpen) { CV.art = ''; CV.listKey = ''; CV.cur = -2; cvPaint(); } }; }
 addEventListener('resize', () => { if (coverOpen) CV.cur = -2; });
 // esc cierra primero el menú de opciones
 addEventListener('keydown', e => { if (e.key === 'Escape' && coverOpen && $('cover').classList.contains('menu')) { e.stopImmediatePropagation(); $('cover').classList.remove('menu'); $('cvMenuBtn').classList.remove('on'); } }, true);
+
+// ---------- la portada sigue la canción ----------
+const CVR = { sat: 1, bri: 1, glow: 0 };
+function cvReactFrame(pos, dur) {
+  const art = $('cover').querySelector('.cv-art');
+  let sat = 1, bri = 1, glow = 0;
+  if (CV.react && mode === 'proc') {
+    const plan = SEM.plans?.[SEM.blockNow], e = plan ? (plan.energy ?? 5) : 5 + (IN.mood?.a || 0) * 3;
+    const sad = plan && /triste|melancolico|oscuro|nostalgico/.test(plan.mood || '');
+    if (e >= 7) { bri = 1.06 + (IN.beat || 0) * .05; sat = 1.15; glow = 60 + (e - 7) * 20; }                 // coro, drop: se ilumina
+    else if (e <= 3 || sad) { sat = sad ? .5 : .7; bri = .82; }                                          // puente, lo triste: se apaga
+  }
+  CVR.sat += (sat - CVR.sat) * .05; CVR.bri += (bri - CVR.bri) * .08; CVR.glow += (glow - CVR.glow) * .06;
+  art.style.setProperty('--sat', CVR.sat.toFixed(3)); art.style.setProperty('--bri', CVR.bri.toFixed(3));
+  art.style.setProperty('--glowR', CVR.glow.toFixed(0) + 'px');
+  cvNextFrame(pos, dur);
+}
+// en el drop, la portada se parte en pedazos y vuelve a armarse
+{ const _m = moment; moment = function (kind) {
+  _m(kind);
+  if (kind !== 'drop' || !coverOpen || !CV.react) return;
+  const art = $('cover').querySelector('.cv-art'); art.querySelector('.cv-shards')?.remove();
+  const sh = document.createElement('div'); sh.className = 'cv-shards'; sh.style.setProperty('--artbg', `url("${ext.artUrl}")`);
+  for (let k = 0; k < 16; k++) {
+    const x = k % 4, y = Math.floor(k / 4), i = document.createElement('i');
+    i.style.backgroundPosition = `${x * 33.333}% ${y * 33.333}%`;
+    i.style.setProperty('--dx', ((x - 1.5) * (18 + Math.random() * 22)).toFixed(0) + 'px'); i.style.setProperty('--dy', ((y - 1.5) * (18 + Math.random() * 22)).toFixed(0) + 'px');
+    i.style.setProperty('--r', ((Math.random() - .5) * 24).toFixed(1) + 'deg'); sh.appendChild(i);
+  }
+  art.appendChild(sh); setTimeout(() => sh.remove(), 1400);
+}; }
+
+// ---------- a continuación (solo Música deja leer la cola) ----------
+const CVN = { key: '', data: null, busy: false };
+function cvNextFrame(pos, dur) {
+  const key = ext.key();
+  if (key !== CVN.key && !CVN.busy) {
+    CVN.key = key; CVN.data = null; CVN.busy = true;
+    fetch('/next').then(r => r.json()).then(d => { if (CVN.key === key && d && d.name) { CVN.data = d; $('cvNextName').textContent = d.name; $('cvNextArtist').textContent = d.artist;
+      $('cvNextArt').src = d.art ? '/nextart?t=' + d.art : ''; $('cvNextArt').style.visibility = d.art ? '' : 'hidden'; } }).catch(() => {}).finally(() => { CVN.busy = false; });
+  }
+  $('cover').querySelector('.cv-next').classList.toggle('on', !!(CVN.data && dur && dur - pos < 20 && dur - pos > 1));
+}
+
+// ---------- me gusta ----------
+const CVL = { key: '' };
+function cvMsg(t, ms = 2800) { const m = $('cvMsg'); m.textContent = t; m.classList.add('on'); clearTimeout(cvMsg.t); cvMsg.t = setTimeout(() => m.classList.remove('on'), ms); }
+async function cvLikeState() {
+  const key = ext.key(); if (key === CVL.key) return; CVL.key = key;
+  try { const d = await fetch('/like').then(r => r.json()); if (CVL.key === key) $('cvLike').classList.toggle('on', d.liked === true); } catch (e) {}
+}
+async function cvLike() {
+  const b = $('cvLike'); b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop');
+  try {
+    const d = await fetch('/like', { method: 'POST' }).then(r => r.json());
+    if (d.error) return cvMsg(d.error, 4200);
+    if (d.src === 'music') { b.classList.toggle('on', d.liked); return cvMsg(d.liked ? 'marcada como favorita en Música' : 'quitada de favoritas'); }
+    b.classList.add('on'); cvMsg('guardada en tus me gusta de Spotify (si ya estaba, se quitó)');
+  } catch (e) { cvMsg('el puente no responde'); }
+}
+setInterval(() => { if (coverOpen) cvLikeState(); }, 1000);

@@ -372,6 +372,86 @@ def to_mp4(data):
 
 
 LOG_LAST = {}
+# ---------- modo carátula: qué sigue y me gusta ----------
+NEXT_ART = os.path.join(tempfile.gettempdir(), 'lumora-next.bin')
+NEXT_SCRIPT = '''
+tell application "Music"
+  if player state is stopped then return "none"
+  if shuffle enabled then return "shuffle"
+  set p to current playlist
+  set cid to persistent ID of current track
+  set n to count of tracks of p
+  set i to 0
+  repeat with k from 1 to n
+    if persistent ID of track k of p is cid then
+      set i to k
+      exit repeat
+    end if
+  end repeat
+  if i = 0 or i >= n then return "end"
+  set t to track (i + 1) of p
+  set out to (name of t) & (ASCII character 31) & (artist of t) & (ASCII character 31) & (album of t)
+  if (count of artworks of t) > 0 then
+    set d to raw data of artwork 1 of t
+    set fh to open for access (POSIX file "%s") with write permission
+    set eof fh to 0
+    write d to fh
+    close access fh
+    set out to out & (ASCII character 31) & "art"
+  end if
+  return out
+end tell
+''' % NEXT_ART
+NEXT = {'key': None, 'data': {}}
+
+
+def next_track():
+    # solo Música deja leer la cola (y solo sin aleatorio); se recalcula una vez por canción
+    with lock:
+        src, key = state.get('src'), (state.get('name'), state.get('artist'))
+    if src != 'music':
+        return {'error': 'spotify no deja leer la cola'}
+    if NEXT['key'] == key:
+        return NEXT['data']
+    try:
+        r = osa(NEXT_SCRIPT, timeout=12)
+    except Exception as e:
+        return {'error': str(e)[:120]}
+    if r in ('none', 'shuffle', 'end'):
+        data = {'error': {'shuffle': 'aleatorio activado', 'end': 'fin de la lista', 'none': 'nada sonando'}[r]}
+    else:
+        f = r.split('\x1f')
+        data = {'name': f[0], 'artist': f[1] if len(f) > 1 else '', 'album': f[2] if len(f) > 2 else '', 'art': int(time.time() * 1000) if len(f) > 3 else 0}
+    NEXT['key'], NEXT['data'] = key, data
+    return data
+
+
+def like(toggle):
+    with lock:
+        src = state.get('src')
+    if src == 'music':
+        if toggle:
+            osa('tell application "Music" to set favorited of current track to not (favorited of current track)')
+        return {'liked': osa('tell application "Music" to get favorited of current track') == 'true', 'src': 'music'}
+    if not toggle:
+        return {'liked': None, 'src': 'spotify'}
+    # Spotify no tiene comando: su atajo "guardar en Tus me gusta" (⌥⇧B), y se devuelve el foco a la app anterior
+    script = '''
+    tell application "System Events" to set prev to name of first application process whose frontmost is true
+    tell application "Spotify" to activate
+    delay 0.35
+    tell application "System Events" to keystroke "b" using {option down, shift down}
+    delay 0.2
+    tell application prev to activate
+    return "ok"
+    '''
+    try:
+        osa(script, timeout=8)
+        return {'liked': None, 'src': 'spotify', 'ok': True}
+    except Exception as e:
+        return {'error': 'macOS no dio permiso de accesibilidad para usar el atajo de Spotify', 'detail': str(e)[:120]}
+
+
 # ---------- modo autor: los videos armados a mano, por canción ----------
 AUTOR_FILE = os.path.expanduser('~/Library/Application Support/lumora/autor.json')
 AUTOR = {'data': {}}
@@ -473,6 +553,24 @@ class Handler(SimpleHTTPRequestHandler):
                 return self.send_json({'scenes': guion.SCENES, 'objects': guion.OBJECTS, 'moods': guion.MOODS, 'times': guion.TIMES,
                                        'colors': guion.COLORS, 'transitions': guion.TRANSITIONS})
             return self.send_json({'ready': guion.available(), 'model': guion.MODEL})
+        if path == '/prefs':
+            import guion
+            p = guion.load_prefs()
+            return self.send_json({'sessions': p.get('sessions', 0), 'text': guion.prefs_text(p)})
+        if path == '/next':
+            return self.send_json(next_track())
+        if path == '/nextart':
+            if not os.path.exists(NEXT_ART):
+                return self.send_json({'error': 'sin carátula'}, 404)
+            data = open(NEXT_ART, 'rb').read()
+            self.send_response(200); self.send_header('Content-Type', 'image/png' if data[:4] == b'\x89PNG' else 'image/jpeg')
+            self.send_header('Content-Length', str(len(data))); self.end_headers()
+            return self.wfile.write(data)
+        if path == '/like':
+            try:
+                return self.send_json(like(False))
+            except Exception as e:
+                return self.send_json({'error': str(e)[:160]})
         if path == '/autor':                                    # el video que el usuario armó a mano para esta canción
             k = parse_qs(urlparse(self.path).query).get('key', [''])[0]
             return self.send_json(AUTOR['data'].get(k) or {})
@@ -550,6 +648,18 @@ class Handler(SimpleHTTPRequestHandler):
             if msg != LOG_LAST.get('m'):
                 LOG_LAST['m'] = msg; print('[página]', msg, flush=True)
             return self.send_json({'ok': True})
+        if u.path == '/prefs':                                 # tu estilo de director: lo que cambias en el modo autor
+            n = int(self.headers.get('Content-Length') or 0)
+            try:
+                import guion
+                return self.send_json(guion.learn(json.loads(self.rfile.read(n) or b'{}')))
+            except Exception as e:
+                return self.send_json({'error': str(e)[:160]}, 500)
+        if u.path == '/like':
+            try:
+                return self.send_json(like(True))
+            except Exception as e:
+                return self.send_json({'error': str(e)[:160]})
         if u.path == '/autor':
             n = int(self.headers.get('Content-Length') or 0)
             body = json.loads(self.rfile.read(min(n, 4_000_000)) or b'{}')

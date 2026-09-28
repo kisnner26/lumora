@@ -35,9 +35,13 @@ la consola de reproducción aparece centrada abajo al mover el mouse: la escena 
 
 ![modo carátula con estilo vinilo: el disco asoma detrás de la portada y gira mientras suena](docs/img/caratula.jpg)
 
-el modo carátula pone la portada de protagonista: cuatro fondos (difuminado, ambiente con los colores de la portada, vinilo que gira, mínimo), la letra en una línea o completa al lado de la portada (avanza sola y un clic salta a ese verso), tamaño de portada, latido con el ritmo y reloj. los controles van en una barra flotante que se oculta sola; las opciones, en un menú que sale de ella. se abre con la tecla `c`.
+el modo carátula pone la portada de protagonista: siete fondos (difuminado, ambiente con los colores de la portada, escena con el video corriendo detrás, mínimo, y la portada con un vinilo, un cassette o un cd que asoman y giran), la letra en una línea o completa al lado (avanza sola y un clic salta a ese verso), tamaño de portada, latido y reloj. la portada sigue la canción: brilla en el coro, se apaga en lo triste y se parte en el drop. con apple music muestra qué canción sigue en los últimos segundos, y un corazón marca la canción como favorita (en spotify usa su atajo de teclado). los controles van en una barra flotante que se oculta sola; las opciones, en un menú que sale de ella. se abre con la tecla `c`.
 
 los ajustes funcionan como una consola de luces: canales numerados, teclas con led, faders con escala y la paleta con muestras reales.
+
+## personajes con identidad y tu estilo de director
+
+las figuras de cada artista se ven igual en todas sus canciones: mismo color de luz, estatura, accesorios (gorra, gorro, capucha, lentes, cadena, aretes, moño, collar) y franja de color en la ropa, como un universo propio por artista. y lumora aprende de ti: cuando editas un video en el modo autor, anota qué cambiaste respecto al guion de claude (escenarios, colores, ánimos, transiciones, objetos, cuánta palabra gigante) y se lo pasa a claude como tu estilo en las canciones nuevas.
 
 ## modo autor
 

@@ -210,6 +210,57 @@ def _mmss(t):
     return f'{t // 60}:{t % 60:02d}'
 
 
+# ---------- tu estilo de director: lo que el usuario cambia en el modo autor ----------
+PREFS_FILE = os.path.expanduser('~/Library/Application Support/lumora/estilo.json')
+PREF_KEYS = ('scene_in', 'scene_out', 'color_in', 'color_out', 'mood_in', 'trans_in', 'obj_in', 'obj_out')
+
+
+def load_prefs():
+    try:
+        return json.load(open(PREFS_FILE))
+    except Exception:
+        return {}
+
+
+def learn(diff):
+    p = load_prefs()
+    for k in PREF_KEYS:
+        d = p.setdefault(k, {})
+        for name, n in (diff.get(k) or {}).items():
+            d[str(name)] = d.get(str(name), 0) + int(n)
+    p['big_delta'] = p.get('big_delta', 0) + int(diff.get('big_delta', 0))
+    p['energy_delta'] = p.get('energy_delta', 0) + float(diff.get('energy_delta', 0))
+    p['blocks'] = p.get('blocks', 0) + int(diff.get('blocks', 0))
+    p['sessions'] = p.get('sessions', 0) + 1
+    os.makedirs(os.path.dirname(PREFS_FILE), exist_ok=True)
+    json.dump(p, open(PREFS_FILE, 'w'), ensure_ascii=False)
+    return {'ok': True, 'sessions': p['sessions'], 'text': prefs_text(p)}
+
+
+def prefs_text(p=None):
+    # lo aprendido se vuelve instrucciones cortas; solo cuenta lo que se repite (2 veces o más)
+    p = p if p is not None else load_prefs()
+    if not p.get('sessions'):
+        return ''
+    top = lambda k, n=4: [a for a, c in sorted((p.get(k) or {}).items(), key=lambda kv: -kv[1]) if c >= 2][:n]
+    out = []
+    if top('scene_in'): out.append('prefiere los escenarios: ' + ', '.join(top('scene_in')))
+    if top('scene_out'): out.append('suele cambiar estos escenarios, úsalos menos: ' + ', '.join(top('scene_out')))
+    if top('color_in'): out.append('colores favoritos: ' + ', '.join(top('color_in')))
+    if top('color_out'): out.append('colores que suele quitar: ' + ', '.join(top('color_out')))
+    if top('mood_in'): out.append('ánimos que elige: ' + ', '.join(top('mood_in')))
+    if top('trans_in'): out.append('transiciones que prefiere: ' + ', '.join(top('trans_in')))
+    if top('obj_in', 6): out.append('objetos que agrega a menudo: ' + ', '.join(top('obj_in', 6)))
+    if top('obj_out', 6): out.append('objetos que quita, evítalos salvo que la letra los nombre: ' + ', '.join(top('obj_out', 6)))
+    b = p.get('big_delta', 0)
+    if b >= 3: out.append('le gusta más la palabra gigante: úsala un poco más')
+    if b <= -3: out.append('usa menos la palabra gigante')
+    blocks = max(1, p.get('blocks', 1)); e = p.get('energy_delta', 0) / blocks
+    if e >= .6: out.append('prefiere más energía que la que propones')
+    if e <= -.6: out.append('prefiere videos más calmados que los que propones')
+    return '; '.join(out)
+
+
 def _prompt(req):
     lines, cuts = req.get('lines') or [], req.get('cuts') or [0]
     out = [f"Canción: {req.get('title', '')}", f"Artista: {req.get('artist', '')}"]
@@ -224,6 +275,9 @@ def _prompt(req):
         end = _mmss(b) if b != float('inf') else 'fin'
         out.append(f'Bloque {n} ({_mmss(a)}–{end})' + ('' if inside else ' — instrumental, sin letra'))
         out += [f"  [{l['i']}] {_mmss(l['t'])}  {l['text']}" for l in inside]
+    pt = prefs_text()
+    if pt:                                                      # estilo aprendido del modo autor (va aquí para no romper la caché del sistema)
+        out += ['', 'Estilo del usuario, aprendido de cómo edita sus videos (respétalo sin contradecir la letra): ' + pt + '.']
     rg = req.get('range')
     if rg:                                                      # la canción se reparte entre dos lecturas simultáneas
         a, b = int(rg[0]), int(rg[1])
