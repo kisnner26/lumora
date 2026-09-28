@@ -8,7 +8,7 @@ const CFG_DEFAULT = {
   intensity: 1, camera: true, cameraAmt: 1, transitions: 'todas', flashes: true,
   lyricSize: 1, typo: 'variada', letterAnim: true, trMode: 'ambas', kinetic: true,
   instruments: true, cards: true, symbols: true, echo: true, np: true,
-  palette: 'auto', variation: 'nueva', ai: true, recFormat: 'horizontal',
+  palette: 'auto', variation: 'nueva', ai: false, recFormat: 'horizontal',
 };
 const CFG = window.CFG = (() => { try { return { ...CFG_DEFAULT, ...JSON.parse(localStorage.getItem('tc_cfg') || '{}') }; } catch (e) { return { ...CFG_DEFAULT }; } })();
 const saveCfg = () => { try { localStorage.setItem('tc_cfg', JSON.stringify(CFG)); } catch (e) {} };
@@ -151,6 +151,20 @@ setCss.textContent = `
       linear-gradient(90deg, var(--gold) var(--p,50%), transparent var(--p,50%)) center / 100% 2px no-repeat,
       repeating-linear-gradient(90deg, rgba(246,238,226,.22) 0 1px, transparent 1px 10%) center / 100% 9px no-repeat; }
   .opt input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:5px; height:24px; margin-top:1px; border-radius:2px; background:var(--paper); box-shadow:0 0 12px rgba(255,190,120,.8); }
+  /* luces: la muestra en vivo de lo que la luz está haciendo */
+  #settings .lt-now { display:flex; align-items:center; gap:14px; padding:6px 0 14px; border-bottom:1px solid var(--rule); }
+  #settings .lt-now i { flex:1; height:38px; border-radius:10px; background:var(--c, #f4c983); opacity:calc(.12 + var(--b, .5) * .88);
+                        box-shadow:0 0 34px -4px var(--c, #f4c983); border:1px solid rgba(255,255,255,.08); }
+  #settings .lt-now span { font:400 9.5px 'Martian Mono',monospace; letter-spacing:.16em; text-transform:uppercase; color:var(--faint); max-width:12ch; line-height:1.5; }
+  #settings #ltHue::-webkit-slider-runnable-track { background:linear-gradient(90deg, hsl(0 90% 55%), hsl(60 90% 55%), hsl(120 90% 50%), hsl(180 90% 50%), hsl(240 90% 60%), hsl(300 90% 58%), hsl(359 90% 55%)) center / 100% 4px no-repeat; }
+  #settings .seg[data-lt] { justify-content:flex-start; margin-top:4px; }
+  /* calibrar: el punto destella a la vez que la luz debería hacerlo */
+  #settings .calib { display:inline-flex; align-items:center; gap:10px; margin-top:12px; padding:7px 12px 7px 10px !important; border-radius:9px; border:1px solid var(--rule) !important;
+                     font:400 10px 'Martian Mono',monospace !important; letter-spacing:.12em; text-transform:uppercase; color:var(--mute) !important; transition:border-color .2s, color .2s; }
+  #settings .calib:hover { border-color:rgba(246,238,226,.3) !important; color:var(--paper) !important; }
+  #settings .calib i { width:9px; height:9px; border-radius:50%; background:rgba(246,238,226,.18); transition:background .5s, box-shadow .5s; }
+  #settings .calib.on { border-color:rgba(244,201,131,.45) !important; color:var(--gold) !important; }
+  #settings .calib i.flash { background:#fff; box-shadow:0 0 14px #fff, 0 0 30px var(--gold2); transition:none; }
   #settings .reset { margin:26px 34px 44px; font:400 10.5px 'Martian Mono',monospace !important; letter-spacing:.14em; text-transform:uppercase; color:var(--faint) !important; border-bottom:1px solid var(--rule) !important; padding:4px 0 !important; }
   #settings .reset:hover { color:var(--gold) !important; border-color:var(--gold) !important; }
   #fps { position:fixed; top:14px; left:14px; z-index:8; font:400 11px 'Martian Mono',monospace; color:#f4c983; background:rgba(0,0,0,.55); padding:4px 8px; border-radius:6px; display:none; }
@@ -182,7 +196,7 @@ const OPTS = [
     ['kinetic', 'Palabra gigante', 'sw', null, 'en ganchos, coros y drops'],
   ]],
   ['contenido', [
-    ['ai', 'Guion con Claude', 'sw', null, 'lee la letra completa antes de empezar y decide qué se ve en cada verso'],
+    ['ai', 'Guion con Claude (opcional)', 'sw', null, 'lumora dirige sola, sin IA y al instante. Con esto activado, Claude lee la letra y escribe el guion (requiere Claude Code o una clave)'],
     ['instruments', 'Instrumentos', 'sw'], ['cards', 'Fotos de lo que se nombra', 'sw'], ['symbols', 'Banderas y marcas', 'sw'],
     ['echo', 'Eco de la palabra clave', 'sw'], ['np', 'Aviso de lo que suena', 'sw'],
   ]],
@@ -218,7 +232,21 @@ OPTS.forEach(([title, opts], si) => {
   panelEl.appendChild(sec);
 });
 { const sec = document.createElement('section'); sec.id = 'set-luces';
-  sec.innerHTML = `<div class="set-title"><b>${String(SECTIONS.length).padStart(2, '0')}</b><h3>luces</h3></div><div class="opt"><label>Sincronizar luces del cuarto<small id="setLights"></small></label><button class="sw" id="lightsSw" aria-label="luces"></button></div>`;
+  const ltSeg = (k, opts) => `<div class="seg" data-lt="${k}">${opts.map(([v, t]) => `<button data-ltv="${v}">${t}</button>`).join('')}</div>`;
+  const ltFad = (id, min, max, step) => `<div class="fad"><input type="range" id="${id}" min="${min}" max="${max}" step="${step}"><output id="${id}Out"></output></div>`;
+  sec.innerHTML = `<div class="set-title"><b>${String(SECTIONS.length).padStart(2, '0')}</b><h3>luces</h3></div>
+    <div class="lt-now"><i id="ltNow"></i><span>así está la luz ahora</span></div>
+    <div class="opt"><label>Sincronizar luces del cuarto<small id="setLights"></small></label><button class="sw" id="lightsSw" aria-label="luces"></button></div>
+    <div class="opt wide"><label>Movimiento<small>quieta: solo el color · respira: una ola lenta por compás · pulso: late con cada tiempo (a medio tiempo si la canción va rápida) · fiesta: golpes secos y destellos en los drops</small></label>${ltSeg('mode', LT_MODES)}</div>
+    <div class="opt wide"><label>Color<small>un solo color por canción. La canción: el tono que Claude le leyó al guion entero · portada: el color que domina la carátula · por partes: cambia solo al cambiar de sección, con fundido · fijo: el que elijas</small></label>${ltSeg('color', LT_COLORS)}</div>
+    <div class="opt" id="ltHueRow"><label>Tono fijo<small>el color que se usa en "fijo" y cuando la canción no da uno</small></label>${ltFad('ltHue', 0, 359, 1)}</div>
+    <div class="opt"><label>Profundidad del pulso<small>cuánto baja la luz entre golpe y golpe</small></label>${ltFad('ltDepth', 0, 1, .05)}</div>
+    <div class="opt"><label>Brillo máximo<small>el techo: los coros y los drops llegan hasta aquí</small></label>${ltFad('ltMax', 20, 100, 5)}</div>
+    <div class="opt"><label>Destellos en los drops<small>un golpe de luz blanca en los drops (en "pulso" y "fiesta"). Respeta "Destellos" de Pantalla</small></label><button class="sw" id="ltDrops" aria-label="destellos"></button></div>
+    <div class="opt"><label>Luz cálida en pausa<small>al pausar, la luz baja a un ámbar tenue</small></label><button class="sw" id="ltPause" aria-label="pausa"></button></div>
+    <div class="opt"><label>Adelanto de las luces<small>compensa lo que tarda la luz en reaccionar por wifi. Calibra: si la luz destella después del punto, sube el valor; si antes, bájalo.</small></label>
+      ${ltFad('lightsLead', 0, 350, 10)}
+      <div><button class="calib" id="lightsCalib"><i></i><span>calibrar</span></button></div></div>`;
   panelEl.appendChild(sec); }
 const reset = document.createElement('button'); reset.className = 'reset'; reset.textContent = 'restablecer todo'; panelEl.appendChild(reset);
 document.body.appendChild(panelEl);
@@ -234,11 +262,25 @@ const fmtVal = (k, v) => (+v).toFixed(2) + '×';
 function paintFader(i) { const p = (i.value - i.min) / (i.max - i.min) * 100; i.style.setProperty('--p', p + '%'); i.nextElementSibling.textContent = fmtVal(i.dataset.key, i.value); }
 function syncUI() {
   panelEl.querySelectorAll('.sw[data-key]').forEach(b => b.classList.toggle('on', !!CFG[b.dataset.key]));
-  panelEl.querySelectorAll('.seg').forEach(g => g.querySelectorAll('button').forEach(b => b.classList.toggle('on', CFG[g.dataset.key] === b.dataset.v)));
-  panelEl.querySelectorAll('input[type=range]').forEach(i => { i.value = CFG[i.dataset.key]; paintFader(i); });
+  panelEl.querySelectorAll('.seg[data-key]').forEach(g => g.querySelectorAll('button').forEach(b => b.classList.toggle('on', CFG[g.dataset.key] === b.dataset.v)));
+  panelEl.querySelectorAll('input[type=range][data-key]').forEach(i => { i.value = CFG[i.dataset.key]; paintFader(i); });
   rail.querySelector('button:not(.on)') && !rail.querySelector('.on') && rail.firstChild.classList.add('on');
   $('lightsSw').classList.toggle('on', LT.on);
   $('setLights').textContent = LT.devices.length ? LT.devices.length + ' luz(es) Govee' : 'ninguna luz encontrada';
+  paintLights();
+}
+function paintRange(id, txt) {
+  const i = $(id); i.style.setProperty('--p', (i.value - i.min) / (i.max - i.min) * 100 + '%'); $(id + 'Out').textContent = txt;
+}
+function paintLead() { $('lightsLead').value = LT.lead; paintRange('lightsLead', LT.lead + ' ms'); }
+function paintLights() {
+  panelEl.querySelectorAll('.seg[data-lt]').forEach(g => g.querySelectorAll('button').forEach(b => b.classList.toggle('on', LT.o[g.dataset.lt] === b.dataset.ltv)));
+  $('ltHue').value = LT.o.hue; paintRange('ltHue', LT.o.hue + '°'); $('ltHueOut').style.color = `hsl(${LT.o.hue} 90% 62%)`;
+  $('ltHueRow').style.display = LT.o.color === 'fijo' ? '' : 'none';
+  $('ltDepth').value = LT.o.depth; paintRange('ltDepth', Math.round(LT.o.depth * 100) + '%');
+  $('ltMax').value = LT.o.max; paintRange('ltMax', LT.o.max + '%');
+  $('ltDrops').classList.toggle('on', LT.o.drops); $('ltPause').classList.toggle('on', LT.o.pause);
+  paintLead();
 }
 function applyAll() {
   applyQuality();
@@ -256,12 +298,29 @@ panelEl.addEventListener('click', e => {
   if (b.dataset.go) return;
   if (b === reset) { Object.assign(CFG, CFG_DEFAULT); return applyAll(); }
   if (b.id === 'lightsSw') { $('lightsBtn').click(); return setTimeout(syncUI, 50); }
+  if (b.dataset.ltv) { setLightsOpt(b.parentElement.dataset.lt, b.dataset.ltv); return paintLights(); }
+  if (b.id === 'ltDrops' || b.id === 'ltPause') { const k = b.id === 'ltDrops' ? 'drops' : 'pause'; setLightsOpt(k, !LT.o[k]); return paintLights(); }
+  if (b.id === 'lightsCalib') {
+    const dot = b.querySelector('i'), label = b.querySelector('span');
+    const done = () => { b.classList.remove('on'); label.textContent = 'calibrar'; };
+    if (LT.calib) return lightsCalibStop();
+    if (!lightsCalibrate(() => { dot.classList.add('flash'); setTimeout(() => dot.classList.remove('flash'), 120); }, done)) {
+      label.textContent = LT.on ? 'no hay luces' : 'activa las luces'; return setTimeout(done, 1800);
+    }
+    b.classList.add('on'); label.textContent = 'detener';
+    return;
+  }
   if (b.dataset.key) CFG[b.dataset.key] = !CFG[b.dataset.key];
   else if (b.dataset.v) CFG[b.parentElement.dataset.key] = b.dataset.v;
   applyAll();
 });
-panelEl.addEventListener('input', e => { const i = e.target; if (i.dataset.key) { CFG[i.dataset.key] = parseFloat(i.value); paintFader(i); applyAll(); } });
-function toggleSettings(on = !panelEl.classList.contains('open')) { panelEl.classList.toggle('open', on); if (on) syncUI(); }
+panelEl.addEventListener('input', e => {
+  const i = e.target;
+  if (i.id === 'lightsLead') { setLightsLead(+i.value); paintLead(); return; }
+  if (i.id === 'ltHue' || i.id === 'ltDepth' || i.id === 'ltMax') { setLightsOpt({ ltHue: 'hue', ltDepth: 'depth', ltMax: 'max' }[i.id], +i.value); return paintLights(); }
+  if (i.dataset.key) { CFG[i.dataset.key] = parseFloat(i.value); paintFader(i); applyAll(); }
+});
+function toggleSettings(on = !panelEl.classList.contains('open')) { panelEl.classList.toggle('open', on); if (on) syncUI(); else lightsCalibStop(); }
 addEventListener('keydown', e => { if (e.key === ',' && !/TEXTAREA|INPUT/.test(document.activeElement?.tagName || '')) toggleSettings(); if (e.key === 'Escape' && panelEl.classList.contains('open')) { toggleSettings(false); e.stopImmediatePropagation(); } }, true);
 
 // botones del engranaje: en la cápsula y en el panel principal

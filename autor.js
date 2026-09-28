@@ -363,7 +363,7 @@ async function openAutor() {
   if (!AUT.cat) try { AUT.cat = await fetch('/story?catalog=1').then(r => r.json()); } catch (e) { toast('el puente no responde'); return false; }
   stage(); AUT.open = true; document.body.classList.add('autor');
   AUT.P = fromCurrent(); AUT.hist = []; AUT.fut = [];
-  AUT.base = /guion de Claude/.test(IN.aiState || '') ? JSON.parse(JSON.stringify(AUT.P)) : null;   // solo se aprende de lo que cambias sobre el guion de Claude
+  AUT.base = /guion de Claude|director de lumora/.test(IN.aiState || '') ? JSON.parse(JSON.stringify(AUT.P)) : null;   // solo se aprende de lo que cambias sobre el guion de Claude
   const pos = ext.now(); AUT.sel = { kind: 'block', i: Math.max(0, IN.cuts.findLastIndex(c => c <= pos)) };
   $('autSong').innerHTML = `<b>${esc(ext.st.name)}</b> · ${esc(ext.st.artist)}`;
   $('autSaved').textContent = 'sin cambios'; $('autSaved').className = '';

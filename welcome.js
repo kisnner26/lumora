@@ -26,7 +26,7 @@ async function welcomeTick() {
     WEL.claude = false;
     try { WEL.claude = await fetch('/story').then(r => r.json()); } catch (e) { WEL.claude = { ready: false }; }
   }
-  if (window.CFG && CFG.ai === false) setSt('stClaude', '', 'desactivado en ajustes');
+  if (!(window.CFG && CFG.ai)) setSt('stClaude', 'ok', 'director de lumora · sin IA');
   else if (WEL.claude?.ready) setSt('stClaude', 'ok', 'listo · ' + String(WEL.claude.model || '').replace('claude-', '').replace('-', ' '));
   else if (WEL.claude) setSt('stClaude', 'warn', 'inicia sesión en Claude Code o agrega una clave');
   if (typeof LT === 'undefined') setSt('stLights', '', 'no disponible');

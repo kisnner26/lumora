@@ -12,6 +12,22 @@ from urllib.parse import urlparse, parse_qs
 PORT = 8888
 ROOT = os.path.dirname(os.path.abspath(__file__))
 ART = os.path.join(tempfile.gettempdir(), 'lumora-art.bin')
+# cada carátula queda guardada con su token: la estantería y "artista" del modo carátula
+# piden portadas de canciones que ya pasaron, y /art a secas solo tiene la actual
+ART_DIR = os.path.expanduser('~/Library/Caches/lumora-portadas')
+ART_KEEP = 80
+
+
+def art_keep(token):
+    try:
+        os.makedirs(ART_DIR, exist_ok=True)
+        with open(ART, 'rb') as src, open(os.path.join(ART_DIR, '%d.bin' % token), 'wb') as dst:
+            dst.write(src.read())
+        files = sorted((os.path.join(ART_DIR, f) for f in os.listdir(ART_DIR)), key=os.path.getmtime)
+        for old in files[:-ART_KEEP]:
+            os.remove(old)
+    except OSError:
+        pass
 
 # un solo proceso osascript que vive en bucle (lanzar uno por lectura hacía parpadear el Dock)
 WATCH_JXA = r'''
@@ -327,7 +343,9 @@ def govee_send(ip, cmd, data):
 
 
 def lights_loop():
-    # busca luces al arrancar y cada 2 minutos; envía como mucho ~12 órdenes por segundo por luz
+    # busca luces al arrancar y cada 2 minutos; envía como mucho ~25 órdenes por segundo por luz
+    # (antes 80 ms de cola: con el pulso predictivo de lights.js ese margen se sumaba a su propio
+    # adelanto, así que aquí se recorta al mínimo seguro para el firmware de Govee)
     govee_scan()
     while True:
         if time.time() - LIGHTS['last_scan'] > 120:
@@ -343,7 +361,7 @@ def lights_loop():
                 govee_send(ip, 'colorwc', {'color': {'r': r, 'g': g, 'b': b}, 'colorTemInKelvin': 0})
             if 'bright' in pend:
                 govee_send(ip, 'brightness', {'value': max(1, min(100, int(pend['bright'])))})
-        time.sleep(.08)
+        time.sleep(.04)
 
 
 def lights_cmd(body):
@@ -518,6 +536,8 @@ def poll():
                     except Exception:
                         has = False
                     upd['art'] = int(now * 1000) if has else 0
+                    if has:
+                        art_keep(upd['art'])
             upd['at'] = num(ts) if out not in ('off', 'stopped') and not out.startswith('err') and num(ts) else now
             with lock:
                 state.update(upd)
@@ -629,12 +649,22 @@ class Handler(SimpleHTTPRequestHandler):
                 devs = [{'ip': ip, **d} for ip, d in LIGHTS['devices'].items()]
             return self.send_json({'devices': devs, 'error': LIGHTS['error']})
         if path == '/art':
-            if not os.path.exists(ART):
+            token = urlparse(self.path).query
+            src = ART
+            if token.isdigit():                              # una portada concreta: la guardada, nunca la de otra canción
+                kept = os.path.join(ART_DIR, token + '.bin')
+                if os.path.exists(kept):
+                    src = kept
+                elif int(token) != state.get('art'):
+                    return self.send_json({'error': 'sin carátula'}, 404)
+            if not os.path.exists(src):
                 return self.send_json({'error': 'sin carátula'}, 404)
-            data = open(ART, 'rb').read()
+            data = open(src, 'rb').read()
             ctype = 'image/png' if data[:4] == b'\x89PNG' else 'image/jpeg'
             self.send_response(200)
             self.send_header('Content-Type', ctype)
+            if src != ART:
+                self.send_header('Cache-Control', 'max-age=31536000, immutable')
             self.send_header('Content-Length', str(len(data)))
             self.end_headers()
             return self.wfile.write(data)

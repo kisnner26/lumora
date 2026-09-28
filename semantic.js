@@ -61,12 +61,20 @@ document.body.appendChild(prepEl);
   #prep b { display:block; height:100%; width:0; background:rgba(243,236,223,.6); transition:width .4s linear; }`; document.head.appendChild(st); }
 
 async function planSong() {
-  if (window.CFG && CFG.ai === false) return;
+  const useAI = !!(window.CFG && CFG.ai);                           // por defecto dirige lumora sola; Claude es opcional
   const key = ext.key() + '|' + IN.cuts.length + '|' + (window.SESSION || '');
-  if (SEM.key === key || !IN.synced || IN.cuts.length < 2) return;
-  SEM.key = key; SEM.plans = []; STORY.reset();
+  if (SEM.key === key || IN.cuts.length < 2) return;
+  SEM.key = key; SEM.plans = []; SEM.blockNow = -1; STORY.reset();
   const lines = IN.lines.map((l, i) => ({ i, t: l.t, text: l.text })).filter(l => l.text && l.text.trim());
-  if (!lines.length) return;
+  // sin letra (instrumental o sin sincronizar): el guion sale de la estructura, al instante y sin IA
+  if (!lines.length) {
+    const v = DIR.plan();
+    if (v.error || SEM.key !== key) return;
+    for (const b of v.blocks) { b.objects = [...new Set(b.objects || [])].slice(0, 4); b.energy = clamp(b.energy ?? 5, 0, 10); applyPlan(b.n, b); }
+    STORY.add(v); diversify();
+    IN.aiState = 'director de lumora'; ui();
+    return;
+  }
   // varias lecturas a la vez: la primera solo hasta el primer verso cantado (corta, rápida) y el resto
   // repartido en tramos que terminan antes de que la canción llegue a ellos.
   const rate = (() => { try { return +localStorage.getItem('tc_story_rate') || 2.2; } catch (e) { return 2.2; } })();   // segundos por verso
@@ -92,7 +100,7 @@ async function planSong() {
   try { own = await fetch('/autor?key=' + encodeURIComponent(autorKey())).then(r => r.json()); } catch (e) {}
   if (SEM.key !== key) return;
   if (!(own && own.blocks && own.cuts && own.cuts.length === IN.cuts.length)) own = null;
-  const reqs = own ? [Promise.resolve({ ...own, cached: true, autor: true })] : segs.map(ask), req = reqs[0], rest = reqs.slice(1);
+  const reqs = own ? [Promise.resolve({ ...own, cached: true, autor: true })] : useAI ? segs.map(ask) : [Promise.resolve(DIR.plan())], req = reqs[0], rest = reqs.slice(1);
   let r = null; req.then(v => r = v);
   const esperaGi = GENS.findIndex(g => g.name === 'espera');
   const planned = IN.blockGen ? [...IN.blockGen] : [];                  // el guion por género queda de respaldo
@@ -108,7 +116,7 @@ async function planSong() {
   }, 150);
   const tick = setInterval(() => { prepEl.querySelector('b').style.width = Math.min(95, (performance.now() - t0) / 10 / est) + '%'; }, 300);
   await req;
-  { const w0 = performance.now(); while (!IN.trHead && performance.now() - w0 < 8000 && SEM.key === key) await new Promise(r => setTimeout(r, 100)); }
+  { const w0 = performance.now(), cap = useAI ? 8000 : 500; while (!IN.trHead && performance.now() - w0 < cap && SEM.key === key) await new Promise(r => setTimeout(r, 100)); }
   clearTimeout(showT); clearInterval(watch); clearInterval(tick); prepEl.querySelector('b').style.width = '100%';
   if (SEM.key !== key) return;
   IN.blockGen = planned;
@@ -121,13 +129,18 @@ async function planSong() {
     }
     STORY.add(v);
   };
+  let local = null;
+  const localPlan = () => local || (local = DIR.plan());
+  if (r.error && !own) { const v = localPlan(); if (!v.error) r = { ...v, fallback: r.error }; }
   useStory(r);
   diversify();
-  const label = v => v.error ? 'Claude: ' + v.error : v.autor ? 'guion del autor' : 'guion de Claude' + (v.cached ? ' (de memoria)' : '');
+  const label = v => v.error ? 'Claude: ' + v.error : v.autor ? 'guion del autor' : v.via === 'local' ? 'director de lumora' + (v.fallback ? ' (Claude no respondió)' : '') : 'guion de Claude' + (v.cached ? ' (de memoria)' : '');
   let left = rest.length;
   IN.aiState = label(r) + (left && !r.error ? ' · leyendo el resto' : '');
-  for (const q of rest) q.then(v => { if (SEM.key !== key) return; useStory(v); left--;
-    if (!r.error) IN.aiState = v.error ? 'guion de Claude (un tramo falló: ' + v.error + ')' : label(r) + (left ? ' · leyendo el resto' : ''); ui(); });
+  const inRange = ([a, b]) => ({ blocks: localPlan().blocks?.filter(p => p.n >= a && p.n <= b) || [],
+    lines: localPlan().lines?.filter(l => IN.lines[l.i] && IN.lines[l.i].t >= IN.cuts[a] && IN.lines[l.i].t < (IN.cuts[b + 1] ?? 1e9)) || [] });
+  rest.forEach((q, k) => q.then(v => { if (SEM.key !== key) return; useStory(v.error ? inRange(segs[k + 1]) : v); left--;
+    if (!r.error) IN.aiState = v.error ? 'guion de Claude (un tramo lo dirigió lumora)' : label(r) + (left ? ' · leyendo el resto' : ''); ui(); }));
   IN.preparing = false; window.LOWFX = SEM.prevLow; SEM.blockNow = -1;
   setTimeout(() => prepEl.classList.remove('show'), 300);
   if (paused !== null && ext.key() + '|' + IN.cuts.length + '|' + (window.SESSION || '') === key) ext.cmd('play');   // sigue justo donde se detuvo

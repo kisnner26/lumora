@@ -40,7 +40,7 @@ function hudTick2() {
   // escena y origen del guion
   const sec = SEM.blockNow, gen = mode === 'proc' && sec >= 0 ? GENS[IN.blockGen?.[sec]]?.name : '';
   $('hudScene').textContent = gen && gen !== 'espera' ? 'escena · ' + gen : '';
-  $('hudSrc').textContent = mode === 'proc' ? (/autor/.test(IN.aiState || '') ? 'guion del autor' : /Claude/.test(IN.aiState || '') && !/Claude:/.test(IN.aiState || '') ? 'guion de claude' : '') : '';
+  $('hudSrc').textContent = mode === 'proc' ? (/autor/.test(IN.aiState || '') ? 'guion del autor' : /Claude/.test(IN.aiState || '') && !/Claude:|no respondió/.test(IN.aiState || '') ? 'guion de claude' : /director de lumora/.test(IN.aiState || '') ? 'director de lumora' : '') : '';
   // estado de las herramientas
   $('hudTr').textContent = { ambas: 'es+en', es: 'trad', orig: 'orig' }[IN.trMode] || 'es+en';
   $('hudLyr').classList.toggle('off', IN.show === false);
