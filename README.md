@@ -4,9 +4,9 @@ lyric videos en vivo para lo que suena en tu mac. le das play en apple music o s
 
 página del producto: **https://kisnner26.github.io/lumora**
 
-[![demo de lumora: cuando la letra nombra a magic johnson aparece su foto](docs/img/demo.gif)](https://kisnner26.github.io/lumora/#demo)
+[![promo de lumora: el coro con la letra cinética y los subtítulos traducidos](docs/img/promo.gif)](https://kisnner26.github.io/lumora/#demo)
 
-**[ver la demo completa (51 s)](https://kisnner26.github.io/lumora/#demo)** · grabada con obs, con sonido.
+**[ver el promo completo (67 s)](https://kisnner26.github.io/lumora/#demo)** · hecho con una grabación real de lumora, con sonido.
 
 ![una canción de amor: la pareja, los corazones y la palabra que remata el verso, elegidos por claude](docs/img/estreno.jpg)
 
@@ -34,6 +34,11 @@ la bienvenida se escribe con luz: mientras espera muestra frases que se enciende
 la consola de reproducción aparece centrada abajo al mover el mouse: la escena que suena y de dónde sale el guion, los controles, herramientas (traducción, letra, modo autor, luces, grabar en 16:9 o 9:16, carátula, pantalla completa, ajustes, inicio) y una barra con cada estrofa marcada.
 
 ![modo carátula con estilo vinilo: el disco asoma detrás de la portada y gira mientras suena](docs/img/caratula.jpg)
+
+| | |
+|---|---|
+| ![modo carátula con el menú de opciones](docs/img/caratula-menu.jpg) | ![en el drop la portada se parte en pedazos](docs/img/caratula-drop.jpg) |
+| ![cd tornasol detrás de la portada](docs/img/caratula-cd.jpg) | ![cassette detrás de la portada](docs/img/caratula-cassette.jpg) |
 
 el modo carátula pone la portada de protagonista: siete fondos (difuminado, ambiente con los colores de la portada, escena con el video corriendo detrás, mínimo, y la portada con un vinilo, un cassette o un cd que asoman y giran), la letra en una línea o completa al lado (avanza sola y un clic salta a ese verso), tamaño de portada, latido y reloj. la portada sigue la canción: brilla en el coro, se apaga en lo triste y se parte en el drop. con apple music muestra qué canción sigue en los últimos segundos, y un corazón marca la canción como favorita (en spotify usa su atajo de teclado). los controles van en una barra flotante que se oculta sola; las opciones, en un menú que sale de ella. se abre con la tecla `c`.
 
