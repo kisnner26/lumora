@@ -32,3 +32,11 @@ no sé si Música y Spotify informan de la canción nueva al empezar o al termin
 - escritorio vivo: probar la opción D (Plash o similar apuntando a `?fx=espacio`) y medir CPU/GPU; si vale, construir la app nativa del estudio (docs/VIABILIDAD-ESCRITORIO-VIVO.md). Sin hacer.
 - WebXR: probar `?xr=1` en un Quest o Vision Pro (el navegador del visor, por HTTPS o localhost con reenvío): comprobar «entrar en VR», la orientación (no se ve invertido ni girado) y el rendimiento. El código de sesión está escrito pero **no se ha ejecutado nunca** con un visor.
 - abrir el PNG 360° exportado en un visor 360° (Quest Gallery, Facebook, Google Earth VR…) y revisar que la costura no se vea.
+
+## fase 4 (catálogo)
+- mirar a ojo en el Mac con canciones reales que los dibujos disparen con sentido (las hojas de contacto y las pruebas de detección son con frases de prueba). Si alguno aparece fuera de lugar, quitar su palabra en el patrón del dibujo (`riso-props-*.js`).
+- dibujos flojos anotados en docs/QA/fase-4-oleada-*.md (famosos, sombreros de oficios, lobo, serpiente, dragón, brazo fuerte…): mejorarlos si molestan.
+
+## fase 8 (ajustes)
+- probar «alto contraste» y «reducir movimiento» con el clip sonando en el Mac y revisar que ningún texto quede ilegible; y la vista previa a 60 fps mientras suena música (usa un segundo Stage).
+- en el Mac también: confirmar que los ajustes de «looks» se ven bien con tu paleta y tus luces Govee.

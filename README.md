@@ -70,6 +70,13 @@ la risografía no es solo el fondo: la bienvenida, los ajustes, la consola de re
 |---|---|
 | ![bienvenida sobre una escena viva, con etiquetas de papel](docs/img/bienvenida-riso.jpg) | ![ajustes en papel crema: fichas, teclas cuadradas y faders con regla](docs/img/ajustes-riso.jpg) |
 
+## experimental: 360° y escritorio vivo
+
+- **panorama 360°** y **visor** (`?xr=1&escena=bosque`): exporta una escena como imagen equirectangular o míralas por dentro; con WebXR aparece «entrar en VR» (sin probar con visor todavía). ajustes > imagen.
+- **escritorio vivo**: solo hay un estudio de viabilidad, sin código: [docs/VIABILIDAD-ESCRITORIO-VIVO.md](docs/VIABILIDAD-ESCRITORIO-VIVO.md).
+
+el resumen de todo el trabajo y lo que falta comprobar está en [docs/INFORME-FINAL.md](docs/INFORME-FINAL.md) y [docs/PENDIENTE-MAC.md](docs/PENDIENTE-MAC.md).
+
 ## ajustes
 
 el panel de ajustes (tecla `,`) tiene nueve secciones: imagen, efectos, letra, contenido, color, luces, **looks**, **accesibilidad** y **memoria**.
