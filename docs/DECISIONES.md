@@ -43,3 +43,4 @@ registro de las decisiones tomadas sin preguntar (fecha, fase, duda, decisión, 
 - **fases 2 y 3 en un solo commit:** los cambios de ambas comparten `riso-clip.js` e `index.html`.
 
 - oleada 1: alias "té" y "baby" quitados de taza/cuna por falsos positivos (tú, cariño); se mantienen "tea" y "bebé".
+- oleada 2: los dibujos de países no nombran al país (monumento, animal, objeto); alias genéricos (rey, puente, isla, solo) excluidos.

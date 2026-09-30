@@ -1,12 +1,15 @@
 # catálogo de dibujos
 
-generado con `node tools/catalogo_md.mjs` desde el motor real. total: **298** dibujos (191 en el catálogo + 107 originales).
+generado con `node tools/catalogo_md.mjs` desde el motor real. total: **435** dibujos (328 en el catálogo + 107 originales).
 
 | categoría | dibujos |
 |---|---|
 | banderas | 69 |
 | objetos | 85 |
 | simbolos | 37 |
+| emociones | 30 |
+| comida | 61 |
+| paises | 46 |
 | originales (riso-props.js) | 107 |
 
 ## banderas (69)
@@ -123,7 +126,7 @@ generado con `node tools/catalogo_md.mjs` desde el motor real. total: **298** di
 | `bombilla` | BOMBILLA | (bombillas? · light ?bulbs? · bulb · idea · bright idea · foco) |
 | `botella` | BOTELLA | (botellas? · bottles? · message in a bottle · embotellad\w* · bottle service) |
 | `copa` | COPA | (copas? · wine glass · glass of wine · champagne · champa[nñ]a · brindis · toast · cheers · salud) |
-| `taza` | TAZA | (tazas? · mugs? · cups? · coffee cup · caf[eé] · coffee · t[eé]) |
+| `taza` | TAZA | (tazas? · mugs? · cups? · coffee cup · caf[eé] · coffee · tea) |
 | `plato` | PLATO | (platos? · plates? · dish(es)? · dinner · cena · supper) |
 | `cubiertos` | CUBIERTOS | (cubiertos? · forks? · knife · knives · spoons? · tenedor · cuchillo · cuchara · cutlery) |
 | `regalo` | REGALO | (regalos? · gifts? · presents? · obsequio · sorpresa · surprise) |
@@ -154,7 +157,7 @@ generado con `node tools/catalogo_md.mjs` desde el motor real. total: **298** di
 | `pala` | PALA | (palas? · shovels? · dig · cavar · dug · excav\w* · grave digger · bury) |
 | `hacha` | HACHA | (hachas? · axe · lumberjack · le[nñ]ador · chop · talar · woodcutter) |
 | `rueda` | RUEDA | (ruedas? · wheels? · tire · llanta · neum[aá]tico · rolling · spinning wheel) |
-| `cuna` | CUNA | (cunas? · cradle · crib · baby · beb[eé]s? · newborn · reci[eé]n nacido · lullaby · canci[oó]n de cuna) |
+| `cuna` | CUNA | (cunas? · cradle · crib · beb[eé]s? · newborn · reci[eé]n nacido · lullaby · canci[oó]n de cuna) |
 | `columpio` | COLUMPIO | (columpios? · swings? · swing set · playground · parque infantil · niñez · childhood) |
 | `buzon` | BUZÓN | (buz[oó]n · mailbox · post ?box · send a letter · correo) |
 | `semaforo` | SEMÁFORO | (sem[aá]foros? · traffic lights? · red light · luz roja · green light · luz verde · stoplight · stop) |
@@ -214,6 +217,158 @@ generado con `node tools/catalogo_md.mjs` desde el motor real. total: **298** di
 | `ojo_llora` | OJO LLORANDO | (ojos? llorosos? · crying eyes? · teary eyes? · llorando · crying · sollozo · sobbing · weeping · llanto · tears in my eyes) |
 | `pelo` | CABELLO | (cabello · hair · melena · pelo · hairstyle · long hair · pelo largo · peinar · comb · curls? · rizos?) |
 | `pulgar_arriba` | ME GUSTA | (likes? · me gusta · thumbs? up · pulgar · good job · bien hecho · approved · aprobad[oa] · great) |
+
+## emociones (30)
+
+| id | etiqueta | palabras que lo disparan |
+|---|---|---|
+| `soledad` | SOLEDAD | (soledad · solitari[oa]s? · lonely · loneliness · alone · solitude) |
+| `miedo` | MIEDO | (miedo · temor · susto · asustad[oa]s? · pánico · panico · terror · fear · afraid · scared · frightened · horror) |
+| `ira` | IRA | (ira · rabia · furia · enojo · enojad[oa]s? · enfadad[oa]s? · coraje · angry · anger · rage · fury · furious) |
+| `alegria` | ALEGRÍA | (alegr[ií]a · alegre · feliz · felicidad · contento · contenta · gozo · happy · happiness · joy · joyful · cheerful) |
+| `nostalgia` | NOSTALGIA | (nostalgia · nost[aá]lgic[oa]s? · a[nñ]oranza · a[nñ]orar · a[nñ]oro · recuerdos? · memories · remember when · nostalgic · homesick) |
+| `esperanza` | ESPERANZA | (esperanza · esperanzad[oa] · ilusi[oó]n · hope · hopeful · hoping) |
+| `celos` | CELOS | (celos · celoso · celosa · celosos · jealous · jealousy · envy · envidia · envidioso) |
+| `culpa` | CULPA | (culpa · culpable · culpabilidad · remordimiento · arrepentid[oa] · guilt · guilty · remorse · regret · arrepiento) |
+| `verguenza` | VERGÜENZA | (verg[uü]enza · averg[uü]enza\w* · sonroj\w* · sonrojo · ashamed · shame · shy · embarrass\w* · blush\w* · timid[oa]) |
+| `sorpresa` | SORPRESA | (sorpresa · sorprendid[oa]s? · sorprender · asombro · incre[ií]ble · surprise · surprised · shocked · amazed · omg) |
+| `calma` | CALMA | (calma · calmado · calmada · tranquil[oa]s? · tranquilidad · serenidad · sereno · calm · peaceful · tranquility · relax\w* · relajad[oa]) |
+| `ansiedad` | ANSIEDAD | (ansiedad · ansios[oa]s? · nervios · nervios[oa]s? · angustia · estr[eé]s · estresad[oa] · anxiety · anxious · nervous · stress\w* · overthinking · panic attack) |
+| `tristeza` | TRISTEZA | (tristeza · triste · tristes · apenad[oa] · deprimid[oa] · depresi[oó]n · melancol[ií]a · sad · sadness · sorrow · depressed · heartache · gloomy) |
+| `deseo` | DESEO | (deseo · desear · deseos · anhelo · ganas de ti · desire · crave · craving · longing · yearn\w*) |
+| `pasion` | PASIÓN | (pasi[oó]n · apasionad[oa] · ardiente · arder · passion · passionate · burning desire · fervor) |
+| `libertad` | LIBERTAD | (libertad · libre · libres · liberarse · liberar · freedom · liberty · set me free · break free) |
+| `orgullo` | ORGULLO | (orgullo · orgullos[oa]s? · orgullosamente · pride · proud · proudly · arrogante · arrogant) |
+| `tension` | TENSIÓN | (tensi[oó]n · tenso · tensa · tensos · al l[ií]mite · tension · tense · on edge · breaking point · suspense · suspenso) |
+| `duda` | DUDA | (duda · dudas · dudar · dudo · dudando · incertidumbre · inseguro · inseguridad · doubt · doubts · doubting · uncertain) |
+| `olvido` | OLVIDO | (olvido · olvidar · olvidarte · olvid[oó] · olvidado · olvidada · forget · forgot · forgotten · forgetting · forget you · borrar · erase) |
+| `abandono` | ABANDONO | (abandono · abandonar · abandonad[oa] · abandon\w* · left behind · deserted · plantad[oa]) |
+| `traicion` | TRAICIÓN | (traici[oó]n · traicion\w* · traidor · traidora · traicionar · traicionado · traicionaste · betray\w* · betrayal · traitor · backstab\w* · two.faced · dos caras) |
+| `ternura` | TERNURA | (ternura · tierno · tierna · tiernamente · dulzura · caricia · acariciar · tenderness · tender · gentle · sweetness · cuddle · caress) |
+| `euforia` | EUFORIA | (euforia · euf[oó]ric[oa] · [eé]xtasis · delirio · eufor\w* · euphoria · euphoric · ecstasy · ecstatic · high on life · on top of the world) |
+| `vacio` | VACÍO | (vac[ií]o · vac[ií]a · vacios · hueco · void · emptiness · empty inside · hollow · nothingness · nothingness) |
+| `cansancio` | CANSANCIO | (cansancio · cansad[oa]s? · agotad[oa]s? · agotamiento · fatiga · tired · exhausted · weary · fatigue · sleepy · drained · burnout · worn out) |
+| `obsesion` | OBSESIÓN | (obsesi[oó]n · obsesionad[oa] · obsesivo · obsess\w* · fixation · fixated · no puedo dejar de pensar · can'?t stop thinking · adicci[oó]n · addicted · addiction · adicto) |
+| `confusion` | CONFUSIÓN | (confusi[oó]n · confundid[oa]s? · confundir · desorientad[oa] · perdid[oa] en · confusion · confused · lost in · disoriented · bewildered · mareo · mareado) |
+| `serenidad` | SERENIDAD | (paz interior · serenidad · equilibrio · zen · meditar · meditaci[oó]n · inner peace · mindful\w* · meditat\w* · armon[ií]a · harmony) |
+| `gratitud` | GRATITUD | (gratitud · agradecid[oa]s? · agradecer · agradezco · thankful · grateful · gratitude · thank you) |
+
+## comida (61)
+
+| id | etiqueta | palabras que lo disparan |
+|---|---|---|
+| `pan` | PAN | (pan · panes · bread · toast · tostadas? · panader[ií]a · bakery · baguette) |
+| `pizza` | PIZZA | (pizzas? · pizzer[ií]a · pepperoni) |
+| `hamburguesa` | HAMBURGUESA | (hamburguesas? · burgers? · hamburger · cheeseburger · mcdonald\w*) |
+| `taco` | TACO | (tacos? · burritos? · quesadillas? · tortillas? · nachos? · tex.?mex) |
+| `sushi` | SUSHI | (sushi · maki · nigiri · sashimi · onigiri · ramen · wasabi) |
+| `helado` | HELADO | (helados? · ice cream · gelato · cono de helado · paleta helada · popsicle · sorbet) |
+| `pastel` | PASTEL | (pasteles? · tartas? · cakes? · birthday cake · torta · bizcocho · pastel de cumplea[nñ]os) |
+| `cupcake` | CUPCAKE | (cupcakes? · magdalenas? · muffins?) |
+| `donut` | DONA | (donas? · donuts? · doughnuts? · rosquillas? · rosquilla) |
+| `galleta` | GALLETA | (galletas? · cookies? · biscuits? · oreo) |
+| `chocolate` | CHOCOLATE | (chocolates? · cacao · cocoa · bomb[oó]n · bombones · bonbon · nutella) |
+| `manzana` | MANZANA | (manzanas? · apples? · pomme · apple pie) |
+| `banana` | BANANA | (bananas? · pl[aá]tanos? · bananos? · guineos? · banano) |
+| `uvas` | UVAS | (uvas? · racimo · grapes? · vi[nñ]edo · vineyard) |
+| `fresa` | FRESA | (fresas? · strawberr\w+ · frutilla · berries · frutos rojos) |
+| `sandia` | SANDÍA | (sand[ií]as? · watermelons? · melon(es)? · melons?) |
+| `naranja` | NARANJA | (naranjas? · oranges? · mandarinas? · tangerines? · c[ií]tricos? · citrus) |
+| `limon` | LIMÓN | (limones? · lim[oó]n · lemons? · limonada · lemonade · limes?) |
+| `pina` | PIÑA | (pi[nñ]as? · pineapples? · pi[nñ]a colada) |
+| `cereza` | CEREZA | (cerezas? · cherr(y · ies) · guindas?) |
+| `durazno` | DURAZNO | (duraznos? · melocot[oó]n(es)? · peach(es)? · albaricoques? · apricots?) |
+| `aguacate` | AGUACATE | (aguacates? · avocados? · guacamole · palta) |
+| `mango` | MANGO | (mangos? · mangoes · mango biche) |
+| `coco` | COCO | (cocos? · coconuts? · palma de coco · coco loco · pi[nñ]a colada) |
+| `pera` | PERA | (peras? · pears?) |
+| `tomate` | TOMATE | (tomates? · tomato(es)? · jitomate · ketchup · salsa roja · kétchup) |
+| `zanahoria` | ZANAHORIA | (zanahorias? · carrots?) |
+| `maiz` | MAÍZ | (ma[ií]z · elotes? · corn · choclo · mazorca · cornfield · tamal(es)?) |
+| `papa` | PAPA | (papas? · patatas? · potato(es)? · tub[eé]rculos? · fries · papas fritas · french fries) |
+| `cebolla` | CEBOLLA | (cebollas? · onions? · scallions? · cebollino · chalotas?) |
+| `ajo` | AJO | (ajos? · garlic · dientes de ajo · ajillo) |
+| `chile` | CHILE | (chiles? · aj[ií]es? · chilis? · chillis? · jalape[nñ]os? · peppers? · picante · spicy · hot sauce · habanero) |
+| `brocoli` | BRÓCOLI | (br[oó]coli · broccoli · vegetales? · verduras? · veggies? · vegetables?) |
+| `hongo` | HONGO | (hongos? · setas? · champi[nñ]ones? · mushrooms? · shrooms?) |
+| `huevo` | HUEVO | (huevos? · eggs? · omelette · tortilla de huevo · yema · yolk) |
+| `queso` | QUESO | (quesos? · cheese · fromage · mozzarella · cheddar · parmesano · parmesan) |
+| `tocino` | TOCINO | (tocino · bacon · jam[oó]n · ham · salchichas? · sausages? · chorizo · embutidos? · hot ?dogs? · perritos? calientes?) |
+| `pollo` | POLLO FRITO | (pollo · chicken · alitas · wings · nuggets · muslo · drumstick · fried chicken · gallina) |
+| `bistec` | CARNE | (carnes? · bistec · bisteces · steaks? · beef · asado · parrilla · barbacoa · bbq · barbecue · churrasco · grill) |
+| `pescado` | PESCADO | (pescados? · fish · filete · salm[oó]n · salmon · atunes? · tuna · trucha · trout · ceviche) |
+| `camaron` | CAMARÓN | (camarones? · camar[oó]n · langostinos? · shrimps? · prawns? · langosta · lobsters? · cangrejos? · crabs? · mariscos? · seafood) |
+| `sopa` | SOPA | (sopas? · soups? · caldo · broth · guiso · stew · sancocho · pozole · menudo · estofado) |
+| `arroz` | ARROZ | (arroz · rice · paella · risotto · frijoles · gallo pinto) |
+| `pasta` | PASTA | (pastas? · espaguetis? · spaghetti · fideos? · noodles? · macarr[oó]n(es)? · lasa[nñ]a · lasagna · ravioli · fettuccine) |
+| `ensalada` | ENSALADA | (ensaladas? · salads? · lechuga · lettuce · espinacas? · spinach · kale) |
+| `sandwich` | SÁNDWICH | (s[aá]ndwich(es)? · sandwich(es)? · emparedados? · bocadillos? · bagels? · croissants?) |
+| `palomitas` | PALOMITAS | (palomitas? · pochoclo · cotufas · popcorn · movie snacks?) |
+| `empanada` | EMPANADA | (empanadas? · pasteles? de carne · pastel(es)? salados? · pastelitos? · calzone · dumplings? · pierogi · samosas? · arepas?) |
+| `cerveza` | CERVEZA | (cervezas? · beers? · chelas? · birras? · brindis · brindar · lager · pilsner) |
+| `vino` | VINO | (vino · vinos · wine · tinto · red wine · merlot · vineyard · whisky · whiskey · rum · tequila · vodka · licor · liquor · brandy · cognac · champ[aá]n · champagne · shots?) |
+| `agua` | AGUA | (agua · waters? · thirst · thirsty · hidrat\w+ · gota de agua · water drop) |
+| `leche` | LECHE | (leche · milk · l[aá]cteos? · dairy · batido · milkshake · smoothie · yogur · yogurt · cereal) |
+| `refresco` | REFRESCO | (refrescos? · sodas? · coca.?cola · gaseosas? · pepsi · sprite · fanta · jugo · juice · zumo · limonada · popote · pajilla) |
+| `piruleta` | PIRULETA | (piruletas? · paletas? · chupetes? · lollipops? · caramelos? · candy · candies · golosinas? · gomitas? · gummy · sugar candy) |
+| `miel` | MIEL | (miel · honey · abejas? · bees? · panal · honeycomb · colmena · beehive · dulzura) |
+| `croissant` | CRUASÁN | (cruasanes? · cruas[aá]n · croissants? · medialunas? · panecillos? · bollos?) |
+| `cafe_grano` | GRANO DE CAFÉ | (granos? de caf[eé] · coffee beans? · cafeter[ií]a · caf[eé] con leche · espresso · latte · cappuccino · cafeina · caffeine) |
+| `panqueques` | PRETZEL | (pretzels? · churros? · rosca · donut hole · waffles? · pancakes? · hotcakes? · panqueques? · crepas? · crepes? · panqueque) |
+| `nueces` | NUECES | (nueces? · nuts? · almendras? · almonds? · cacahuates? · man[ií]es? · peanuts? · pistachos? · pistachios? · avellanas? · hazelnuts?) |
+| `fruta_cesta` | FRUTA | (frutas? · fruits? · frutales · jugosa · juicy) |
+| `banquete` | BANQUETE | (banquete · fest[ií]n · feast · banquet · dinner) |
+
+## paises (46)
+
+| id | etiqueta | palabras que lo disparan |
+|---|---|---|
+| `torre_eiffel` | TORRE EIFFEL | (torre eiffel · eiffel · eiffel tower) |
+| `coliseo` | COLISEO | (coliseo · colosseum · coliseum · anfiteatro) |
+| `machu_picchu` | MACHU PICCHU | (machu picchu · inca · incas · cusco · cuzco · sacsayhuam[aá]n) |
+| `cristo_redentor` | CRISTO REDENTOR | (cristo redentor · corcovado · christ the redeemer) |
+| `gran_muralla` | GRAN MURALLA | (gran muralla · great wall · muralla china) |
+| `piramides` | PIRÁMIDES | (pir[aá]mides? · pyramids? · egipto · egypt · esfinge · sphinx · fara[oó]n · pharaoh) |
+| `taj_mahal` | TAJ MAHAL | (taj mahal · mausoleo) |
+| `estatua_libertad` | ESTATUA DE LA LIBERTAD | (estatua de la libertad · statue of liberty · lady liberty · nueva york skyline) |
+| `big_ben` | BIG BEN | (big ben · torre del reloj · elizabeth tower · westminster) |
+| `sagrada_familia` | SAGRADA FAMILIA | (sagrada familia · gaud[ií] · gaudi · park g[uü]ell) |
+| `molino` | MOLINO | (molinos? de viento · molinos? · windmills? · tulipanes? · tulips?) |
+| `opera_sydney` | ÓPERA DE SÍDNEY | (sydney · s[ií]dney · opera house · [oó]pera de s[ií]dney) |
+| `monte_fuji` | MONTE FUJI | (monte fuji · fuji · fujiyama · mount fuji) |
+| `torre_pisa` | TORRE DE PISA | (torre de pisa · leaning tower · pisa) |
+| `partenon` | PARTENÓN | (partenon · parten[oó]n · acr[oó]polis · acropolis · columnas griegas) |
+| `brandeburgo` | PUERTA DE BRANDEMBURGO | (brandeburgo · brandenburg\w* · muro de berl[ií]n · berlin wall) |
+| `catedral_rusa` | CATEDRAL RUSA | (san basilio · catedral rusa · kremlin · plaza roja · red square · saint basil · cebolla · onion dome) |
+| `pagoda` | PAGODA | (pagodas? · templo asi[aá]tico · shaolin · buda · buddha · budismo · buddhism) |
+| `torii` | TORII | (torii · santuario · shrine · shinto · japon[eé]s · japanese · kioto · kyoto · tokio · tokyo · geisha · samur[aá]i · samurai) |
+| `moai` | MOAI | (moais? · isla de pascua · easter island · rapa nui) |
+| `chichen_itza` | PIRÁMIDE MAYA | (chich[eé]n itz[aá] · mayas? · mayan? · azteca · aztecs? · tikal · teotihuac[aá]n · templo maya · calendario azteca) |
+| `obelisco` | OBELISCO | (obelisco · obelisk · washington monument) |
+| `golden_gate` | PUENTE COLGANTE | (golden gate · puente colgante · suspension bridge · brooklyn bridge) |
+| `castillo` | CASTILLO | (castillos? · castles?) |
+| `mezquita` | MEZQUITA | (mezquitas? · mosques? · minarete · minaret · meca · mecca · alham?bra · isl[aá]mic\w* · ramad[aá]n) |
+| `cascada` | CATARATAS | (cataratas? · iguaz[uú] · iguazu · niagara · niágara · waterfalls? · cascadas? · salto [aá]ngel · angel falls) |
+| `palmera_playa` | PALMERA | (palmeras? · palm trees? · playa tropical · tropical beach · caribe · caribbean · para[ií]so tropical) |
+| `canguro` | CANGURO | (canguros? · kangaroos? · koalas? · australia · australian?o? · outback) |
+| `panda` | PANDA | (pandas? · oso panda · bamb[uú] · bamboo) |
+| `llama_andina` | LLAMA | (llamas? · alpacas? · vicu[nñ]as? · guanacos? · andes · andino · andina · altiplano) |
+| `condor` | CÓNDOR | (c[oó]ndor · condor · [aá]guila · eagle · halc[oó]n · falcon · hawk) |
+| `jaguar` | JAGUAR | (jaguares? · jaguars? · leopardos? · leopards? · pumas? · panteras? · panthers? · tigres? · tigers? · guepardos? · cheetahs?) |
+| `quetzal` | QUETZAL | (quetzal(es)? · colibr[ií]es? · hummingbirds? · guacamayas? · macaws? · loros? · parrots? · tuc[aá]n(es)? · toucans? · aves tropicales) |
+| `elefante` | ELEFANTE | (elefantes? · elephants? · safari · savana · savanna · jirafas? · giraffes? · leones? · lions? · africa · [aá]frica · africano · african) |
+| `camello` | CAMELLO | (camellos? · camels? · dromedarios? · desierto · sahara · dunas? · dunes? · beduino · bedouin) |
+| `flamenco_ave` | FLAMENCO | (flamencos? · flamingos? · garzas? · herons? · cigüe[nñ]as? · storks? · cisnes? · swans?) |
+| `sombrero_charro` | SOMBRERO | (sombreros? · charro · mariachi · mariachis · vaqueros? · cowboys? · rancheras? · ranchero · texas hat) |
+| `guitarra_flamenca` | GUITARRA ESPAÑOLA | (guitarra espa[nñ]ola · flamenco · flamenca · sevillanas? · castañuelas? · castanets · toro de lidia · torero · bullfight\w* · corrida) |
+| `tambor_samba` | PANDEIRO | (pandeiros? · tamborines? · tambourine · tambores? · drums? line · percusi[oó]n · bater[ií]a de samba · bongos? · congas? · timbales? · bater[ií]a) |
+| `mate_calabaza` | MATE | (yerba mate · gaucho · gauchos · pampas? · asado argentino · chimichurri) |
+| `gaita` | GAITA | (gaitas? · bagpipes? · escocia · scotland · scottish · highlands? · celta · celtic · tartan · kilt) |
+| `oso_polar` | OSO POLAR | (osos? polar(es)? · polar bears? · ártico · arctic · antártida · antarctica · pingüinos? · penguins? · iglú · igloo · tundra · groenlandia · greenland) |
+| `paella` | PAELLA | (paella · tapas · jam[oó]n ib[eé]rico · sangr[ií]a · gazpacho · tortilla espa[nñ]ola · pintxos? · fideu[aá]) |
+| `ceviche` | CEVICHE | (ceviche · cebiche · pisco · lomo saltado · empanadas? chilenas? · pollo a la brasa · pupusas? · baleadas? · gallo pinto · fritanga · nacatamal · vigor[oó]n · mofongo) |
+| `pasaporte_avion` | VIAJE AL MUNDO | (pasaporte · passport · viajar por el mundo · around the world · world tour · vuelta al mundo · emigrar · emigrate · inmigrante · immigrant · migrar) |
+| `desfile_carnaval` | CARNAVAL | (carnaval · carnival · comparsa · mardi gras · m[aá]scaras? venecianas? · masquerade) |
 
 ## originales
 
