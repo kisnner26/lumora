@@ -57,7 +57,7 @@
     return { hx, hy };
   }
   SG.draw = (s, kt, time, age, dur) => {
-    const list = s.singers || [], n = list.length, v = K.v, cx = s.flip ? 470 : 1130, xs = n === 1 ? [cx] : n === 2 ? [cx - 185, cx + 185] : [cx - 280, cx, cx + 280], k = n === 1 ? 1.12 : n === 2 ? .95 : .78, ground = 790;
+    const list = s.singers || [], n = list.length, v = K.v, cx = s.flip ? 470 : 1130, xs = n === 1 ? [cx] : n === 2 ? [cx - 185, cx + 185] : [cx - 280, cx, cx + 280], k = n === 1 ? 1.12 : n === 2 ? .95 : .78, ground = 760;
     const p = easeOut(clamp(kt / .6)), act = s.text ? (s.text.li >= 0 ? s.text.li : 0) % n : -1, line = s.text && age >= 0 && age < dur;
     list.forEach((sg, i) => {
       const active = i === act && !!line, open = active ? clamp(.25 + .75 * Math.abs(sin(kt * 9 + i)) + R.A.beat * .3) : 0, y = ground + (1 - p) * 420, x = xs[i];
@@ -67,11 +67,10 @@
       K.c.save(); K.c.translate(x, ground + 52); K.c.rotate((i % 2 ? .012 : -.012));
       const nm = sg.name.toUpperCase().slice(0, 26), w = Math.min(330, K.measure(nm, { font: 'display', size: 34 * Math.min(1, k + .1), w: 800, stretch: 'condensed' }) + 40);
       K.rect(-w / 2 + 6, 6, w, 46, { f: 1, ft: .3, over: true }); K.rect(-w / 2, 0, w, 46, { f: -1, s: 1, lw: 3.5 }); K.txt(nm, 0, 35, { font: 'display', size: 34 * Math.min(1, k + .1), w: 800, stretch: 'condensed', align: 'center', i: active ? 2 : 1 }); K.c.restore();
-      if (sg.id) { const mx = x + (s.flip ? -1 : 1) * 130 * k * (i % 2 ? -1 : 1) + (n === 1 ? (s.flip ? 150 : -150) : 0), my = 250 + i * 20; K.circ(mx, my, 92 * k, { f: -1, s: 1, lw: 6 }); K.circ(mx, my, 92 * k, { f: 3, ft: .3 });
-        R.props.drawProp(K, sg.id, mx, my, .36 * k * 1.1, easeOut(clamp((kt - .3) / 1)), { seed: s.seed + i, ph: sg.h % 6, rot: 0 }); K.tape(mx - 40, my - 92 * k, 80, 26, -.4); }
+      if (sg.id) { const mx = n === 1 ? x + (s.flip ? 250 : -250) : x, my = n === 1 ? 300 : 120, rr = (n === 1 ? 104 : 74) * Math.min(1, k + .15); K.circ(mx, my, rr, { f: -1, s: 1, lw: 6 }); K.circ(mx, my, rr, { f: 3, ft: .3 });
+        R.props.drawProp(K, sg.id, mx, my, rr / 92 * .5, easeOut(clamp((kt - .3) / 1)), { seed: s.seed + i, ph: sg.h % 6, rot: 0 }); K.tape(mx - 40, my - rr, 80, 26, -.4); }
     });
     K.code(n > 1 ? `DÚO · ${n} VOCES · EL MICRÓFONO PASA VERSO A VERSO` : 'EN EL MICRÓFONO', (s.flip ? v.r - 60 : v.l + 60) + (s.flip ? 0 : 0), 815, { align: s.flip ? 'right' : 'left', size: 14, bg: true });
   };
-  // experimental: apagado de fábrica hasta probarlo con canciones reales (docs/PENDIENTE-MAC.md)
-  if (window.SETUI) SETUI.addRow('contenido', ['singers', 'Artistas cantando (experimental)', 'sw', null, 'si suena un artista del catálogo de famosos (o una colaboración) salen tomas con su figura cantando al micrófono; en los dúos el micrófono pasa de verso en verso'], false);
+  if (window.SETUI) SETUI.addRow('contenido', ['singers', 'Artistas cantando', 'sw', null, 'si suena un artista del catálogo de famosos (o una colaboración) salen tomas con su figura cantando al micrófono; en los dúos el micrófono pasa de verso en verso'], true);
 })();

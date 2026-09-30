@@ -41,5 +41,6 @@ no sé si Música y Spotify informan de la canción nueva al empezar o al termin
 - probar «alto contraste» y «reducir movimiento» con el clip sonando en el Mac y revisar que ningún texto quede ilegible; y la vista previa a 60 fps mientras suena música (usa un segundo Stage).
 - en el Mac también: confirmar que los ajustes de «looks» se ven bien con tu paleta y tus luces Govee.
 
-## artistas cantando con micrófono (experimental, apagado de fábrica)
-- `riso-cantantes.js` está escrito pero **sin verificar**: la prueba tools/test_cantantes.mjs aún no produce una toma de cantante con el puente simulado (se está investigando) y no se vio ninguna captura del dibujo. Actívalo en ajustes > contenido > «Artistas cantando» con una canción de un artista del catálogo (p. ej. Bad Bunny) y revisa la figura, el micrófono, las medallas y, en colaboraciones, que salgan todos los créditos.
+## artistas cantando con micrófono
+- verificado con el puente simulado (tools/test_cantantes.mjs: créditos, solo, trío, turnos, apagado; capturas revisadas). Falta verlo con tus canciones reales: que los nombres de artista de Música/Spotify (p. ej. «Bad Bunny, Jhay Cortez») se separen bien y que la figura y las medallas se vean bien mezcladas con la letra. Se apaga en ajustes > contenido > «Artistas cantando».
+- el turno del micrófono va por orden de versos, no por detección de voz.

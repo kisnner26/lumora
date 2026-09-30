@@ -58,7 +58,7 @@
     const named = (R.people && text ? R.people.detect(text, 3) : []), rr0 = R.rng(seed ^ 0x9e37);
     const objs = [...new Set([...named, ...own, ...(L?.objects || []), ...(plan?.objects || [])])].map(id => PROP_OF[id] || id).filter(hasProp);
     const prev = RC.kindHist.slice(-2), blockTxt = IN.lines.filter(l => l.text && l.t >= (IN.cuts[sec] ?? 0) && l.t < (IN.cuts[sec + 1] ?? 1e9)).map(l => l.text).join(' ');
-    const byWords = sceneByWords(text, blockTxt, mood), recent = RC.recentScenes || (RC.recentScenes = []), cfgOn = !!window.CFG && CFG.singers === true, singers = cfgOn && R.singers ? R.singers.plan(window.ext?.st?.artist, window.ext?.st?.name) : null;
+    const byWords = sceneByWords(text, blockTxt, mood), recent = RC.recentScenes || (RC.recentScenes = []), cfgOn = !window.CFG || CFG.singers !== false, singers = cfgOn && R.singers ? R.singers.plan(window.ext?.st?.artist, window.ext?.st?.name) : null;
     let kind;
     if (why === 'title') kind = 'title'; else if (why === 'outro') kind = 'outro';
     else if (li < 0) kind = objs.length && r() < .5 ? 'prop' : 'scene';
@@ -209,7 +209,7 @@
         let wlh = v.h * .4; if (showText) { const w = (v.w - m * 2) * .46, x = s.flip ? v.r - m - w - 10 : v.l + m + 10; if (window.CFG?.textBox) { const ft = fitText(text, w, v.h * .5, { size: 104 * clamp(CFG.lyricSize || 1, .7, 1.6), w: 600, font: 'hand' }); K.rect(x - 16, v.t + m + 88, w + 32, ft.lines.length * ft.size * 1.12 + 26, { f: -1, s: 1, lw: 3.5 }); } wlh = writeLine(text, x, v.t + m + 96, w, v.h * .5, age, dur, { align: s.flip ? 'right' : 'left', keyPaper: s.bg === 'flood' }).h; }
         if (s.text?.tr && showText) { const w = (v.w - m * 2) * .46, x = s.flip ? v.r - m - w - 10 : v.l + m + 10, yy = v.t + m + 96 + wlh + 18; trBox(s.text.tr, s.flip ? x + w : x, Math.min(yy, v.b - m - 330), w, s.flip ? 'right' : 'left'); }
       });
-      notes(s, time, s.flip ? 'noStamp' : 'x');
+      notes(s.kind === 'singer' ? { ...s, notes: s.notes.filter(n => n !== 'stat' && n !== 'post') } : s, time, s.flip ? 'noStamp' : 'x');
     } else if (s.kind === 'scene') {
       const sc = R.scenes[s.scene]; let state = RC.sceneState[s.scene]; if (!state) state = RC.sceneState[s.scene] = sc.make(R.rng(hash(ext.key() + s.scene)), K) || {};
       K.c.save(); try { sc.draw(K, state, K.t, dt, R.A); } finally { K.c.restore(); }
