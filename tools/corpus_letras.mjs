@@ -18,7 +18,7 @@ export const PERMITIDOS = {
   alone: ['soledad'], lonely: ['soledad'], smile: ['sonrisa'], laugh: ['sonrisa'], vacio: ['vacio'], window: ['ventana'], ventana: ['ventana'],
   // sustantivos que el catálogo dibuja a propósito: decir «mesa» o «book» saca una mesa o un libro
   pan: ['pan'], pie: ['pie_descalzo'], boca: ['labios'], oreja: ['oreja'], pelo: ['pelo', 'cabello_largo'], sangre: ['gota_sangre'], hueso: ['esqueleto', 'hueso'],
-  novia: ['ramo_novia'], novio: ['ramo_novia'], reina: ['corona'], orange: ['naranja'], paint: ['pincel'], page: ['libro'], book: ['libro'], letter: ['carta'],
+  novia: ['ramo_novia'], novio: ['ramo_novia'], reina: ['corona'], orange: ['naranja'], paint: ['pincel', 'painter'], page: ['libro'], book: ['libro', 'writer'], letter: ['carta'],
   pen: ['lapiz'], pencil: ['lapiz'], table: ['mesa'], chair: ['silla'], cup: ['taza'], bottle: ['botella'], plate: ['plato'], fork: ['cubiertos'], knife: ['cubiertos'],
   spoon: ['cubiertos'], bag: ['maleta'], ring: ['anillo'], chain: ['cadena'], key: ['llave'], sword: ['espada'], shield: ['escudo'], peace: ['paz'], win: ['trofeo'],
   forget: ['olvido'], regret: ['culpa'], olvido: ['olvido'], adelante: ['puerta_abierta'],

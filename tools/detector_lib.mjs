@@ -6,15 +6,17 @@ const RAIZ = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..')
 export function archivosCatalogo() {
   const html = fs.readFileSync(path.join(RAIZ, 'index.html'), 'utf8');
   const todos = [...html.matchAll(/<script src="([^"]+)"/g)].map(m => m[1]);
-  const i = todos.indexOf('riso-catalog.js'), j = todos.findIndex((f, k) => k > i && !/^riso-props/.test(f));
+  const i = todos.indexOf('riso-catalog.js'), j = todos.findIndex((f, k) => k > i && !/^riso-(props|people)/.test(f));
   return todos.slice(i, j);
 }
 export function cargarDetector(cfg = {}) {
-  const defs = {};
+  const defs = {}, duplicados = [];
   const win = { CFG: cfg, console, Math, RISO_DEV: false };
   win.window = win;
-  win.RISO = { props: { DEFS: defs, variants: {}, geom: {}, def(ids, draw) { for (const id of [].concat(ids)) defs[id] = { draw }; } } };
+  win.RISO = { props: { DEFS: defs, variants: {}, geom: {}, def(ids, draw) { for (const id of [].concat(ids)) { if (defs[id]) duplicados.push(id); defs[id] = { draw }; } } } };
   const ctx = vm.createContext(win);
+  // los dibujos originales de riso-props.js (no se ejecutan; solo sus ids, para detectar repetidos)
+  for (const m of fs.readFileSync(path.join(RAIZ, 'riso-props.js'), 'utf8').matchAll(/\bdef\((\[[^\]]*\]|'[^']+')/g)) for (const x of m[1].matchAll(/'([^']+)'/g)) defs[x[1]] = { draw: null };
   // como en el navegador, las banderas toman sus nombres y gentilicios de NATIONS (symbols.js y reality.js, que se cargan antes).
   // solo se extrae esa lista: ejecutar los archivos enteros exige medio programa (GENS, procFrame, interpret...)
   const leer = f => fs.readFileSync(path.join(RAIZ, f), 'utf8');
@@ -23,5 +25,5 @@ export function cargarDetector(cfg = {}) {
   else { vm.runInContext(base[0], ctx, { filename: 'symbols.js (NATIONS)' }); vm.runInContext(extra[0], ctx, { filename: 'reality.js (NATIONS)' }); }
   for (const f of archivosCatalogo()) vm.runInContext(fs.readFileSync(path.join(RAIZ, f), 'utf8'), ctx, { filename: f });
   const R = win.RISO;
-  return { detect: (t, n = 5) => R.people.detect(t, n), info: R.catalog.info, total: R.catalog.count, defs, R };
+  return { detect: (t, n = 5) => R.people.detect(t, n), info: R.catalog.info, total: R.catalog.count, defs, duplicados, R };
 }

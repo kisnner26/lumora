@@ -49,4 +49,6 @@ export const REGRESIONES = [
   ['no me acuerdo de nada, recuerdo poco', ['nostalgia'], []],
   ['a bright idea', [], ['bombilla']],
   ['tengo una idea', ['bombilla'], []],
+  ['chocolate cookies', ['chef'], ['galleta']],
+  ['i cook every night', [], ['chef']],
 ];

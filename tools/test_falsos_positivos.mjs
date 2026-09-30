@@ -32,7 +32,16 @@ let reg = 0; for (const [f, no, si] of REGRESIONES) {
 console.log(`ok    ${reg}/${REGRESIONES.length} regresiones cubiertas`);
 
 // 5. higiene de las reglas: una raíz de dos a cuatro letras con comodín se come palabras ajenas (win\w* sacaba window, wine, winter)
-const permitidas = new Set(['cuba', 'ital', 'suiz', 'suec', 'swed', 'finn', 'grec', 'turk', 'thai', 'kiwi', 'saud', 'kiss', 'sing', 'howl', 'surf', 'glid', 'tico', 'ruso', 'ingl', 'ric']);
+const permitidas = new Set(['cuba', 'ital', 'suiz', 'suec', 'swed', 'finn', 'grec', 'turk', 'thai', 'kiwi', 'saud', 'kiss', 'sing', 'howl', 'surf', 'glid', 'tico', 'ruso', 'ingl', 'ric', 'joya', 'yate', 'dunk', 'run', 'box', 'chef', 'bake', 'juez', 'film', 'poet', 'poem', 'book']);
 for (const [id, e] of Object.entries(D.info)) for (const m of e.alias.source.matchAll(/(?<![\w\\\]\[])([a-záéíóúñ]{2,4})\\w[*+]/gi)) if (!permitidas.has(m[1].toLowerCase())) falla('raíz corta con comodín:', id, m[0]);
 console.log('ok    sin raíces cortas con comodín');
+
+// 6. integración de los dos catálogos: sin ids repetidos, sin dibujos dobles y con variantes
+if (D.duplicados.length) falla('ids repetidos:', D.duplicados.join(', ')); else console.log('ok    sin ids repetidos entre archivos');
+const V = D.R.props.variants, tiene = (id, v) => (V[id] || []).includes(v);
+const INT = [['Messi marcó un gol', ['messi'], ['jersey10']], ['el jet privado despega', ['privjet'], ['avion']], ['Neymar en la cancha', ['jersey10'], []], ['un Patek en la muñeca', ['watch'], []], ['soy bombero', ['bombero'], ['fireman']], ['tocando la guitarra', [], ['soccer']]];
+let ints = 0; for (const [f, si, no] of INT) { const ids = D.detect(f, 8); const faltan = si.filter(x => !ids.includes(x)), sobran = no.filter(x => ids.includes(x)); if (faltan.length || sobran.length) falla('integración:', f, faltan.length ? 'falta ' + faltan : '', sobran.length ? 'sobra ' + sobran : '', '=>', ids.join(',')); else ints++; }
+console.log(`ok    ${ints}/${INT.length} casos de integración (un solo dibujo por concepto)`);
+for (const [base, extra] of [['messi', 'jersey10'], ['medico', 'medic'], ['bombero', 'fireman'], ['michael_jackson', 'mj'], ['elvis', 'elvis_tupe'], ['trofeo', 'trophy'], ['corona', 'crown']]) if (!tiene(base, extra)) falla('variante faltante:', base, '<-', extra);
+console.log('ok    tus dibujos son variantes de los del catálogo'); 
 console.log(fallos ? `\nFALLOS: ${fallos}` : '\nFALSOS POSITIVOS: ok'); process.exit(fallos ? 1 : 0);

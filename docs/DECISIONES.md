@@ -58,3 +58,14 @@ registro de las decisiones tomadas sin preguntar (fecha, fase, duda, decisión, 
 - **no se tocó `semaforo_mano`:** dibuja una calle entera, así que «calle» y «street» son un acierto, aunque frecuente.
 - **pruebas portables.** `tools/lib.mjs` tenía rutas del entorno de la nube (`/opt/node22/...`, `/opt/pw-browsers/...`). Ahora busca Playwright y el navegador donde estén (Mac, Linux, nube), y `tools/check.sh` omite las pruebas con navegador si no hay Playwright, diciéndolo. La detección se prueba también en Node puro (`tools/test_falsos_positivos.mjs`), sin navegador.
 - **sin verificar aquí:** las pruebas con navegador (`test_props`, `test_mix`, etc.) no se ejecutaron con la nueva `lib.mjs` porque esta máquina no tiene Playwright; la detección sí se comprobó en el navegador real de la app con el puente simulado.
+
+## integración de las dos líneas de trabajo (rama feature/integracion)
+- **qué se juntó:** `feature/catalogo-pro` (fases 0 a 9, más la corrección del detector y de las pruebas) y `feature/menu-escenas` (captura de versos, modo portada, famosos/oficios/deportes/marcas, arreglos del menú y de la carátula).
+- **dos archivos se llamaban `riso-share.js`.** el del agente (colección de pósters, dedicatoria, enlace) pasó a `riso-compartir.js` (global `RISOSHARE`); `riso-share.js` es la captura de versos (global `RISOCLIP.share`), que es la que citan el README y `cover.js`.
+- **`riso-people.js` ya no tiene detector propio.** sus 57 dibujos se registran en el catálogo (`RISO.catalog.add`) y se cargan justo después de los archivos de categoría. `riso-catalog.js` ganó `grupo()` y `vincular()`:
+  - `vincular(base, extra)`: mi dibujo es una variante más de uno existente (p. ej. `messi` alterna con `jersey10`), así que el clip no repite siempre el mismo.
+  - `grupo(nombre, ids)`: si varios ids nombran lo mismo (p. ej. «médico» y «la medicina») sale uno solo: el de la coincidencia más larga, o el primero registrado si empatan. Así «jet privado» saca el jet y no el avión genérico.
+- **tres ids estaban repetidos** con el catálogo (`surf`, `elvis`, `einstein`): los míos pasaron a `surf_tabla`, `elvis_tupe` y `einstein_pelo` y entran como variantes.
+- **categoría nueva `marcas`** (objetos de lujo y consumo) con su propio interruptor, separada de «banderas y marcas».
+- **el seguro de salida del cierre** lo habían escrito los dos por separado: se conservó una sola versión (la que también cubre el modo portada y el reinicio de la canción).
+- **pendiente:** la captura de versos aún no guarda en la colección de pósters; hoy son dos caminos separados.

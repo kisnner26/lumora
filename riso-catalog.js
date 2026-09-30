@@ -15,8 +15,8 @@
 // ============================================================
 (() => {
   const R = window.RISO; if (!R) return;
-  const PRIO = { famosos: 0, oficios: 1, deportes: 1, banderas: 1, paises: 1, emociones: 2, comida: 3, animales: 3, naturaleza: 3, transporte: 3, tecnologia: 3, musica: 3, simbolos: 3, fiestas: 3, ropa: 3, objetos: 4 };
-  const RX = [], names = {}, cats = {}, info = {}, moodProps = {};
+  const PRIO = { marcas: 3, famosos: 0, oficios: 1, deportes: 1, banderas: 1, paises: 1, emociones: 2, comida: 3, animales: 3, naturaleza: 3, transporte: 3, tecnologia: 3, musica: 3, simbolos: 3, fiestas: 3, ropa: 3, objetos: 4 };
+  const RX = [], names = {}, cats = {}, info = {}, moodProps = {}, grupoDe = {};
   const add = e => {
     if (!e || !e.id || !/^[a-z0-9_]+$/.test(e.id)) throw new Error('riso-catalog: id inválido ' + (e && e.id));
     if (info[e.id]) { const m = 'riso-catalog: id repetido «' + e.id + '»'; if (window.RISO_DEV) throw new Error(m); console.warn(m); return; }
@@ -28,16 +28,34 @@
     if (e.variantes?.length) R.props.variants[e.id] = [e.id, ...e.variantes];
   };
   const off = cat => { try { if (!window.CFG) return false; if (cat === 'banderas' && CFG.symbols === false) return true; return !!(CFG.catOn && CFG.catOn[cat] === false); } catch (e) { return false; } };
-  // la regla debe coincidir con una palabra completa: ni una letra (con o sin acento) antes, ni después
+  // la regla debe coincidir con una palabra completa: ni una letra (con o sin acento) antes, ni después.
+  // devuelve el largo de la coincidencia más larga (0 si no hay): sirve para elegir el más específico dentro de un grupo
   const letra = /\p{L}/u;
-  const entera = (g, t) => { g.lastIndex = 0; let m; while ((m = g.exec(t))) { const a = t[m.index - 1], b = t[m.index + m[0].length]; const ap = b && /['’]/.test(b) && letra.test(t[m.index + m[0].length + 1] || '');            // won't, don't, l'amour: el apóstrofo une la palabra
-      if (!(a && letra.test(a)) && !(b && letra.test(b)) && !ap) return true; if (!m[0].length) g.lastIndex++; } return false; };
+  const largo = (g, t) => {
+    g.lastIndex = 0; let m, best = 0;
+    while ((m = g.exec(t))) {
+      const a = t[m.index - 1], b = t[m.index + m[0].length];
+      const ap = b && /['’]/.test(b) && letra.test(t[m.index + m[0].length + 1] || '');            // won't, don't, l'amour: el apóstrofo une la palabra
+      if (!(a && letra.test(a)) && !(b && letra.test(b)) && !ap) best = Math.max(best, m[0].length);
+      if (!m[0].length) g.lastIndex++;
+    }
+    return best;
+  };
   const detect = (text, limit = 3) => {
-    if (!text) return []; const out = [];
-    for (const [id, rx] of RX) { if (out.length >= limit) break; if (off(info[id]?.cat)) continue; if (entera(info[id].global, text)) out.push(id); }
+    if (!text) return [];
+    const cand = [];
+    for (const [id] of RX) { if (off(info[id]?.cat)) continue; const n = largo(info[id].global, text); if (n) cand.push([id, n]); }
+    // equivalentes (p. ej. «médico» y «la medicina»): entre los de un mismo grupo solo queda el de la coincidencia más larga; en empate, el que se registró primero
+    const mejor = {};
+    for (const [id, n] of cand) { const g = grupoDe[id]; if (g && (!mejor[g] || n > mejor[g][1])) mejor[g] = [id, n]; }
+    const out = cand.filter(([id]) => !grupoDe[id] || mejor[grupoDe[id]][0] === id).map(q => q[0]).slice(0, limit);
     const f = window.CFG && CFG.catFreq != null ? +CFG.catFreq : 1;               // 0 a 1: probabilidad de mostrar lo que se nombra
     return f >= 1 || !out.length ? out : (Math.random() < f ? out : []);
   };
+  // agrupa ids que nombran lo mismo para que no salgan dos dibujos a la vez; ids que aún no existen se ignoran
+  const grupo = (nombre, ids) => { for (const id of ids) if (info[id]) grupoDe[id] = nombre; };
+  // un dibujo más para un id que ya existe: el clip elige uno al azar con la semilla de la toma
+  const vincular = (base, ...extras) => { if (!info[base]) return; const v = R.props.variants[base] || [base]; for (const x of extras) if (!v.includes(x)) v.push(x); R.props.variants[base] = v; };
   const pickVariant = (id, r) => { const v = R.props.variants[id]; return v && v.length > 1 ? v[Math.floor(r() * v.length)] : id; };
   // ---------- ajustes: un chip por categoría y un deslizador de frecuencia ----------
   const catLabel = {};
@@ -48,7 +66,7 @@
     const g = document.querySelector('[data-chips=catOn]'); if (g && !g.querySelector(`[data-cv="${cat}"]`)) { const b = document.createElement('button'); b.dataset.cv = cat; b.textContent = text; g.appendChild(b); }
     if (typeof syncUI === 'function') syncUI();
   }
-  R.catalog = { add, label, info, cats, moodProps, pickVariant, get count() { return Object.keys(info).length; } };
+  R.catalog = { add, label, grupo, vincular, info, cats, moodProps, pickVariant, get count() { return Object.keys(info).length; } };
   R.people = R.people || { RX, names, detect };
   Object.assign(R.people, { RX, names, detect });
 })();
