@@ -310,7 +310,7 @@ void main(){
       this.cut = { to: id, kind: k, dir: Math.random() < .5 ? 1 : -1, t: 0, swapped: false, swap: sw };
     }
     // corte con movimiento a otra toma: swap() se llama a mitad del corte, cuando la imagen sale de cuadro
-    cutTo(swap, kind) { if (this.cut) return swap(); this.cut = { to: '_clip', kind: kind || 'h', dir: Math.random() < .5 ? 1 : -1, t: 0, swapped: false, swap: () => { swap(); this.sceneT0 = this.t; } }; }
+    cutTo(swap, kind) { if (this.cut) return swap(); if (window.CFG && CFG.reduceMotion) { swap(); this.sceneT0 = this.t; return; } this.cut = { to: '_clip', kind: kind || 'h', dir: Math.random() < .5 ? 1 : -1, t: 0, swapped: false, swap: () => { swap(); this.sceneT0 = this.t; } }; }
     // un cuadro: dtReal en segundos
     frame(dtReal) {
       const dt = Math.min(.08, dtReal || .016), t0 = performance.now();
@@ -324,7 +324,8 @@ void main(){
       if (sc.cam) sc.cam(cam, t, A, this.state); else {
         cam.x = Math.sin(t * .13 + 1) * 46 + Math.sin(t * .051) * 30; cam.y = Math.cos(t * .097) * 26; cam.z = 1.08 + Math.sin(t * .061) * .045; cam.r = Math.sin(t * .04) * .006;
       }
-      cam.z += A.beat * .014 * (A.live ? 1 : .5); if (this.kick > .01) { cam.z += this.kick * .035; cam.y += Math.sin(this.t * 60) * this.kick * 6; this.kick *= Math.pow(.001, dt); } else this.kick = 0;
+      const rm = window.CFG && CFG.reduceMotion; if (rm) { cam.x *= .15; cam.y *= .15; cam.r *= .15; }
+      cam.z += rm ? 0 : A.beat * .014 * (A.live ? 1 : .5); if (rm) this.kick = 0; if (this.kick > .01) { cam.z += this.kick * .035; cam.y += Math.sin(this.t * 60) * this.kick * 6; this.kick *= Math.pow(.001, dt); } else this.kick = 0;
       // corte por movimiento: la escena sale barrida y la nueva entra frenando
       let whip = [0, 0], zb = 0, cx = cam.x, cy = cam.y, cz = cam.z, cr = cam.r;
       const cut = this.cut;

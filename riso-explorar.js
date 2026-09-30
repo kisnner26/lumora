@@ -69,6 +69,7 @@
     return st.canvas;
   }
 
+  EXP.paint = paint;
   // ---------- mapa ----------
   const HEAD = { x0: 90, y0: 150, w: 1420, h: 560, lon0: -180, lon1: 180, lat0: 82, lat1: -58 };
   const proj = (lon, lat) => [HEAD.x0 + (lon - HEAD.lon0) / (HEAD.lon1 - HEAD.lon0) * HEAD.w, HEAD.y0 + (lat - HEAD.lat0) / (HEAD.lat1 - HEAD.lat0) * HEAD.h];

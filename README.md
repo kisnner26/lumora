@@ -70,6 +70,17 @@ la risografía no es solo el fondo: la bienvenida, los ajustes, la consola de re
 |---|---|
 | ![bienvenida sobre una escena viva, con etiquetas de papel](docs/img/bienvenida-riso.jpg) | ![ajustes en papel crema: fichas, teclas cuadradas y faders con regla](docs/img/ajustes-riso.jpg) |
 
+## ajustes
+
+el panel de ajustes (tecla `,`) tiene nueve secciones: imagen, efectos, letra, contenido, color, luces, **looks**, **accesibilidad** y **memoria**.
+
+- un **buscador** arriba filtra los ajustes por nombre o descripción. ![buscador](docs/img/aj-busqueda.jpg)
+- una **vista previa** viva muestra cómo queda la letra, la traducción y los efectos con lo que tengas puesto. ![vista previa](docs/img/aj-panel.jpg)
+- cada sección tiene su **restablecer**.
+- los **looks** son conjuntos de ajustes listos (risografía clásica, cine nocturno, calma, fiesta, lectura, mínimo) y «mi look» para guardar el tuyo. ![looks](docs/img/aj-looks.jpg)
+- **accesibilidad**: reducir movimiento, alto contraste, letra sobre papel y tamaño de la letra. ![alto contraste](docs/img/aj-contraste.jpg)
+- **memoria**: qué guarda lumora en tu navegador y cómo borrarlo.
+
 ## explorar
 
 la tarjeta **explorar** del menú (o ajustes > contenido) abre tres vistas hechas con lo que ya escuchaste:

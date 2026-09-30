@@ -117,7 +117,7 @@
   function fitText(text, maxW, maxH, o0, maxLines = 4) { let size = o0.size, lines; for (; size > 22; size -= 4) { const o = { ...o0, size }; lines = wrap(text, maxW, o); if (lines.length <= maxLines && lines.length * size * 1.12 <= maxH) break; } return { size, lines: lines || [] }; }
   // dibuja el verso; age = segundos desde que empezó; devuelve el alto usado
   function writeLine(text, x, y, maxW, maxH, age, dur, o = {}) {
-    const key = keyWord(text, storyOf(text)), font = o.font || 'hand', base = { size: o.size || 104, w: font === 'hand' ? 600 : 800, font, i: o.i || 1, align: 'left' };
+    const key = keyWord(text, storyOf(text)), font = o.font || 'hand', base = { size: (o.size || 104) * clamp(window.CFG?.lyricSize || 1, .7, 1.6), w: font === 'hand' ? 600 : 800, font, i: o.i || 1, align: 'left' };
     if (font === 'display') base.ls = 0;
     const { size, lines } = fitText(text, maxW, maxH, base), all = lines.flat(), n = all.length, span = clamp(dur * .55, .5, n * .34 + .3);
     let gi = 0, cy = y + size * .95, keyPos = null;
@@ -131,7 +131,7 @@
           const q = clamp((age - t0) / .18), drop = (1 - q * q) * size * .9, sc = 1 + (1 - q) * .5, c = K.c;
           c.save(); c.translate(cx + ww / 2, cy); c.scale(sc, sc); c.translate(-(cx + ww / 2), -cy);
           K.txt(w, cx + 6, cy + 6 - drop, { ...wo, i: 3, tone: .85 }); K.txt(w, cx, cy - drop, { ...wo, i: 2, fs: o.keyPaper ? R.K.PAPER : undefined }); c.restore();
-          if (q >= 1) R.fx.slam(text + '|' + w);
+          if (q >= 1 && !o.preview) R.fx.slam(text + '|' + w);
         } else if (p > 0) { const c = K.c; c.save(); c.beginPath(); c.rect(cx - 8, cy - size * 1.05, (ww + 16) * p, size * 1.4); c.clip();
           K.txt(w, cx, cy + (1 - p) * size * .12, { ...wo, i: isKey ? 2 : (o.i || 1), fs: isKey && o.keyPaper ? R.K.PAPER : undefined }); c.restore(); }
         if (isKey) keyPos = { x: cx, y: cy, w: ww, size, p };
@@ -196,7 +196,7 @@
         R.props.drawProp(K, p.id, cxp + off[0], cy + off[1], sc * (i === 0 ? 1 : .55), easeOut(k), { seed: s.seed + i * 7, ph: p.ph, rot: p.rot }); });
       if (s.props.length > 1 || s.bg === 'paper') K.tape(cxp - 190, cy - 240, 120, 38, -.5);
       K.screen(() => {
-        let wlh = v.h * .4; if (showText) { const w = (v.w - m * 2) * .46, x = s.flip ? v.r - m - w - 10 : v.l + m + 10; wlh = writeLine(text, x, v.t + m + 96, w, v.h * .5, age, dur, { align: s.flip ? 'right' : 'left', keyPaper: s.bg === 'flood' }).h; }
+        let wlh = v.h * .4; if (showText) { const w = (v.w - m * 2) * .46, x = s.flip ? v.r - m - w - 10 : v.l + m + 10; if (window.CFG?.textBox) { const ft = fitText(text, w, v.h * .5, { size: 104 * clamp(CFG.lyricSize || 1, .7, 1.6), w: 600, font: 'hand' }); K.rect(x - 16, v.t + m + 88, w + 32, ft.lines.length * ft.size * 1.12 + 26, { f: -1, s: 1, lw: 3.5 }); } wlh = writeLine(text, x, v.t + m + 96, w, v.h * .5, age, dur, { align: s.flip ? 'right' : 'left', keyPaper: s.bg === 'flood' }).h; }
         if (s.text?.tr && showText) { const w = (v.w - m * 2) * .46, x = s.flip ? v.r - m - w - 10 : v.l + m + 10, yy = v.t + m + 96 + wlh + 18; trBox(s.text.tr, s.flip ? x + w : x, Math.min(yy, v.b - m - 330), w, s.flip ? 'right' : 'left'); }
       });
       notes(s, time, s.flip ? 'noStamp' : 'x');
@@ -251,7 +251,7 @@
   }
 
   // ---------- el motor: una escena virtual dentro del escenario compartido ----------
-  R.register({ id: 'clip', name: 'videoclip', inks: 0, make: () => ({}), cam: (cam, t, a) => shotCam(cam, RC.shot ? K.t - RC.shot.k0 : t, a),
+  R.register({ id: 'clip', name: 'videoclip', inks: 0, make: () => ({}), cam: (cam, t, a) => { shotCam(cam, RC.shot ? K.t - RC.shot.k0 : t, a); if (window.CFG && CFG.reduceMotion) { cam.x *= .15; cam.y *= .15; cam.r *= .15; } },
     draw(K2, s, t, dt) { if (RC.mix?.on) RC.mix.draw(dt); else if (RC.shot) drawShot(RC.shot, RC.time || 0, dt); } });
   R.order.splice(R.order.indexOf('clip'), 1);                          // no aparece entre las escenas del menú
 

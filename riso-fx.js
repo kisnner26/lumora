@@ -11,7 +11,7 @@
   const R = window.RISO; if (!R || !R.stage) return;
   const st = R.stage, { clamp, ease, easeOut } = R, sin = Math.sin, cos = Math.cos, PI = Math.PI, TAU = PI * 2;
   const FX = R.fx = { hits: new Set() };
-  const on = k => { const c = window.CFG && CFG.fxCine; return !c || c[k] !== false; };
+  const on = k => { if (window.CFG && CFG.reduceMotion) return false; const c = window.CFG && CFG.fxCine; return !c || c[k] !== false; };
   FX.on = on;
   const rnd = () => Math.random();
 
