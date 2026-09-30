@@ -45,9 +45,9 @@
   const keyWord = (text, L) => { const w = (L?.word || (typeof salient === 'function' ? salient(text) : '') || '').replace(/[^\p{L}\p{N}'’-]/gu, ''); return w.toLowerCase(); };
 
   // la escena que piden las palabras del verso (y, si no hay, las de la estrofa)
-  function sceneByWords(text, block) {
+  function sceneByWords(text, block, mood) {
     let best = null, bs = 0;
-    for (const [id, rx] of Object.entries(R.SCENE_RX || {})) { if (!R.scenes[id]) continue; const g = new RegExp(rx.source, 'gi'); const n = (text.match(g) || []).length * 2 + (block ? Math.min(2, (block.match(g) || []).length) * .5 : 0); if (n > bs) { bs = n; best = id; } }
+    for (const [id, rx] of Object.entries(R.SCENE_RX || {})) { if (!R.scenes[id]) continue; if (id === 'ella' && !['romantico', 'feliz', 'euforico', 'sereno', 'nostalgico'].includes(mood)) continue; const g = new RegExp(rx.source, 'gi'); const n = (text.match(g) || []).length * 2 + (block ? Math.min(2, (block.match(g) || []).length) * .5 : 0); if (n > bs) { bs = n; best = id; } }
     return bs >= 1.5 || (bs >= 1 && !text) ? best : null;
   }
   function makeShot(li, sec, time, why) {
@@ -57,7 +57,7 @@
     const own = typeof LEX !== 'undefined' && text ? LEX.filter(([, re]) => re.test(text)).map(q => q[0]) : [];
     const objs = [...new Set([...own, ...(L?.objects || []), ...(plan?.objects || [])])].map(id => PROP_OF[id] || id).filter(hasProp);
     const prev = RC.kindHist.slice(-2), blockTxt = IN.lines.filter(l => l.text && l.t >= (IN.cuts[sec] ?? 0) && l.t < (IN.cuts[sec + 1] ?? 1e9)).map(l => l.text).join(' ');
-    const byWords = sceneByWords(text, blockTxt), recent = RC.recentScenes || (RC.recentScenes = []);
+    const byWords = sceneByWords(text, blockTxt, mood), recent = RC.recentScenes || (RC.recentScenes = []);
     let kind;
     if (why === 'title') kind = 'title'; else if (why === 'outro') kind = 'outro';
     else if (li < 0) kind = objs.length && r() < .5 ? 'prop' : 'scene';
@@ -79,7 +79,7 @@
     }
     if (kind === 'scene') {
       let id = byWords || plan && SCENE_MAP[plan.scene] || (R.scenes[plan?.scene] ? plan.scene : null) || MOOD_SCENE[mood] || 'ciudad';
-      if (/eyes|woman|man|couple/.test((objs || []).join(',')) || (mood === 'romantico' && r() < .4)) id = 'retrato';
+      if (!byWords && /eyes|woman|couple/.test((objs || []).join(',')) && ['romantico', 'feliz', 'euforico', 'sereno'].includes(mood)) id = 'ella'; else if (!byWords && (/eyes|man/.test((objs || []).join(',')) || (mood === 'romantico' && r() < .4))) id = 'retrato';
       if (li >= 0 && RC.lastScene === id && r() < .6) { const alt = R.order.filter(x => x !== id); id = alt[(r() * alt.length) | 0]; }
       shot.scene = id; RC.lastScene = id; recent.push(id); if (recent.length > 6) recent.shift(); shot.inks = R.scenes[id].inks;
       if (r() < .45) shot.inks = inkList[(sec + 1) % inkList.length];
@@ -134,6 +134,14 @@
   }
   function scribble(x, y, w, p, ink) { if (p <= 0) return; const pts = []; for (let i = 0; i <= 18; i++) pts.push([x - 4 + (w + 8) * i / 18, y + sin(i * 1.6) * 3 + i * .5]); R.props.pen(K, pts, p, { i: ink, lw: 7, seed: 5, single: true }); }
 
+  // traducción: etiqueta de papel con letra de imprenta, siempre legible sobre cualquier trama
+  function trBox(text, x, y, maxW, align, size = 38) {
+    const o = { size, w: 600, font: 'display', stretch: 'normal' }; const { size: sz, lines } = fitText(text, maxW - 28, 200, o, 3), lh = sz * 1.2, h = lines.length * lh + 22, wmax = Math.max(...lines.map(l => K.measure(l.join(' '), { ...o, size: sz }))) + 28;
+    const bx = align === 'right' ? x - wmax : align === 'center' ? x - wmax / 2 : x;
+    K.rect(bx + 6, y + 6, wmax, h, { f: 1, ft: .3, over: true }); K.rect(bx, y, wmax, h, { f: -1, s: 1, lw: 3.5 });
+    lines.forEach((l, i) => K.txt(l.join(' '), bx + 14, y + 10 + sz * .95 + i * lh, { ...o, size: sz, i: 1 })); return h + 8;
+  }
+
   // ---------- fondos de las tomas de objeto ----------
   function drawBg(s, kt) {
     const c = K.c, cx = 800, cy = 450 + (s.layout === 2 ? -30 : 0), v = K.v;
@@ -178,8 +186,8 @@
         R.props.drawProp(K, p.id, cxp + off[0], cy + off[1], sc * (i === 0 ? 1 : .55), easeOut(k), { seed: s.seed + i * 7, ph: p.ph, rot: p.rot }); });
       if (s.props.length > 1 || s.bg === 'paper') K.tape(cxp - 190, cy - 240, 120, 38, -.5);
       K.screen(() => {
-        if (showText) { const w = (v.w - m * 2) * .46, x = s.flip ? v.r - m - w - 10 : v.l + m + 10; writeLine(text, x, v.t + m + 96, w, v.h * .5, age, dur, { align: s.flip ? 'right' : 'left', keyPaper: s.bg === 'flood' }); }
-        if (s.text?.tr) { const w = (v.w - m * 2) * .44, x = s.flip ? v.r - m - w - 10 : v.l + m + 10; K.txt(s.text.tr, s.flip ? x + w : x, v.t + m + 96 + v.h * .5 + 8, { font: 'serif', italic: true, w: 500, size: 34, i: 1, tone: .8, align: s.flip ? 'right' : 'left' }); }
+        let wlh = v.h * .4; if (showText) { const w = (v.w - m * 2) * .46, x = s.flip ? v.r - m - w - 10 : v.l + m + 10; wlh = writeLine(text, x, v.t + m + 96, w, v.h * .5, age, dur, { align: s.flip ? 'right' : 'left', keyPaper: s.bg === 'flood' }).h; }
+        if (s.text?.tr && showText) { const w = (v.w - m * 2) * .46, x = s.flip ? v.r - m - w - 10 : v.l + m + 10, yy = v.t + m + 96 + wlh + 18; trBox(s.text.tr, s.flip ? x + w : x, Math.min(yy, v.b - m - 330), w, s.flip ? 'right' : 'left'); }
       });
       notes(s, time, s.flip ? 'noStamp' : 'x');
     } else if (s.kind === 'scene') {
@@ -188,7 +196,8 @@
       K.screen(() => {
         if (showText) { const w = Math.min(v.w * .62, 900), o = { size: 70, font: 'display', w: 800, ls: 0 }, fit = fitText(text, w - 44, 300, o, 3), bh = fit.lines.length * fit.size * 1.1 + 40, x = v.l + m + 10, y = v.b - m - bh - 8;
           K.rect(x + 8, y + 8, w, bh, { f: 1, ft: .3, over: true }); K.rect(x, y, w, bh, { f: -1, s: 1, lw: 4 });
-          writeLine(text, x + 22, y + 6, w - 44, bh - 12, age, dur, { size: 70, font: 'display', scribble: false }); }
+          writeLine(text, x + 22, y + 6, w - 44, bh - 12, age, dur, { size: 70, font: 'display', scribble: false });
+          if (s.text?.tr) trBox(s.text.tr, x, y - 92, w, 'left', 34); }
       });
       const saved = s.notes; notes({ ...s, notes: saved.filter(n => n !== 'stat' && n !== 'post') }, time, 'x');
     } else if (s.kind === 'giant') {
@@ -198,6 +207,7 @@
         K.txt(word, cx + 10, cy + 10, { ...wo, i: 3, tone: .9 }); K.txt(word, cx - 6, cy - 4, { ...wo, i: 2 });          // dos tintas mal registradas
         K.c.save(); K.c.strokeStyle = K.ink(1); K.c.lineWidth = 6; K.c.lineJoin = 'round'; K.c.font = `900 ${wo.size}px ${R.FONTS.display}`; try { K.c.fontStretch = 'condensed'; } catch (e) {} K.c.textAlign = 'center'; K.c.strokeText(word, cx, cy); K.c.restore();
         if (showText) K.txt(text, cx, v.b - m - 30, { font: 'hand', w: 600, size: 44, align: 'center', i: 1 });
+        if (showText && s.text?.tr) trBox(s.text.tr, cx, v.b - m - 120, v.w * .6, 'center', 34);
       });
       notes(s, time, 'x');
     } else {                                                        // título y cierre

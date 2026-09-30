@@ -167,6 +167,10 @@
   .cv-prog, .cv-prog span { color:var(--rk1) !important; }
   .cv-bar { background:linear-gradient(var(--rk1),var(--rk1)) center/100% 4px no-repeat !important; }
   .cv-bar i { background:var(--rk2) !important; box-shadow:none !important; height:8px !important; margin-top:-4px !important; border:2px solid var(--rk1); border-left:0; border-radius:0 !important; }
+  .cv-tools #cvLike svg { stroke:var(--rk1) !important; fill:none !important; }
+  .cv-tools #cvLike.on { background:var(--rk1) !important; }
+  .cv-tools #cvLike.on svg { fill:var(--rk2) !important; stroke:var(--rkl) !important; }
+  .cv-tools #cvLike:hover:not(.on) { background:var(--rk2) !important; }
   .cv-menu { border-radius:0 !important; }
   .cv-menu::-webkit-scrollbar-thumb { background:var(--rk1) !important; border-radius:0 !important; }
   .cv-tabs, .cv-segs { border:3px solid var(--rk1) !important; border-radius:0 !important; background:var(--rkl) !important; padding:3px !important; gap:3px; }
