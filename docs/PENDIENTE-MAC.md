@@ -15,3 +15,7 @@ no sé si Música y Spotify informan de la canción nueva al empezar o al termin
 5. observa: (a) ¿el `name` cambia al empezar el solape o al terminar? (b) ¿la posición de la nueva empieza en 0 o ya en varios segundos? (c) ¿la mezcla visual dura lo que dura el audio? revisa `RISOMIX.log` (from, to, D, p0).
 6. ajuste: si el nombre cambia al terminar el solape, la mezcla llega tarde; en ese caso hay que adelantarla desde los últimos segundos usando `ext.st.dur - ext.now()` (empezar la mezcla al entrar en el crossfade). si cambia al empezar y la posición ya viene avanzada, revisa que D = pos + 3 sea razonable con tu duración de crossfade y cambia el +3 en `riso-mix.js` (`M.onSongChange`).
 7. probar también con el modo portada si existe en tu copia (no probado aquí).
+
+## fase 5 (efectos de cine)
+- comprobar en el Mac que la tinta líquida y el papel rasgado corren a 60 fps con WebGL real (aquí solo se probó con SwiftShader y el tiempo congelado).
+- mirar a ojo si la sacudida de las palabras con peso es cómoda con el modo «destellos» apagado; si molesta, bajar `kick` en riso-fx.js.

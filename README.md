@@ -70,6 +70,15 @@ la risografía no es solo el fondo: la bienvenida, los ajustes, la consola de re
 |---|---|
 | ![bienvenida sobre una escena viva, con etiquetas de papel](docs/img/bienvenida-riso.jpg) | ![ajustes en papel crema: fichas, teclas cuadradas y faders con regla](docs/img/ajustes-riso.jpg) |
 
+## efectos de cine
+
+el videoclip tiene cuatro efectos que se apagan por separado en ajustes > efectos:
+
+- **tinta líquida**: entre estrofas una mancha de tinta se derrama sobre la imagen y luego escurre. ![tinta líquida](docs/img/fx-tinta-liquida-1.jpg)
+- **papel rasgado**: una hoja con el borde roto tapa la toma y se retira. ![papel rasgado](docs/img/fx-papel-rasgado.jpg)
+- **palabras con peso**: la palabra clave del verso cae con golpe, más gruesa y con sombra mal registrada, y sacude un poco la cámara.
+- **taller de impresión**: la portada se imprime tinta por tinta con marcas de registro, marcas de corte y barra de color. ![taller de impresión](docs/img/fx-taller-impresion.jpg)
+
 ## catálogo de dibujos
 
 739 dibujos procedurales en risografía que el videoclip elige cuando la letra los nombra: banderas, objetos, símbolos, emociones, comida, países (monumentos, animales, objetos típicos), animales, naturaleza, transporte, tecnología, música, famosos (por emblema, nunca por retrato), oficios, deportes, fiestas, ropa y cuerpo. la lista completa con sus palabras disparadoras está en [docs/CATALOGO.md](docs/CATALOGO.md) (se regenera con `node tools/catalogo_md.mjs`) y las hojas de contacto en `docs/img/catalogo-*.jpg`. cada categoría se apaga o se hace más rara desde ajustes > contenido.

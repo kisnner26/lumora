@@ -72,7 +72,7 @@ const RISO = window.RISO = (() => {
   const VS = 'attribute vec2 p;varying vec2 v;void main(){v=p*.5+.5;gl_Position=vec4(p,0.,1.);}';
   const FS = `precision highp float;
 varying vec2 v; uniform sampler2D uP; uniform vec2 uRes; uniform vec3 uPaper, uI1, uI2, uI3;
-uniform vec2 uR1, uR2, uR3, uWhip; uniform float uZoom, uCell, uGrain, uAmt;
+uniform vec2 uR1, uR2, uR3, uWhip; uniform vec3 uPass; uniform float uZoom, uCell, uGrain, uAmt;
 float h21(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
 float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3. - 2. * f);
   return mix(mix(h21(i), h21(i + vec2(1., 0.)), f.x), mix(h21(i + vec2(0., 1.)), h21(i + vec2(1., 1.)), f.x), f.y); }
@@ -100,7 +100,7 @@ float screen(vec2 p, float ang, float tone, float mode, float n){
 }
 void main(){
   vec2 px = gl_FragCoord.xy;
-  vec3 t = plate(v);
+  vec3 t = plate(v) * uPass;
   float n = vn(px / 1.9), n2 = vn(px / 5.3 + 7.);
   vec3 col = uPaper;
   col *= mix(vec3(1.), uI3, screen(px, .785, t.b, 0., n) * .93);
@@ -286,7 +286,7 @@ void main(){
         const tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
         for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v);
         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-        this.U = {}; for (const n of ['uP', 'uRes', 'uPaper', 'uI1', 'uI2', 'uI3', 'uR1', 'uR2', 'uR3', 'uWhip', 'uZoom', 'uCell', 'uGrain']) this.U[n] = gl.getUniformLocation(pr, n);
+        this.U = {}; for (const n of ['uP', 'uRes', 'uPaper', 'uI1', 'uI2', 'uI3', 'uR1', 'uR2', 'uR3', 'uWhip', 'uPass', 'uZoom', 'uCell', 'uGrain']) this.U[n] = gl.getUniformLocation(pr, n);
         this.gl = gl; this.ok = true;
       } catch (e) { console.warn('riso: shader', e.message); }
     }
@@ -324,14 +324,14 @@ void main(){
       if (sc.cam) sc.cam(cam, t, A, this.state); else {
         cam.x = Math.sin(t * .13 + 1) * 46 + Math.sin(t * .051) * 30; cam.y = Math.cos(t * .097) * 26; cam.z = 1.08 + Math.sin(t * .061) * .045; cam.r = Math.sin(t * .04) * .006;
       }
-      cam.z += A.beat * .014 * (A.live ? 1 : .5);
+      cam.z += A.beat * .014 * (A.live ? 1 : .5); if (this.kick > .01) { cam.z += this.kick * .035; cam.y += Math.sin(this.t * 60) * this.kick * 6; this.kick *= Math.pow(.001, dt); } else this.kick = 0;
       // corte por movimiento: la escena sale barrida y la nueva entra frenando
       let whip = [0, 0], zb = 0, cx = cam.x, cy = cam.y, cz = cam.z, cr = cam.r;
       const cut = this.cut;
       if (cut) {
-        cut.t += dt; const OUT = .2, INN = .36; let m;
-        if (cut.t < OUT) m = this._cutMove(cut, ease(cut.t / OUT), 1);
-        else { if (!cut.swapped) { cut.swapped = true; cut.swap(); } m = this._cutMove(cut, 1 - easeOut(clamp((cut.t - OUT) / INN)), -1); if (cut.t > OUT + INN) this.cut = null; }
+        if (!cut.hold) cut.t += dt; const fxk = cut.kind === 'ink' || cut.kind === 'tear', OUT = fxk ? .55 : .2, INN = fxk ? .65 : .36; let m;
+        if (cut.t < OUT) { m = this._cutMove(cut, ease(cut.t / OUT), 1); cut.ph = 'out'; cut.p = cut.t / OUT; }
+        else { if (!cut.swapped) { cut.swapped = true; cut.swap(); } m = this._cutMove(cut, 1 - easeOut(clamp((cut.t - OUT) / INN)), -1); cut.ph = 'in'; cut.p = clamp((cut.t - OUT) / INN); if (cut.t > OUT + INN) this.cut = null; }
         cx += m.x; cy += m.y; cz *= m.z; cr += m.r; whip = m.whip; zb = m.zb;
       }
       const scn = scenes[this.sceneId];
@@ -342,6 +342,8 @@ void main(){
       pc.save(); pc.translate(pw / 2, ph / 2); pc.scale(base * cz, base * cz); pc.rotate(cr); pc.translate(-(VW / 2 + cx), -(VH / 2 + cy));
       try { scn.draw(K, this.state, t, sdt, A); } catch (e) { if (!this._err) { this._err = 1; console.warn('riso:', scn.id, e.message); } }
       pc.restore();
+      if (this.cut && this.fxCut && (this.cut.kind === 'ink' || this.cut.kind === 'tear')) { try { K.screen(() => this.fxCut(K, this.cut)); } catch (e) { if (!this._err3) { this._err3 = 1; console.warn('riso corte:', e.message); } } }
+      if (this.fxAfter) { try { K.screen(() => this.fxAfter(K)); } catch (e) { if (!this._err4) { this._err4 = 1; console.warn('riso fx:', e.message); } } }
       if (this.notes) { try { this._annotate(scn, K, t); } catch (e) { if (!this._err2) { this._err2 = 1; console.warn('riso notas:', e.message); } } }
       this._present(whip, zb);
       this.lastCost = performance.now() - t0;
@@ -355,6 +357,7 @@ void main(){
         case 'v': o.y = cut.dir * s * p * 900; o.whip = [0, cut.dir * s * p * .16]; break;
         case 'zin': o.z = sign > 0 ? 1 + p * 2.2 : 1 + p * 1.1; o.zb = p * .5; break;
         case 'zout': o.z = sign > 0 ? 1 - p * .5 : 1 + p * 1.6; o.zb = -p * .45; break;
+        case 'ink': case 'tear': break;
         default: o.r = cut.dir * s * p * .9; o.z = 1 + p * .5; o.zb = p * .25;
       }
       return o;
@@ -406,7 +409,7 @@ void main(){
       gl.uniform3fv(U.uI1, inks.i[0]); gl.uniform3fv(U.uI2, inks.i[1]); gl.uniform3fv(U.uI3, inks.i[2]);
       const r1 = rg(0, 0, 0), r2 = rg(-3.2 * s, 2.4 * s, 1), r3 = rg(2.6 * s, -2.8 * s, 2);
       gl.uniform2f(U.uR1, r1[0], r1[1]); gl.uniform2f(U.uR2, r2[0], r2[1]); gl.uniform2f(U.uR3, r3[0], r3[1]);
-      gl.uniform2f(U.uWhip, whip[0], whip[1]); gl.uniform1f(U.uZoom, zb);
+      const ps = this.pass || [1, 1, 1]; gl.uniform3f(U.uPass, ps[0], ps[1], ps[2]); gl.uniform2f(U.uWhip, whip[0], whip[1]); gl.uniform1f(U.uZoom, zb);
       gl.uniform1f(U.uCell, Math.max(4.2, h / [118, 138, 156][this.detail - 1])); gl.uniform1f(U.uGrain, [.8, 1, 1][this.detail - 1]);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     }

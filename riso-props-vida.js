@@ -224,4 +224,5 @@
   B('hueso', 'HUESO', /\b(hueso|hueso roto|broken bone|fractura|fracture|bone|hueso duro|hard bone|esqueleto de dinosaurio)\b/i, [
     { p: 'M-140 -60 C-190 -100 -190 -20 -150 -20 C-170 20 -110 20 -100 -20 L100 60 C110 20 170 20 150 60 C190 100 190 20 140 20 C140 -20 90 -20 100 20 L-100 -60 Z', f: -1, s: 10 },
   ], { moods: ['oscuro'] });
+  if (R.catalog && R.catalog.label) for (const [c, t] of [['objetos', 'objetos'], ['simbolos', 'símbolos'], ['emociones', 'emociones'], ['comida', 'comida y bebida'], ['paises', 'monumentos y países'], ['animales', 'animales'], ['naturaleza', 'naturaleza y cielo'], ['transporte', 'transporte'], ['tecnologia', 'tecnología'], ['musica', 'música'], ['famosos', 'famosos (emblemas)'], ['oficios', 'oficios'], ['deportes', 'deportes'], ['fiestas', 'fiestas'], ['ropa', 'ropa'], ['cuerpo', 'cuerpo']]) R.catalog.label(c, t);
 })();

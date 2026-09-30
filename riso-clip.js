@@ -125,8 +125,14 @@
       let cx = x; const lw = K.measure(ln.join(' '), { ...base, size });
       if (o.align === 'center') cx = x + (maxW - lw) / 2; else if (o.align === 'right') cx = x + maxW - lw;
       for (const w of ln) {
-        const wo = { ...base, size }, ww = K.measure(w, wo), t0 = gi / Math.max(1, n) * span, p = easeOut(clamp((age - t0) / .26)), isKey = key && w.toLowerCase().replace(/[^\p{L}\p{N}'’-]/gu, '') === key;
-        if (p > 0) { const c = K.c; c.save(); c.beginPath(); c.rect(cx - 8, cy - size * 1.05, (ww + 16) * p, size * 1.4); c.clip();
+        const isKey = key && w.toLowerCase().replace(/[^\p{L}\p{N}'’-]/gu, '') === key, heavy = R.fx?.weight(), wo = heavy ? (isKey ? { ...base, size: size * 1.16, w: 900 } : { ...base, w: font === 'hand' ? 500 : 700 }) : { ...base, size };
+        const ww = K.measure(w, wo), t0 = gi / Math.max(1, n) * span, p = easeOut(clamp((age - t0) / .26));
+        if (p > 0 && heavy && isKey) {                                       // palabra con peso: cae, golpea y deja sombra mal registrada
+          const q = clamp((age - t0) / .18), drop = (1 - q * q) * size * .9, sc = 1 + (1 - q) * .5, c = K.c;
+          c.save(); c.translate(cx + ww / 2, cy); c.scale(sc, sc); c.translate(-(cx + ww / 2), -cy);
+          K.txt(w, cx + 6, cy + 6 - drop, { ...wo, i: 3, tone: .85 }); K.txt(w, cx, cy - drop, { ...wo, i: 2, fs: o.keyPaper ? R.K.PAPER : undefined }); c.restore();
+          if (q >= 1) R.fx.slam(text + '|' + w);
+        } else if (p > 0) { const c = K.c; c.save(); c.beginPath(); c.rect(cx - 8, cy - size * 1.05, (ww + 16) * p, size * 1.4); c.clip();
           K.txt(w, cx, cy + (1 - p) * size * .12, { ...wo, i: isKey ? 2 : (o.i || 1), fs: isKey && o.keyPaper ? R.K.PAPER : undefined }); c.restore(); }
         if (isKey) keyPos = { x: cx, y: cy, w: ww, size, p };
         cx += ww + K.measure(' ', wo); gi++;
@@ -291,11 +297,12 @@
       const next = makeShot(li, sec, time, why === 'title' || why === 'outro' ? why : '');
       if (why === 'outro') window.dispatchEvent(new CustomEvent('riso:outro'));
       if (!cur) { RC.shot = next; RC.count = 1; }
-      else { RC.pending = next; st.cutTo(() => { RC.shot = next; RC.pending = null; RC.count++; }, next.cut); }
+      else { if (why === 'sec' && R.fx) { const k = R.fx.pickCut(next, cur); if (k) next.cut = k; } RC.pending = next; st.cutTo(() => { RC.shot = next; RC.pending = null; RC.count++; }, next.cut); }
     }
     if (RC.shot) keepShotText(RC.shot, time);
     const want = window.LOWFX ? 1 : 2; if (RC.detail !== want) { RC.detail = want; st.setDetail(want, true); }
     st.margin = 34; st.notes = false; st.lyric = true; st.speed = 1; st.auto = true; st.setInks(RC.shot?.inks ?? 0);
+    if (R.fx) R.fx.beforeFrame(RC.shot);
     st.frame(Math.max(.001, dt));
     x.drawImage(st.canvas, 0, 0, W, H);
     if (RC.afterFrame) RC.afterFrame(time);

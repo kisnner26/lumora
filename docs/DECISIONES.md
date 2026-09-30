@@ -46,3 +46,4 @@ registro de las decisiones tomadas sin preguntar (fecha, fase, duda, decisión, 
 - oleada 2: los dibujos de países no nombran al país (monumento, animal, objeto); alias genéricos (rey, puente, isla, solo) excluidos.
 - oleada 3: los patrones de alias se escriben con (es)? para que el singular dispare; nombres propios ambiguos (aurora, alba, mercedes, turkey) fuera de los alias.
 - oleada 4: los famosos se dibujan solo con emblemas de su obra (guante, balón, molino); alias solo con nombre completo o títulos, sin políticos ni figuras religiosas; se excluyó «madonna» a secas.
+- fase 5: los cortes de tinta y papel duran 1,2 s (más que los normales) y solo se usan al cambiar de estrofa; el taller de impresión se resuelve con un uniforme `uPass` que apaga las planchas, no con capas extra. `cut.hold` congela un corte para las pruebas.
