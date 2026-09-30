@@ -43,7 +43,8 @@
   // ---------- los objetos ----------
   // d.s = trazo, d.f = relleno, d.dot = punto, P = { p: avance 0..1, t, beat, seed }
   const DEFS = {};
-  const def = (ids, draw) => { for (const id of [].concat(ids)) DEFS[id] = { n: 12, draw }; };
+  // registra un dibujo; un id repetido se ignora (y en desarrollo, window.RISO_DEV, lanza error)
+  const def = (ids, draw) => { for (const id of [].concat(ids)) { if (DEFS[id]) { const m = 'riso-props: id repetido «' + id + '»'; if (window.RISO_DEV) throw new Error(m); console.warn(m); continue; } DEFS[id] = { n: 12, draw }; } };
 
   def('sun', (d, P) => {
     d.f(C(0, 0, 92, 0, TAU), 2, .9); d.s(C(0, 0, 92)); d.s(C(0, 0, 76, 1, TAU + 1), { i: 2, lw: 3 });
@@ -197,17 +198,19 @@
       for (let i = 0; i < 14; i++) { const a = i * TAU / 14; d.s(Ln(x + cos(a) * r * .35 * k, y + sin(a) * r * .35 * k, x + cos(a) * r * k, y + sin(a) * r * k, 2), { lw: 6, i: i % 2 ? 1 : 2, single: true }); d.dot(x + cos(a) * r * 1.12 * k, y + sin(a) * r * 1.12 * k, 6, 2); } }
   });
 
+  // encaje: desplazamiento y escala para que cada dibujo quepa en -200..200 (medido con tools/test_props.mjs)
+  const ADJ = {"flowers":[0,-1.3,0.89],"beach":[0,-1.3,0.89],"love":[7.7,-34.6,0.967],"rain":[7.4,-28.5,0.926],"city":[-21.1,-46.4,0.844],"road":[-15.8,-28.1,0.72],"car":[-10.4,-29,0.742],"heaven":[-2.8,3.9,0.709],"tears":[0,-14.3,0.976],"home":[0,22.3,0.932],"light":[3.6,38.4,1],"mountain":[-4.6,-7.5,0.927],"forest":[-10.4,-24,0.916],"smoke":[3.6,-41.6,1],"fireworks":[11.4,15.5,0.951]};
   // ---------- API ----------
   // dibuja el objeto `id` en (x,y) con escala s; p = 0..1 cuánto se ha dibujado
   function drawProp(K, id, x, y, s, p, o = {}) {
     const dfn = DEFS[id] || DEFS.stars, c = K.c, P = { p: clamp(p), t: K.t + (o.ph || 0), beat: K.a.beat, n: dfn.n };
     const d = { idx: 0 };
-    d.s = (pts, op) => { const lp = clamp(P.p * P.n * .9 - d.idx * .9 + .0); d.idx++; pen(K, pts, lp, { seed: (o.seed || 0) + d.idx * 3.1, ...op }); };
-    d.f = (pts, ink, tone) => { const a = clamp((P.p - .45) / .4); if (a > 0 && tone > 0) K.poly(pts, { f: ink, ft: tone * a }); };
-    d.dot = (px, py, r, ink) => { if (P.p > .5) K.circ(px, py, r * clamp((P.p - .5) / .3), { f: ink }); };
-    c.save(); c.translate(x, y); c.rotate((o.rot || 0) + sin(K.t * .8 + (o.ph || 0)) * .012); c.scale(s * (1 + K.a.beat * .025), s * (1 + K.a.beat * .025));
+    d.s = (pts, op) => { const lp = clamp(P.p * (P.n * .9 + .1) - d.idx * .9); d.idx++; if (api.probe) api.probe(pts); pen(K, pts, lp, { seed: (o.seed || 0) + d.idx * 3.1, ...op }); };
+    d.f = (pts, ink, tone) => { if (api.probe) api.probe(pts); const a = clamp((P.p - .45) / .4); if (a > 0 && tone > 0) K.poly(pts, { f: ink, ft: tone * a }); };
+    d.dot = (px, py, r, ink) => { if (api.probe) api.probe([[px - r, py - r], [px + r, py + r]]); if (P.p > .5) K.circ(px, py, r * clamp((P.p - .5) / .3), { f: ink }); };
+    c.save(); c.translate(x, y); c.rotate((o.rot || 0) + sin(K.t * .8 + (o.ph || 0)) * .012); c.scale(s * (1 + K.a.beat * .025), s * (1 + K.a.beat * .025)); const aj = ADJ[id]; api.adj = aj || null; if (aj) { c.translate(aj[0], aj[1]); c.scale(aj[2], aj[2]); }
     try { dfn.draw(d, P); } finally { c.restore(); }
     dfn.n = Math.max(6, d.idx);
   }
-  RISO.props = { DEFS, drawProp, pen, ids: Object.keys(DEFS), geom: { E, C, Ln, Bz, Pl, Rc, cloudPts, spark, heart } };
+  const api = RISO.props = { DEFS, def, variants: {}, drawProp, pen, ids: Object.keys(DEFS), geom: { E, C, Ln, Bz, Pl, Rc, cloudPts, spark, heart } };
 })();

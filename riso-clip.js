@@ -55,7 +55,8 @@
     const r = rngS(seed), mood = plan?.mood || 'sereno', energy = plan?.energy ?? 5, inkList = MOOD_INKS[mood] || [0, 1, 2];
     const shot = { kind: 'prop', li, sec, t0: timeNow(), k0: st.t, seed, plan, mood, energy, inks: inkList[(sec + (plan?.color === 'oscuro' ? 1 : 0)) % inkList.length], bg: 'paper', layout: 0, why };
     const own = typeof LEX !== 'undefined' && text ? LEX.filter(([, re]) => re.test(text)).map(q => q[0]) : [];
-    const objs = [...new Set([...own, ...(L?.objects || []), ...(plan?.objects || [])])].map(id => PROP_OF[id] || id).filter(hasProp);
+    const named = (R.people && text ? R.people.detect(text, 3) : []), rr0 = R.rng(seed ^ 0x9e37);
+    const objs = [...new Set([...named, ...own, ...(L?.objects || []), ...(plan?.objects || [])])].map(id => PROP_OF[id] || id).filter(hasProp);
     const prev = RC.kindHist.slice(-2), blockTxt = IN.lines.filter(l => l.text && l.t >= (IN.cuts[sec] ?? 0) && l.t < (IN.cuts[sec + 1] ?? 1e9)).map(l => l.text).join(' ');
     const byWords = sceneByWords(text, blockTxt, mood), recent = RC.recentScenes || (RC.recentScenes = []);
     let kind;
@@ -71,8 +72,8 @@
     shot.kind = kind; RC.kindHist.push(kind); if (RC.kindHist.length > 6) RC.kindHist.shift();
     shot.cut = energy >= 7 ? ['h', 'spin', 'v'][(r() * 3) | 0] : energy <= 3 ? ['zin', 'zout'][(r() * 2) | 0] : ['h', 'v', 'zin', 'zout'][(r() * 4) | 0];
     if (kind === 'prop') {
-      const ids = objs.length ? [...new Set(objs)] : (MOOD_PROP[mood] || ['stars']).filter(hasProp);
-      shot.props = ids.slice(0, r() < .35 ? 3 : 1).map((id, i) => ({ id, i, ph: r() * 6, rot: (r() - .5) * .14 }));
+      const cm = (R.catalog?.moodProps[mood] || []).filter(hasProp), ids = objs.length ? [...new Set(objs)] : [...(MOOD_PROP[mood] || ['stars']), ...cm].filter(hasProp);
+      shot.props = ids.slice(0, r() < .35 ? 3 : 1).map((id, i) => ({ id: R.catalog ? R.catalog.pickVariant(id, r) : id, i, ph: r() * 6, rot: (r() - .5) * .14 }));
       if (!objs.length) shot.props = [{ id: ids[(sec + (li < 0 ? 0 : li)) % ids.length], i: 0, ph: r() * 6, rot: (r() - .5) * .14 }];
       shot.bg = ['paper', 'panel', 'burst', 'grid', 'flood'][(r() * (energy >= 7 ? 5 : 4)) | 0]; if (energy < 7 && shot.bg === 'flood' ) shot.bg = 'grid';
       shot.layout = (r() * 3) | 0; shot.flip = r() < .5;
@@ -262,6 +263,8 @@
     const cur = RC.shot, dur = proc.dur || 0, lyricT0 = IN.lines.find(l => l.text)?.t ?? 99;
     let why = '';
     if (!cur) why = 'title';
+    else if (RC.pending && !st.cut) { RC.shot = RC.pending; RC.pending = null; RC.count++; }     // seguro: si el corte terminó sin confirmar la toma, se confirma
+    else if (cur.kind === 'outro' && dur && time < dur - 7 && !st.cut && !RC.pending) why = 'seek';     // el tiempo retrocedió: se sale del cierre
     else if (!st.cut && !RC.pending) {
       const age = time - cur.t0;
       if (dur && time > dur - 6 && cur.kind !== 'outro') why = 'outro';
@@ -274,6 +277,7 @@
     }
     if (why) {
       const next = makeShot(li, sec, time, why === 'title' || why === 'outro' ? why : '');
+      if (why === 'outro') window.dispatchEvent(new CustomEvent('riso:outro'));
       if (!cur) { RC.shot = next; RC.count = 1; }
       else { RC.pending = next; st.cutTo(() => { RC.shot = next; RC.pending = null; RC.count++; }, next.cut); }
     }
@@ -283,7 +287,8 @@
     st.frame(Math.max(.001, dt));
     x.drawImage(st.canvas, 0, 0, W, H);
   }
-  RC.frame = frame;
+  RC.frame = frame; RC.makeShot = makeShot;
+  RC.h = { writeLine, drawBg, fitText, trBox, scribble, keyWord, storyOf, meta, fmt, hash, secOf, lineIdx, timeNow, pad2, wrap, artCanvas, notes };
 
   // ---------- conexión con el video de siempre ----------
   const enabled = () => !window.CFG || CFG.clip !== 'clasico';
