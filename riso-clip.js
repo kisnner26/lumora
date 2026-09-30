@@ -58,12 +58,13 @@
     const named = (R.people && text ? R.people.detect(text, 3) : []), rr0 = R.rng(seed ^ 0x9e37);
     const objs = [...new Set([...named, ...own, ...(L?.objects || []), ...(plan?.objects || [])])].map(id => PROP_OF[id] || id).filter(hasProp);
     const prev = RC.kindHist.slice(-2), blockTxt = IN.lines.filter(l => l.text && l.t >= (IN.cuts[sec] ?? 0) && l.t < (IN.cuts[sec + 1] ?? 1e9)).map(l => l.text).join(' ');
-    const byWords = sceneByWords(text, blockTxt, mood), recent = RC.recentScenes || (RC.recentScenes = []);
+    const byWords = sceneByWords(text, blockTxt, mood), recent = RC.recentScenes || (RC.recentScenes = []), cfgOn = !window.CFG || CFG.singers !== false, singers = cfgOn && R.singers ? R.singers.plan(window.ext?.st?.artist, window.ext?.st?.name) : null;
     let kind;
     if (why === 'title') kind = 'title'; else if (why === 'outro') kind = 'outro';
     else if (li < 0) kind = objs.length && r() < .5 ? 'prop' : 'scene';
     else if (named.length && r() < .92) kind = 'prop';                 // lo que el verso nombra (país, persona, objeto del catálogo) manda sobre la palabra gigante y las escenas
     else if (L?.big && keyWord(text, L)) kind = 'giant';
+    else if (li >= 0 && singers && prev[1] !== 'singer' && r() < (energy >= 7 ? .7 : .5) + (RC.count ? 0 : .3)) kind = 'singer';        // el artista del catálogo canta al micrófono
     else if (byWords && !recent.slice(-2).includes(byWords) && prev[1] !== 'scene' && r() < .8) kind = 'scene';
     else {
       const w = { prop: 1.7, scene: energy >= 7 ? .7 : .5 };
@@ -82,6 +83,7 @@
       const fl = shot.props.find(p => /^flag_/.test(p.id));                       // una bandera va sola y con sus tintas
       if (fl) { shot.props = [fl]; shot.inks = R.catalog.info[fl.id]?.inks ?? shot.inks; if (shot.bg === 'flood' || shot.bg === 'burst') shot.bg = 'paper'; }
     }
+    if (kind === 'singer') { shot.singers = singers; shot.props = []; shot.bg = ['burst', 'grid', 'flood'][(r() * 3) | 0]; shot.layout = (r() * 3) | 0; shot.flip = r() < .5; shot.scene = 'voz'; shot.cut = energy >= 7 ? 'h' : shot.cut; }
     if (kind === 'scene') {
       let id = byWords || plan && SCENE_MAP[plan.scene] || (R.scenes[plan?.scene] ? plan.scene : null) || MOOD_SCENE[mood] || 'ciudad';
       if (R.scenes.ella && !byWords && /eyes|woman|couple/.test((objs || []).join(',')) && ['romantico', 'feliz', 'euforico', 'sereno'].includes(mood)) id = 'ella'; else if (!byWords && (/eyes|man/.test((objs || []).join(',')) || (mood === 'romantico' && r() < .4))) id = 'retrato';
@@ -123,13 +125,19 @@
   function writeLine(text, x, y, maxW, maxH, age, dur, o = {}) {
     const key = keyWord(text, storyOf(text)), font = o.font || 'hand', base = { size: (o.size || 104) * clamp(window.CFG?.lyricSize || 1, .7, 1.6), w: font === 'hand' ? 600 : 800, font, i: o.i || 1, align: 'left' };
     if (font === 'display') base.ls = 0;
-    const { size, lines } = fitText(text, maxW, maxH, base), all = lines.flat(), n = all.length, span = clamp(dur * .55, .5, n * .34 + .3);
+    const heavy0 = R.fx?.weight(), isKeyW = w => key && w.toLowerCase().replace(/[^\p{L}\p{N}'’-]/gu, '') === key;
+    // cómo se dibuja cada palabra: con peso, la clave crece y engorda y las demás adelgazan; el ancho real manda sobre el ajuste
+    const optsFor = (w, sz) => heavy0 ? (isKeyW(w) ? { ...base, size: sz * 1.16, w: 900 } : { ...base, size: sz, w: font === 'hand' ? 500 : 700 }) : { ...base, size: sz };
+    const lineW = (ln, sz) => ln.reduce((a, w, i) => a + K.measure(w, optsFor(w, sz)) + (i ? K.measure(' ', optsFor(w, sz)) : 0), 0);
+    let { size, lines } = fitText(text, maxW, maxH, base);
+    for (let g = 0; g < 12 && size > 22 && lines.some(ln => lineW(ln, size) > maxW); g++) { size -= 4; lines = wrap(text, maxW, { ...base, size }); }
+    const all = lines.flat(), n = all.length, span = clamp(dur * .55, .5, n * .34 + .3);
     let gi = 0, cy = y + size * .95, keyPos = null;
     for (const ln of lines) {
-      let cx = x; const lw = K.measure(ln.join(' '), { ...base, size });
+      let cx = x; const lw = lineW(ln, size);
       if (o.align === 'center') cx = x + (maxW - lw) / 2; else if (o.align === 'right') cx = x + maxW - lw;
       for (const w of ln) {
-        const isKey = key && w.toLowerCase().replace(/[^\p{L}\p{N}'’-]/gu, '') === key, heavy = R.fx?.weight(), wo = heavy ? (isKey ? { ...base, size: size * 1.16, w: 900 } : { ...base, w: font === 'hand' ? 500 : 700 }) : { ...base, size };
+        const isKey = key && w.toLowerCase().replace(/[^\p{L}\p{N}'’-]/gu, '') === key, heavy = heavy0, wo = optsFor(w, size);
         const ww = K.measure(w, wo), t0 = gi / Math.max(1, n) * span, p = easeOut(clamp((age - t0) / .26));
         if (p > 0 && heavy && isKey) {                                       // palabra con peso: cae, golpea y deja sombra mal registrada
           const q = clamp((age - t0) / .18), drop = (1 - q * q) * size * .9, sc = 1 + (1 - q) * .5, c = K.c;
@@ -149,8 +157,10 @@
   function scribble(x, y, w, p, ink) { if (p <= 0) return; const pts = []; for (let i = 0; i <= 18; i++) pts.push([x - 4 + (w + 8) * i / 18, y + sin(i * 1.6) * 3 + i * .5]); R.props.pen(K, pts, p, { i: ink, lw: 7, seed: 5, single: true }); }
 
   // traducción: etiqueta de papel con letra de imprenta, siempre legible sobre cualquier trama
-  function trBox(text, x, y, maxW, align, size = 38) {
+  // fromBottom: y es el borde de abajo (la caja crece hacia arriba y nunca pisa lo que hay debajo)
+  function trBox(text, x, y, maxW, align, size = 38, fromBottom = false) {
     const o = { size, w: 600, font: 'display', stretch: 'normal' }; const { size: sz, lines } = fitText(text, maxW - 28, 200, o, 3), lh = sz * 1.2, h = lines.length * lh + 22, wmax = Math.max(...lines.map(l => K.measure(l.join(' '), { ...o, size: sz }))) + 28;
+    if (fromBottom) y -= h;
     const bx = align === 'right' ? x - wmax : align === 'center' ? x - wmax / 2 : x;
     K.rect(bx + 6, y + 6, wmax, h, { f: 1, ft: .3, over: true }); K.rect(bx, y, wmax, h, { f: -1, s: 1, lw: 3.5 });
     lines.forEach((l, i) => K.txt(l.join(' '), bx + 14, y + 10 + sz * .95 + i * lh, { ...o, size: sz, i: 1 })); return h + 8;
@@ -203,18 +213,18 @@
     const v = K.v, m = st.margin, kt = K.t - s.k0, li = s.li, text = s.text?.text || '', age = s.text ? (time + .2 + (IN.off || 0)) - s.text.t : 0, dur = s.text?.dur || 3;
     const showText = IN.show !== false && text;
     st.setInks(s.inks);
-    if (s.kind === 'prop') {
+    if (s.kind === 'prop' || s.kind === 'singer') {
       drawBg(s, kt);
       const draw = clamp(kt / 1.1), cxp = pcx(s), cy = 450;
       const sc = s.props.length > 1 ? 1.05 : 1.35;
-      s.props.forEach((p, i) => { const off = i === 0 ? [0, 0] : [(i === 1 ? -1 : 1) * (s.flip ? -1 : 1) * 250, (i === 1 ? 1 : -1) * 130], k = clamp((kt - i * .35) / 1.1);
+      if (s.kind === 'singer') R.singers.draw(s, kt, time, age, dur); else s.props.forEach((p, i) => { const off = i === 0 ? [0, 0] : [(i === 1 ? -1 : 1) * (s.flip ? -1 : 1) * 250, (i === 1 ? 1 : -1) * 130], k = clamp((kt - i * .35) / 1.1);
         R.props.drawProp(K, p.id, cxp + off[0], cy + off[1], sc * (i === 0 ? 1 : .55), easeOut(k), { seed: s.seed + i * 7, ph: p.ph, rot: p.rot }); });
       if (s.props.length > 1 || s.bg === 'paper') K.tape(cxp - 190, cy - 240, 120, 38, -.5);
       K.screen(() => {
         let wlh = v.h * .4; if (showText) { const w = (v.w - m * 2) * .46, x = s.flip ? v.r - m - w - 10 : v.l + m + 10; if (window.CFG?.textBox) { const ft = fitText(text, w, v.h * .5, { size: 104 * clamp(CFG.lyricSize || 1, .7, 1.6), w: 600, font: 'hand' }); K.rect(x - 16, v.t + m + 88, w + 32, ft.lines.length * ft.size * 1.12 + 26, { f: -1, s: 1, lw: 3.5 }); } wlh = writeLine(text, x, v.t + m + 96, w, v.h * .5, age, dur, { align: s.flip ? 'right' : 'left', keyPaper: s.bg === 'flood' }).h; }
         if (s.text?.tr && showText) { const w = (v.w - m * 2) * .46, x = s.flip ? v.r - m - w - 10 : v.l + m + 10, yy = v.t + m + 96 + wlh + 18; trBox(s.text.tr, s.flip ? x + w : x, Math.min(yy, v.b - m - 330), w, s.flip ? 'right' : 'left'); }
       });
-      notes(s, time, s.flip ? 'noStamp' : 'x');
+      notes(s.kind === 'singer' ? { ...s, notes: s.notes.filter(n => n !== 'stat' && n !== 'post') } : s, time, s.flip ? 'noStamp' : 'x');
     } else if (s.kind === 'scene') {
       const sc = R.scenes[s.scene]; let state = RC.sceneState[s.scene]; if (!state) state = RC.sceneState[s.scene] = sc.make(R.rng(hash(ext.key() + s.scene)), K) || {};
       K.c.save(); try { sc.draw(K, state, K.t, dt, R.A); } finally { K.c.restore(); }
@@ -222,7 +232,7 @@
         if (showText) { const w = Math.min(v.w * .62, 900), o = { size: 70, font: 'display', w: 800, ls: 0 }, fit = fitText(text, w - 44, 300, o, 3), bh = fit.lines.length * fit.size * 1.1 + 40, x = v.l + m + 10, y = v.b - m - bh - 8;
           K.rect(x + 8, y + 8, w, bh, { f: 1, ft: .3, over: true }); K.rect(x, y, w, bh, { f: -1, s: 1, lw: 4 });
           writeLine(text, x + 22, y + 6, w - 44, bh - 12, age, dur, { size: 70, font: 'display', scribble: false });
-          if (s.text?.tr) trBox(s.text.tr, x, y - 92, w, 'left', 34); }
+          if (s.text?.tr) trBox(s.text.tr, x, y - 10, w, 'left', 34, true); }
       });
       const saved = s.notes; notes({ ...s, notes: saved.filter(n => n !== 'stat' && n !== 'post') }, time, 'x');
     } else if (s.kind === 'giant') {
@@ -231,8 +241,8 @@
         const cx = (v.l + v.r) / 2, cy = (v.t + v.b) / 2 + size * .3, wo = { size: size * (.85 + .15 * p), w: 900, font: 'display', align: 'center', stretch: 'condensed' };
         K.txt(word, cx + 10, cy + 10, { ...wo, i: 3, tone: .9 }); K.txt(word, cx - 6, cy - 4, { ...wo, i: 2 });          // dos tintas mal registradas
         K.c.save(); K.c.strokeStyle = K.ink(1); K.c.lineWidth = 6; K.c.lineJoin = 'round'; K.c.font = `900 ${wo.size}px ${R.FONTS.display}`; try { K.c.fontStretch = 'condensed'; } catch (e) {} K.c.textAlign = 'center'; K.c.strokeText(word, cx, cy); K.c.restore();
-        if (showText) K.txt(text, cx, v.b - m - 30, { font: 'hand', w: 600, size: 44, align: 'center', i: 1 });
-        if (showText && s.text?.tr) trBox(s.text.tr, cx, v.b - m - 120, v.w * .6, 'center', 34);
+        if (showText) writeLine(text, v.l + m + 20, v.b - m - 130, v.w - m * 2 - 40, 112, age, dur, { size: 44, align: 'center', scribble: false });
+        if (showText && s.text?.tr) trBox(s.text.tr, cx, v.b - m - 140, v.w * .6, 'center', 34, true);
       });
       notes(s, time, 'x');
     } else {                                                        // título, cierre y modo portada
