@@ -70,6 +70,12 @@ la risografía no es solo el fondo: la bienvenida, los ajustes, la consola de re
 |---|---|
 | ![bienvenida sobre una escena viva, con etiquetas de papel](docs/img/bienvenida-riso.jpg) | ![ajustes en papel crema: fichas, teclas cuadradas y faders con regla](docs/img/ajustes-riso.jpg) |
 
+## catálogo de dibujos
+
+739 dibujos procedurales en risografía que el videoclip elige cuando la letra los nombra: banderas, objetos, símbolos, emociones, comida, países (monumentos, animales, objetos típicos), animales, naturaleza, transporte, tecnología, música, famosos (por emblema, nunca por retrato), oficios, deportes, fiestas, ropa y cuerpo. la lista completa con sus palabras disparadoras está en [docs/CATALOGO.md](docs/CATALOGO.md) (se regenera con `node tools/catalogo_md.mjs`) y las hojas de contacto en `docs/img/catalogo-*.jpg`. cada categoría se apaga o se hace más rara desde ajustes > contenido.
+
+para agregar uno: escribe `add(id, categoría, etiqueta, /palabras/i, [figuras], {moods})` en un `riso-props-*.js` (mira `riso-props-lib.js` para las figuras y movimientos), inclúyelo en `index.html` y corre `./tools/check.sh`: comprueba que quepa en la caja, que no pase de 900 puntos y que no dispare con frases neutras. en los patrones de palabras usa `(es)?` para el plural (`tren(es)?`), no `es?`.
+
 ## capturas reales
 
 | | |

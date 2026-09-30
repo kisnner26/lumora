@@ -14,9 +14,12 @@ const DEBE = [
   ['una estrella en el volcán', 'volcan'], ['después de la tormenta un arcoíris', 'arcoiris'], ['el amanecer en la playa', 'amanecer'], ['el planeta rojo', 'planeta'],
   ['viajando en tren de noche', 'tren'], ['un avión al cielo', 'avion'], ['despegó el cohete', 'cohete'], ['en la moto a mil', 'moto'],
   ['mi laptop y mi celular', 'laptop'], ['te mando un mensaje', 'chat'], ['tocando la guitarra', 'guitarra_acustica'], ['el saxofón suena', 'saxofon'], ['un vinilo en el tocadiscos', 'vinilo'],
+  ['como Messi en la cancha', 'messi'], ['bailando como Michael Jackson', 'michael_jackson'], ['Bad Bunny en el radio', 'bad_bunny'], ['leí a Rubén Darío', 'ruben_dario'], ['Frida y sus flores', 'frida_kahlo'], ['un genio como Einstein', 'einstein'],
+  ['el médico me dijo', 'medico'], ['soy bombero', 'bombero'], ['un mago en el circo', 'mago'], ['metió un gol en la portería', 'porteria'],
+  ['una fiesta hasta el amanecer', 'serpentina'], ['con globos y confeti', 'globos'], ['me puse mi vestido', 'vestido'], ['tus tacones en el piso', 'tacones'], ['un abrazo eterno', 'abrazo'], ['sonrisa bonita', 'sonrisa'],
   ['bajo la torre Eiffel', 'torre_eiffel'], ['las pirámides de Egipto', 'piramides'], ['un canguro en Australia', 'canguro'], ['el cóndor de los Andes', 'condor'], ['vamos a Machu Picchu', 'machu_picchu'],
 ];
-const NO = ['te quiero mucho mi amor', 'the city lights are burning', 'un café en la mañana', 'i miss you baby', 'dance until the morning sun', 'sleeping in this empty house', 'tengo el corazón roto', 'no me digas que no', 'cruzando el puente hacia tu casa', 'solo quiero estar contigo', 'tal vez mañana te vea', 'gracias por todo', 'eres mi mate en este juego', 'siempre te veo igual', 'lo que siento es real', 'quiero verte otra vez', 'tú y yo, nada más'];
+const NO = ['te quiero mucho mi amor', 'the city lights are burning', 'un café en la mañana', 'i miss you baby', 'dance until the morning sun', 'tengo el corazón roto', 'no me digas que no', 'cruzando el puente hacia tu casa', 'solo quiero estar contigo', 'tal vez mañana te vea', 'gracias por todo', 'eres mi mate en este juego', 'siempre te veo igual', 'lo que siento es real', 'quiero verte otra vez', 'tú y yo, nada más', 'eres fuerte y valiente', 'me duele el alma', 'voy paso a paso'];
 const r = await p.evaluate(([debe, no]) => ({ debe: debe.map(([f, id]) => [f, id, RISO.people.detect(f, 5)]), no: no.map(f => [f, RISO.people.detect(f, 5)]) }), [DEBE, NO]);
 let ok = true, hits = 0;
 for (const [f, id, got] of r.debe) { const c = got.includes(id); hits += c; if (!c) { ok = false; console.log('FALLA debe disparar', id, '<-', f, '=>', got.join(',') || '(nada)'); } }

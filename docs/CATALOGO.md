@@ -1,6 +1,6 @@
 # catálogo de dibujos
 
-generado con `node tools/catalogo_md.mjs` desde el motor real. total: **578** dibujos (471 en el catálogo + 107 originales).
+generado con `node tools/catalogo_md.mjs` desde el motor real. total: **739** dibujos (632 en el catálogo + 107 originales).
 
 | categoría | dibujos |
 |---|---|
@@ -15,6 +15,12 @@ generado con `node tools/catalogo_md.mjs` desde el motor real. total: **578** di
 | transporte | 24 |
 | tecnologia | 25 |
 | musica | 20 |
+| famosos | 59 |
+| oficios | 30 |
+| deportes | 14 |
+| fiestas | 23 |
+| ropa | 17 |
+| cuerpo | 18 |
 | originales (riso-props.js) | 107 |
 
 ## banderas (69)
@@ -542,6 +548,197 @@ generado con `node tools/catalogo_md.mjs` desde el motor real. total: **578** di
 | `acordeon` | ACORDEÓN | (acorde[oó]n(es)? · accordions? · bandone[oó]n · vallenato · cumbia · norte[nñ]o · polka · conjunto norte[nñ]o · tango) |
 | `maracas` | MARACAS | (maracas? · guiro · g[uü]iro · percusi[oó]n latina · cascabel · rattle · sonajero · shaker · caribe musical · salsa · merengue · bachata) |
 | `escenario` | ESCENARIO | (escenarios? · stage · conciertos? · concerts? · tarima · gira · festival · banda en vivo · live band · spotlight · reflectores · telón · curtain · aplausos · applause · encore) |
+
+## famosos (59)
+
+| id | etiqueta | palabras que lo disparan |
+|---|---|---|
+| `michael_jackson` | MICHAEL JACKSON | (michael jackson · rey del pop · king of pop · moonwalk · thriller · billie jean) |
+| `elvis` | ELVIS | (elvis · presley · el rey del rock · king of rock) |
+| `bob_marley` | BOB MARLEY | (bob marley · marley · rastafari · rasta · reggae · jah) |
+| `beatles` | LOS BEATLES | (the beatles · beatles · john lennon · paul mccartney · ringo · abbey road · yellow submarine) |
+| `freddie_mercury` | FREDDIE MERCURY | (freddie mercury · freddie · bohemian rhapsody · queen band · we will rock you) |
+| `david_bowie` | DAVID BOWIE | (david bowie · bowie · ziggy stardust · starman · major tom) |
+| `kurt_cobain` | KURT COBAIN | (kurt cobain · cobain · nirvana · smells like teen spirit · grunge) |
+| `jimi_hendrix` | JIMI HENDRIX | (jimi hendrix · hendrix · purple haze · woodstock) |
+| `bad_bunny` | BAD BUNNY | (bad bunny · benito · conejo malo · un verano sin ti · yhlqmdlg) |
+| `shakira` | SHAKIRA | (shakira · hips don't lie · waka waka · caderas · belly dance · danza del vientre) |
+| `selena` | SELENA | (selena quintanilla · selena · bidi bidi bom bom · como la flor · reina del tex.?mex) |
+| `celia_cruz` | CELIA CRUZ | (celia cruz · la reina de la salsa · az[uú]car) |
+| `luis_miguel` | LUIS MIGUEL | (luis miguel · el sol de m[eé]xico · luismi · la incondicional) |
+| `beyonce` | BEYONCÉ | (beyonc[eé] · beyhive · queen bey · single ladies · crazy in love · lemonade) |
+| `rihanna` | RIHANNA | (rihanna · umbrella · diamonds in the sky · fenty) |
+| `taylor_swift` | TAYLOR SWIFT | (taylor swift · swifties? · eras tour · shake it off · love story taylor · cruel summer · folklore · evermore) |
+| `eminem` | EMINEM | (eminem · slim shady · marshall mathers · lose yourself · 8 mile) |
+| `tupac` | TUPAC | (tupac · 2pac · shakur · all eyez on me · changes tupac) |
+| `daddy_yankee` | DADDY YANKEE | (daddy yankee · gasolina · el cangri · dale don dale · la gasolina) |
+| `adele` | ADELE | (adele · hello from the other side · rolling in the deep · someone like you · skyfall adele) |
+| `amy_winehouse` | AMY WINEHOUSE | (amy winehouse · winehouse · back to black · rehab amy · valerie amy) |
+| `madonna` | MADONNA | (material girl · like a virgin · la reina del pop) |
+| `juanes` | JUANES | (juanes · la camisa negra · a dios le pido · colombia tengo el alma) |
+| `messi` | MESSI | (messi · lionel messi · leo messi · la pulga · la pulga atómica) |
+| `maradona` | MARADONA | (maradona · diego maradona · diego armando · la mano de dios · d10s · el pelusa) |
+| `pele` | PELÉ | (pel[eé] · edson arantes · o rei pel[eé] · rey pel[eé]) |
+| `cristiano` | CRISTIANO RONALDO | (cristiano ronaldo · cr7 · siuuu+ · ronaldo) |
+| `michael_jordan` | MICHAEL JORDAN | (michael jordan · air jordan · his airness · chicago bulls · jordan 23) |
+| `kobe_bryant` | KOBE BRYANT | (kobe bryant · kobe · black mamba · mamba mentality · lakers · 24 y 8) |
+| `lebron` | LEBRON JAMES | (lebron james · lebron · king james · el elegido) |
+| `muhammad_ali` | MUHAMMAD ALI | (muhammad ali · mohamed ali · cassius clay · the greatest ali · float like a butterfly · rumble in the jungle) |
+| `usain_bolt` | USAIN BOLT | (usain bolt · lightning bolt · rel[aá]mpago bolt · el hombre m[aá]s r[aá]pido · fastest man) |
+| `serena_williams` | SERENA WILLIAMS | (serena williams · venus williams · serena · wimbledon · grand slam) |
+| `tiger_woods` | TIGER WOODS | (tiger woods · masters augusta · golf legend) |
+| `roberto_clemente` | ROBERTO CLEMENTE | (roberto clemente · el gran 21 · pittsburgh pirates) |
+| `alexis_arguello` | ALEXIS ARGÜELLO | (alexis arg[uü]ello · arg[uü]ello · el flaco explosivo · flaco explosivo) |
+| `einstein` | EINSTEIN | (albert einstein · einstein · e ?= ?mc · relatividad · relativity) |
+| `frida_kahlo` | FRIDA KAHLO | (frida kahlo · frida · kahlo · las dos fridas · casa azul) |
+| `picasso` | PICASSO | (pablo picasso · picasso · guernica · cubismo · cubism) |
+| `van_gogh` | VAN GOGH | (van gogh · vincent van gogh · noche estrellada · starry night · los girasoles) |
+| `dali` | DALÍ | (salvador dal[ií] · dal[ií] · relojes derretidos · melting clocks · persistence of memory · surrealismo · surrealism) |
+| `da_vinci` | LEONARDO DA VINCI | (leonardo da vinci · da vinci · hombre de vitruvio · vitruvian man · mona lisa · la gioconda) |
+| `mozart` | MOZART | (mozart · wolfgang amadeus · eine kleine nachtmusik · requiem mozart · amadeus) |
+| `beethoven` | BEETHOVEN | (beethoven · ludwig van · para elisa · f[uú]r elise · novena sinfon[ií]a · ninth symphony · oda a la alegr[ií]a) |
+| `shakespeare` | SHAKESPEARE | (shakespeare · william shakespeare · romeo y julieta · romeo and juliet · hamlet · ser o no ser · to be or not to be · macbeth) |
+| `garcia_marquez` | GARCÍA MÁRQUEZ | (garc[ií]a m[aá]rquez · gabriel garc[ií]a · gabo · cien a[nñ]os de soledad · macondo · realismo m[aá]gico) |
+| `neruda` | NERUDA | (pablo neruda · neruda · veinte poemas de amor · puedo escribir los versos · isla negra) |
+| `borges` | BORGES | (jorge luis borges · borges · el aleph · ficciones · laberinto de borges · la biblioteca de babel) |
+| `cervantes` | CERVANTES | (miguel de cervantes · cervantes · don quijote · quijote · sancho panza · dulcinea · el quijote) |
+| `ruben_dario` | RUBÉN DARÍO | (rub[eé]n dar[ií]o · azul dar[ií]o · sonatina · margarita est[aá] linda · felix rub[eé]n garc[ií]a sarmiento · poeta de nicaragua) |
+| `chaplin` | CHAPLIN | (charlie chaplin · chaplin · charlot · tiempos modernos · modern times · the kid chaplin · cine mudo · silent film) |
+| `marilyn` | MARILYN MONROE | (marilyn monroe · marilyn · los caballeros las prefieren rubias · happy birthday mr president) |
+| `audrey_hepburn` | AUDREY HEPBURN | (audrey hepburn · hepburn · desayuno con diamantes · breakfast at tiffany · moon river) |
+| `tesla_nikola` | NIKOLA TESLA | (nikola tesla · tesla coil · bobina tesla · corriente alterna · alternating current) |
+| `darwin` | DARWIN | (charles darwin · darwin · el origen de las especies · origin of species · evoluci[oó]n · evolution · teor[ií]a de la evoluci[oó]n) |
+| `marie_curie` | MARIE CURIE | (marie curie · madame curie · curie · radio y polonio · radium · polonium · radiactividad · radioactivity) |
+| `newton` | NEWTON | (isaac newton · newton · ley de la gravedad · law of gravity · gravitaci[oó]n universal · principia) |
+| `hawking` | HAWKING | (stephen hawking · hawking · agujero negro · black hole · breve historia del tiempo · brief history of time · radiaci[oó]n de hawking) |
+| `bruce_lee` | BRUCE LEE | (bruce lee · bruce li · enter the dragon · kung fu · kungfu · jeet kune do · artes marciales · martial arts) |
+
+## oficios (30)
+
+| id | etiqueta | palabras que lo disparan |
+|---|---|---|
+| `medico` | MÉDICO | (m[eé]dic[oa]s? · doctor(es · a · as)? · doctors? · estetoscopio · stethoscope · cirujan[oa]s? · surgeons? · bata blanca · paciente · patient · enfermer[oa]s? · nurses? · consulta m[eé]dica) |
+| `bombero` | BOMBERO | (bomberos? · firefighters? · firemen · fireman · casco de bombero · manguera · fire hose · fire truck · camion de bomberos) |
+| `policia_placa` | POLICÍA | (polic[ií]as? · policemen · policeman · placa de polic[ií]a · sheriff · agente de polic[ií]a) |
+| `maestro` | MAESTRO | (maestr[oa]s? · profesor(es · a · as)? · teachers? · professors? · escuela · school · pizarr[oó]n · blackboard · alumnos? · homework) |
+| `cocinero` | COCINERO | (cocineros? · chefs? · cocinar · cooking · cocina · kitchen · restaurante · restaurant · receta · recipe · delantal · apron) |
+| `piloto` | PILOTO | (pilotos? · pilots? · aviador(es)? · aviator · cabina · cockpit · capit[aá]n del avi[oó]n · aviaci[oó]n · aviation) |
+| `astronauta` | ASTRONAUTA | (astronautas? · astronauts? · cosmonautas? · traje espacial · spacesuit · space suit · viaje espacial · space walk · caminata espacial) |
+| `pintor` | PINTOR | (pintor(es · a · as)? · painters? · paleta de colores · color palette · lienzo · caballete · easel · pintar · painting · cuadro) |
+| `carpintero` | CARPINTERO | (carpinter[oa]s? · carpenters? · sierra · saws? · serrucho · madera · woodwork · clavo · nails · taladro · drill) |
+| `albanil` | ALBAÑIL | (alba[nñ]iles? · bricklayers? · constructor(es · a · as)? · builders? · obreros? · construcci[oó]n · construction · casco de obra · hard hat · andamio · scaffold · cemento · cement) |
+| `mecanico` | MECÁNICO | (mec[aá]nic[oa]s? · mechanics? · taller mec[aá]nico · garage · llave inglesa · wrench · tuerca · nut and bolt · tornillo · screw · engranaje · gears) |
+| `electricista` | ELECTRICISTA | (electricistas? · electricians? · alicates · pliers · corto ?circuito · short circuit · cable pelado · voltios · volts) |
+| `soldado` | SOLDADO | (soldados? · soldiers? · militar(es)? · military · guerra · ej[eé]rcito · army · batall[oó]n · battle · trinchera · trench · fusil · rifle · veterano · veteran) |
+| `abogado` | ABOGADO | (abogad[oa]s? · lawyers? · attorneys? · juez(es)? · judges? · tribunal · court · juicio · sentencia · verdict · justicia · justice · mazo · gavel · testigo) |
+| `microscopio` | CIENTÍFICO | (cient[ií]fic[oa]s? · scientists? · microscopio · microscope · laboratorio · laboratory · laboratory · experimento · investigador · researcher · qu[ií]mica · chemistry · f[ií]sica · physics · biolog[ií]a · biology) |
+| `detective` | DETECTIVE | (detective · detectives · investigador privado · private eye · gabardina · trench coat · sherlock · holmes · caso sin resolver · cold case · sospechoso · suspect) |
+| `mago` | MAGO | (mag[oa]s? · magicians? · wizards? · hechicer[oa]s? · varita · wand · truco de magia · magic trick · abracadabra · ilusionista · illusionist · sombrero de copa · top hat · conejo del sombrero) |
+| `payaso` | PAYASO | (payas[oa]s? · clowns? · circo · circus · arlequ[ií]n · harlequin · malabares · juggling · acr[oó]bata · acrobat · trapecio · trapeze) |
+| `pescador` | PESCADOR | (pescador(es · a · as)? · fishermen · fisherman · fishing · pescar · ca[nñ]a de pescar · fishing rod · anzuelo · red de pesca · fishing net · carnada · bait) |
+| `timon` | TIMÓN | (tim[oó]n · helm · rueda del barco · ship'?s wheel · capit[aá]n de barco · captain · marinero · sailor · navegante · navigator) |
+| `minero` | MINERO | (mineros? · miners? · carb[oó]n · coal · pico y pala · pickaxe · excavar · oro y plata · gold rush · cantera) |
+| `barbero` | BARBERO | (barberos? · barbers? · barber[ií]a · barbershop · peluquer[ií]a · hair salon · peluquer[oa]s? · hairdresser · corte de pelo · haircut · navaja · razor · afeitar · shave) |
+| `panadero` | PANADERO | (panaderos? · bakers? · panader[ií]a · bakery · horno · oven · hornear · bake · amasar · knead · harina · flour · masa · dough) |
+| `dentista` | DENTISTA | (dentistas? · dentists? · muela · molar · tooth · teeth · dientes · caries · cavity · ortodoncia · braces · sonrisa perfecta) |
+| `cartero` | CARTERO | (carteros? · mail ?man · mailmen · postal · post office · oficina de correos · paquete · package · parcel · encomienda · delivery · repartidor · courier) |
+| `bailarina` | BAILARINA | (bailarin(es · a · as)? · dancers? · ballet · zapatillas de ballet · ballerinas? · danza · dancing shoes · tut[uú]) |
+| `pirata` | PIRATA | (pirat(as? · es) · pirates? · parche · eyepatch · tesoro pirata · pirate ship · jolly roger · calavera pirata · corsario · buccaneer · capit[aá]n garfio) |
+| `arquitecto` | ARQUITECTO | (arquitect[oa]s? · architects? · planos? · blueprints? · dise[nñ]ador de edificios · regla y comp[aá]s · compass and ruler · ingenier[oa]s? · engineers? · maqueta) |
+| `jardinero` | JARDINERO | (jardiner[oa]s? · gardeners? · jard[ií]n · garden · regadera · watering can · sembrar · sow · planting · huerto · orchard · maceta · flower pot) |
+| `sastre` | SASTRE | (sastres? · tailors? · costurer[oa]s? · seamstress · m[aá]quina de coser · sewing machine · coser · sew · aguja e hilo · needle and thread · dobladillo · hem) |
+
+## deportes (14)
+
+| id | etiqueta | palabras que lo disparan |
+|---|---|---|
+| `porteria` | PORTERÍA | (porter[ií]a · goal post · arco de f[uú]tbol · f[uú]tbol · soccer · football · gol(es)? · penal(ti)? · penalty · estadio · stadium) |
+| `canasta` | CANASTA | (canasta · basket · baloncesto · basketball · b[aá]squet(bol)? · nba · encestar · dunk · clavada · tiro triple · three pointer) |
+| `beisbol` | BÉISBOL | (b[eé]isbol · baseball · home run · jonr[oó]n · softball · grandes ligas · major league · pitcher · lanzador · catcher) |
+| `tenis_raqueta` | TENIS | (tenis · tennis · raquetas? · rackets? · racquet · pelota de tenis · tennis ball · cancha de tenis) |
+| `nadador` | NADADOR | (nadadores? · swimmers? · nataci[oó]n · swimming · nadar · swim · piscina · swimming pool · trampol[ií]n) |
+| `guantes_boxeo` | BOXEO | (boxeo · boxing · boxeador(es)? · boxers? · guantes de boxeo · boxing gloves? · cuadril[aá]tero · nocaut · knockout · pelea de box) |
+| `esqui` | ESQUÍ | (esqu[ií](ar)? · ski · skiing · esquiador · skier · snowboard · pista de esqu[ií] · slope) |
+| `surf` | SURF | (surf · surfing · surfista · surfers? · tabla de surf · surfboard · olas para surfear · hang ten) |
+| `voleibol` | VOLEIBOL | (voleibol · volleyball · voley · v[oó]ley · red de voleibol · voley playa · beach volley) |
+| `pesas` | PESAS | (pesas? · weights? · gimnasio · gym · mancuernas? · dumbbells? · barbell · halterofilia · weightlifting · entrenar · workout · levantar pesas · bodybuilding) |
+| `golf_hoyo` | GOLF | (golf · golfista · golfer · hoyo en uno · hole in one · campo de golf · golf course · caddie · birdie) |
+| `ajedrez` | AJEDREZ | (ajedrez · chess · jaque mate · checkmate · tablero de ajedrez · chessboard · peones? · pawns? · reina y rey · caballo y torre · gambito · gambit) |
+| `meta_carrera` | META | (carrera · running · correr · maratones? · marathon · atletismo · athletics · l[ií]nea de meta · finish line · sprint · corredor(es)? · runners? · jogging) |
+| `gimnasta` | GIMNASIA | (gimnasta · gymnast · gimnasia · gymnastics · cinta de gimnasia · ribbon dance · barra de equilibrio · balance beam · acrobacia · acrobatics · yoga · pilates · estiramiento · stretching) |
+
+## fiestas (23)
+
+| id | etiqueta | palabras que lo disparan |
+|---|---|---|
+| `globos` | GLOBOS | (globos? · balloons? · fiesta de cumplea[nñ]os · birthday party · cumplea[nñ]os · birthday · feliz cumple · happy birthday) |
+| `pinata` | PIÑATA | (pi[nñ]atas? · pinatas? · fiesta mexicana · dulces de pi[nñ]ata · papel picado) |
+| `confeti` | CONFETI | (confeti · confetti · serpentinas? · streamers? · celebraci[oó]n · celebration · celebrar · celebrate · felicitaciones · congratulations · hooray · viva la fiesta) |
+| `calabaza_halloween` | CALABAZA | (calabazas? · pumpkins? · jack.?o.?lantern · halloween · noche de brujas · truco o trato · trick or treat) |
+| `bruja` | BRUJA | (brujas? · witch(es)? · escoba m[aá]gica · broomstick · hechizo · spell · caldero · cauldron · poci[oó]n · potion · brujer[ií]a · witchcraft) |
+| `catrina` | CALAVERA | (calaveras? · skulls? · catrinas? · d[ií]a de muertos · day of the dead · dia de los muertos · ofrenda · altar de muertos · sugar skull · memento mori) |
+| `cempasuchil` | CEMPASÚCHIL | (cempas[uú]chil · cempoal · marigolds? · flor de muerto · flores de muerto · caléndula · calendula) |
+| `cupido` | CUPIDO | (cupido · cupid · flecha de amor · love arrow · san valent[ií]n · valentine · d[ií]a de los enamorados · be my valentine) |
+| `campanadas` | AÑO NUEVO | (a[nñ]o nuevo · new year · nochevieja · new year'?s eve · fin de a[nñ]o · feliz a[nñ]o · happy new year · medianoche · midnight · doce campanadas · countdown · cuenta regresiva) |
+| `ramo_novia` | RAMO DE NOVIA | (ramo de novia · bouquet · boda · wedding · novia · bride · novio · groom · casarse · marry me · casamiento · altar de boda · luna de miel · honeymoon) |
+| `mono_novio` | CORBATÍN | (mo[nñ]o · bow tie · esmoquin · tuxedo · smoking · traje de gala · formal wear · gala · baile de graduaci[oó]n · prom) |
+| `serpentina` | FIESTA | (fiestas? · party · parties · fiestita · rumba · parranda · farra · juerga · after party · pachanga · festejo · bash) |
+| `guirnalda` | GUIRNALDA | (guirnaldas? · garlands? · banderines · bunting · luces de fiesta · string lights · luces navide[nñ]as · christmas lights · lucecitas · fairy lights) |
+| `farolillo` | FAROLILLO | (linternas de papel · paper lanterns? · lanternas? · farolillos? · lantern · lanterns · luces flotantes · floating lanterns · festival de luces) |
+| `cotillon` | CORNETA | (cotill[oó]n · party horn · corneta de fiesta · party blower · gorro de fiesta · party hat · sombrero de fiesta · noisemaker) |
+| `fogata` | FOGATA | (fogata · campfire · hoguera · bonfire · acampar · camping · campamento · tienda de campa[nñ]a · tent · malvavisco · marshmallow) |
+| `picnic` | PICNIC | (picnic · pic-?nic · merienda · manta de picnic · picnic blanket · cesta de picnic · picnic basket) |
+| `sombrilla` | SOMBRILLA DE PLAYA | (sombrilla de playa · beach umbrella · playa · beach · arena y sol · sand and sun · vacaciones · vacation · holidays · verano · summer · veraneo · bronceado · suntan · tan lines) |
+| `bola_disco` | BOLA DE DISCO | (bola de disco · disco ball · mirror ball · discoteca ochentera · disco fever · saturday night · noche de baile · dancefloor · pista de baile · dance floor) |
+| `champan` | BRINDIS | (brindis · toast · cheers · chin chin · champ[aá]n · champagne · espumante · sparkling wine · descorchar · uncork · copas en alto · raise a glass · prost) |
+| `gorro_navidad` | GORRO NAVIDEÑO | (gorro de navidad · santa hat · santa claus · pap[aá] noel · navidad · christmas · xmas · nochebuena · villancicos? · carols? · reno de navidad · rudolph) |
+| `calcetin_navidad` | CALCETÍN NAVIDEÑO | (calcet[ií]n navide[nñ]o · christmas stocking · medias navide[nñ]as · stocking · regalos de navidad · christmas gifts · nieve navide[nñ]a · chimenea navide[nñ]a · fireplace) |
+| `trineo` | TRINEO | (trineo · sled · sleigh · toboggan · patinaje sobre hielo · ice skating · patines de hielo · ice skates · pista de hielo · ice rink) |
+
+## ropa (17)
+
+| id | etiqueta | palabras que lo disparan |
+|---|---|---|
+| `camisa` | CAMISA | (camisas? · shirts? · camiseta · t-?shirt · blusa · blouse · polera · playera · jersey · remera) |
+| `pantalon` | PANTALÓN | (pantalones? · pants · jeans · vaqueros? · trousers · mezclilla · denim · shorts? · bermudas?) |
+| `vestido` | VESTIDO | (vestidos? · dress(es)? · falda · skirt · traje de noche · evening gown · gown · minifalda · miniskirt) |
+| `tacones` | TACONES | (tacones? · tac[oó]n alto · high heels? · heels · stilettos? · zapatos de tac[oó]n · zapatillas de tac[oó]n · pumps) |
+| `tenis_zapato` | TENIS | (zapatillas · sneakers? · tenis de correr · running shoes? · kicks · zapatos deportivos · trainers · air max · jordans · sneakerhead) |
+| `botas` | BOTAS | (botas? · boots? · botines? · ankle boots? · botas de cuero · cowboy boots? · botas vaqueras · rain boots · botas de lluvia · wellies) |
+| `gorra` | GORRA | (gorras? · caps? · baseball cap · gorra de b[eé]isbol · snapback · visera · visor · sombrero de sol · sun hat · bucket hat · beanie · gorro de lana) |
+| `bufanda` | BUFANDA | (bufandas? · scarf · scarves · pa[nñ]uelo · handkerchief · bandana · chalinas? · shawl · mantilla · pashmina) |
+| `guantes_lana` | GUANTES | (guantes? · mittens? · gloves? · mitones · manoplas) |
+| `chaqueta` | CHAQUETA | (chaquetas? · jackets? · chamarra · cazadora · abrigos? · coats? · sudadera · hoodie · su[eé]ter · sweater · pullover · chompa · cardigan · chaleco · vest) |
+| `corbata` | CORBATA | (corbatas? · necktie · tie and suit · traje y corbata · suit and tie · traje formal · business suit · trajeado · ejecutivo · executive · oficinista · office worker) |
+| `bolso` | BOLSO | (bolsos? · bolsas? · handbags? · purses? · carteras? · clutch · tote bag · mochilas? · backpacks? · maleta de mano · shopping bag · bolsa de compras) |
+| `calcetin` | CALCETÍN | (calcetines? · socks? · calcetas? · medias · stockings · tights · pantimedias · leggings) |
+| `traje_bano` | TRAJE DE BAÑO | (traje de ba[nñ]o · bikini · swimsuit · swimwear · bathing suit · trunks · ba[nñ]ador · malla · speedo) |
+| `chancletas` | CHANCLETAS | (chancletas? · flip.?flops? · sandalias? · sandals? · ojotas · havaianas · zapatos de playa · slippers? · pantuflas?) |
+| `delantal` | DELANTAL | (delantales? · aprons? · bata de cocina · kitchen apron · overol · overalls? · mono de trabajo · uniforme · uniform) |
+| `anteojos_negros` | ROPA DE NOCHE | (ropa · clothes · clothing · outfit · vestimenta · closet · armario · wardrobe · vestirse · get dressed · lentejuelas? · sequins? · encaje · lace · seda · silk · cuero · leather) |
+
+## cuerpo (18)
+
+| id | etiqueta | palabras que lo disparan |
+|---|---|---|
+| `oreja` | OREJA | (oreja · orejas · o[ií]dos? · ears? · sordo · deaf · susurro · whisper) |
+| `dedo_apunta` | DEDO QUE APUNTA | (apunta · apuntar · dedo [ií]ndice · index finger · acusar · accuse) |
+| `mano_saludo` | MANO SALUDANDO | (saludar · saludo · wave hello · waving · adi[oó]s con la mano · wave goodbye · bye bye) |
+| `mano_victoria` | MANO EN V | (victoria · victory sign · peace sign · se[nñ]al de paz · dos dedos · two fingers · amor y paz · love and peace · hippie · flower power · v de victoria) |
+| `brazo_fuerte` | BRAZO FUERTE | (m[uú]sculo · muscle · muscles · brazo fuerte · flex · flexionar · bicep · b[ií]ceps · poderoso · powerful · superman · hercules) |
+| `cabello_largo` | CABELLO LARGO | (cabello · pelo · hair · cabellera · melena larga · long hair · rizos · curls · curly · trenzas? · braids? · pelo suelto · hair down · peinado · hairstyle · cabello al viento · hair in the wind) |
+| `sonrisa` | SONRISA | (sonrisa · sonre[ií]r · sonriendo · smile · smiling · risa · laughter · re[ií]r · laugh · laughing · carcajada · giggle · reirse) |
+| `ojos_dormidos` | OJOS CERRADOS | (dormir · dormido · dormida · sleep · sleeping · asleep · sue[nñ]o profundo · siesta · nap · cerrar los ojos · close my eyes · eyes closed · closing my eyes · despertar · wake up · waking up · insomnio · insomnia · desvelado) |
+| `craneo` | CRÁNEO | (cr[aá]neo · skull and bones · calavera y huesos · huesos · bones? · esqueleto humano · jolly · veneno · poison · toxic · t[oó]xico · calaveras cruzadas) |
+| `pulmones` | PULMONES | (pulmones? · lungs? · respirar · breathe · breathing · aliento · breath · sin aliento · breathless · suspiro · sigh · exhalar · exhale · inhalar · inhale) |
+| `abrazo` | ABRAZO | (abrazos? · abrazar · abrazame · abr[aá]zame · hugs? · hugging · embrace · cuddle · cuddles · entre tus brazos · in your arms · en mis brazos · in my arms · acurrucar) |
+| `beso` | BESO | (besos? · besar · besarte · kiss · kisses · kissing · beso de buenas noches · te doy un beso · smooch · mua) |
+| `huellas_pies` | HUELLAS DE PIES | (huellas · footprints? · footsteps? · caminar juntos · walk together · pisadas) |
+| `cabeza_pensando` | PENSAMIENTOS | (pensamientos? · thoughts? · en mi cabeza · in my head · overthink) |
+| `latido_ecg` | LATIDO | (latido · latidos · heartbeat · heartbeats · pulso · pulse · palpitar · palpita · pulsaciones · taquicardia · te llevo en el pecho · coraz[oó]n latiendo · beating heart) |
+| `gota_sangre` | SANGRE | (sangre · blood · sangrar · bleed · bleeding · herida · wound · cicatriz · scars?) |
+| `aplauso` | APLAUSO | (aplausos? · aplaudir · applause · clap · clapping · ovaci[oó]n · standing ovation · bravo · palmas · palmear · clap your hands) |
+| `hueso` | HUESO | (hueso · hueso roto · broken bone · fractura · fracture · bone · hueso duro · hard bone · esqueleto de dinosaurio) |
 
 ## originales
 
