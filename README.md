@@ -10,6 +10,48 @@ página del producto: **https://kisnner26.github.io/lumora**
 
 ![una canción de amor: la pareja, los corazones y la palabra que remata el verso, elegidos por claude](docs/img/estreno.jpg)
 
+## el menú de inicio y los fondos animados
+
+![menú de inicio: cuatro tarjetas sobre una escena ilustrada en risografía; la seleccionada se agranda](docs/img/menu-inicio.jpg)
+
+lumora abre en un menú de inicio, como el de una consola: una escena ilustrada en movimiento constante y, encima, una fila de tarjetas: **lyric video**, **modo carátula**, **fondos animados** y **ajustes**. la seleccionada se agranda y el fondo cambia de escena con un corte animado (paneo, zoom o giro con borrón de movimiento, nunca un fundido). sin tocar nada, el fondo rota solo entre las escenas. se maneja con teclado (`←` `→`, `enter`, `1`–`4`, `esc`), mouse o gamepad. lo de siempre sigue igual, solo cambió la puerta de entrada: desde la bienvenida, `esc` o el botón «menú» vuelven al inicio.
+
+las escenas son el producto estrella. todas se dibujan con código, en tiempo real, sin imágenes ni videos, con la estética de una risografía: papel crema con grano, dos o tres tintas planas que se multiplican al sobreponerse, sombras y volumen con tramas de puntos, contornos gruesos con la tinta de relleno ligeramente desalineada, y una capa de anotaciones (papeles pegados con cinta, la letra resaltada palabra por palabra, sello de «en vivo» con reloj que corre, líneas de circuito que se dibujan solas y medidores).
+
+| | |
+|---|---|
+| ![oficina: la silla gira, el cristal brilla, el reloj marca la hora](docs/img/escena-oficina.jpg) | ![cuarto de noche: el bulto respira, el gato mueve la cola, la guirnalda late con el ritmo](docs/img/escena-cuarto.jpg) |
+| ![ciudad al atardecer: capas con paralaje, ventanas que parpadean, autos y un tren elevado](docs/img/escena-ciudad.jpg) | ![espacio: planeta con anillos, luna en órbita, astronauta atado y un cohete que cruza](docs/img/escena-espacio.jpg) |
+| ![bosque: pinos que se mecen, niebla, luciérnagas y un zorro](docs/img/escena-bosque.jpg) | ![retrato de plano cerrado: parpadea, respira y los audífonos laten con los graves](docs/img/escena-retrato.jpg) |
+| ![museo: la máquina tapada con una sábana, cuerda de terciopelo y placa](docs/img/escena-museo.jpg) | ![controles de los fondos animados: escena, velocidad, tintas, detalle, notas, ciclo y grabar](docs/img/fondos-controles.jpg) |
+
+- **con música y sin ella.** si hay audio (el análisis del puente, el micrófono o un mp3) las escenas siguen el bpm, la energía y los golpes: la silla gira más rápido, los focos laten, los audífonos emiten ondas. sin música se mueven solas, con un pulso suave.
+- **fondos animados** abre una escena a pantalla completa, sin menú. la barra de controles aparece al mover el mouse y se oculta sola: escena, **velocidad** (de pausa a 2,5×), **tintas** (seis combinaciones o las propias de cada escena), **detalle** (auto, bajo, medio, alto), notas, ciclo automático y **grabar** el fondo tal cual (mp4 o webm). teclas: `←` `→` escena, `↑` `↓` velocidad, `i` tintas, `d` detalle, `n` notas, `c` ciclo, `espacio` pausa, `r` grabar, `h` ocultar la barra, `f` pantalla completa. con gamepad: `lb`/`rb` escena, `a` tintas, `b` volver.
+- **el director las usa.** las siete escenas entran al catálogo del director de lumora (y al de claude y al modo autor): las elige cuando la letra habla de una oficina, un cuarto de noche, la ciudad, el espacio, el bosque, un rostro o un museo, o cuando el ánimo de la estrofa las pide. en un lyric video van con la letra encima y sin espejo ni gradación, para no romper el look.
+- **rendimiento.** el objetivo es 60 fps; si el promedio baja de 45, el detalle baja solo (menos resolución de plancha, trama más gruesa) y vuelve a subir cuando sobra margen. el modo «detalle» fijo desactiva ese ajuste.
+- `?menu=0` abre directo la bienvenida de siempre y `?fx=espacio` (o cualquier escena) abre directo un fondo.
+
+cómo está hecho: cada escena dibuja en una «plancha» (canvas 2D) donde el canal rojo es la tinta 1 (contornos y trama oscura), el verde la tinta 2 y el azul la tinta 3. un shader webgl (`riso.js`) imprime esas planchas: halftone con rejilla girada por tinta, desalineo de registro, multiplicación sobre el papel, moteado de tinta, grano y borrón de movimiento para los cortes. `riso-scenes.js` y `riso-scenes2.js` tienen las escenas, `riso-menu.js` el menú y los fondos, y `riso-director.js` las conecta con el director. una escena nueva son ~100 líneas:
+
+```js
+RISO.register({
+  id: 'faro', name: 'faro', inks: 0, phrases: ['la luz también espera'],
+  make: rng => ({ /* estado propio */ }),
+  draw(K, s, t, dt, a) {           // a.e energía, a.beat golpe, a.bpm, a.live si hay música
+    K.bg(3, .12);                  // tinta 3 al 12 % = trama de puntos
+    K.circ(800, 450, 120 + a.beat * 10, { f: 2, s: 1, lw: 6 });   // relleno tinta 2, contorno tinta 1
+  },
+});
+```
+
+### un solo estilo en todo el sistema
+
+la risografía no es solo el fondo: la bienvenida, los ajustes, la consola de reproducción, el modo carátula y el modo autor comparten las mismas tintas (índigo y naranja sobre papel crema con trama de puntos), bordes gruesos, sombras planas desplazadas y ningún degradado suave. la bienvenida de siempre también tiene una escena viva detrás. todo el estilo vive en `riso-theme.js`, que solo sobrescribe colores y formas, sin tocar la lógica de cada pieza.
+
+| | |
+|---|---|
+| ![bienvenida sobre una escena viva, con etiquetas de papel](docs/img/bienvenida-riso.jpg) | ![ajustes en papel crema: fichas, teclas cuadradas y faders con regla](docs/img/ajustes-riso.jpg) |
+
 ## capturas reales
 
 | | |
@@ -65,6 +107,7 @@ un editor para armar el video de cualquier canción a mano y al detalle. el vide
 - cada canción se analiza una vez; después arranca al instante
 
 **lo visual**
+- menú de inicio y 7 escenas ilustradas en risografía (oficina, cuarto de noche, ciudad, espacio, bosque, retrato y museo), a pantalla completa o como escenarios del director
 - 20 escenarios procedurales (calle, playa, club, cielo, habitación, estadio, sistema, nebulosa, túnel, auroras…) y más de 80 objetos animados
 - profundidad real con parallax, cámara que respira con el beat
 - más de 35 transiciones (quiebre, glitch, remolino, iris, salto de velocidad…) elegidas según el carácter del cambio
