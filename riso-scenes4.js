@@ -21,11 +21,54 @@
     const o = side < 0 ? -1 : 1; for (let i = 0; i < 4; i++) { const p = up(.04 + i * .09 + (side > 0 ? .56 : 0) * 0); const q = side < 0 ? up(.04 + i * .06) : up(.96 - i * .06); K.line(q[0], q[1], q[0] + (side < 0 ? -1 : 1) * (18 + i * 3), q[1] - 14 - i * 5, 1, 5); }
   };
 
-  register({
+
+  // ---------- retrato a partir de fotos propias (personal/ella1.jpg, ella2.jpg...) ----------
+  // Las fotos NO van al repositorio (carpeta personal/ ignorada por git). Cada una se convierte
+  // en tres planchas de tinta: sombras y pelo en la tinta 1, calidez de la piel y labios en la
+  // tinta 2, y el fondo en la tinta 3. El shader las imprime en trama, como el resto.
+  const CROPS = [[40, 0, 640, 800], [150, 250, 720, 900], [0, 0, 0, 0]];
+  const PH = { imgs: [], plates: [], ready: () => PH.plates.some(Boolean) };
+  const blur = (src, w, h, r) => { const t = new Float32Array(w * h), o = new Float32Array(w * h);
+    for (let y = 0; y < h; y++) { let acc = 0; for (let x = -r; x <= r; x++) acc += src[y * w + Math.min(w - 1, Math.max(0, x))]; for (let x = 0; x < w; x++) { t[y * w + x] = acc / (2 * r + 1); acc += src[y * w + Math.min(w - 1, x + r + 1)] - src[y * w + Math.max(0, x - r)]; } }
+    for (let x = 0; x < w; x++) { let acc = 0; for (let y = -r; y <= r; y++) acc += t[Math.min(h - 1, Math.max(0, y)) * w + x]; for (let y = 0; y < h; y++) { o[y * w + x] = acc / (2 * r + 1); acc += t[Math.min(h - 1, y + r + 1) * w + x] - t[Math.max(0, y - r) * w + x]; } } return o; };
+  function toPlate(img, crop) {
+    const W = 420, H = 525, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d', { willReadFrequently: true });
+    const [sx, sy, sw, sh] = crop[2] ? crop : [0, 0, img.width, img.height]; g.drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
+    const d = g.getImageData(0, 0, W, H), p = d.data, n = W * H, L = new Float32Array(n), R = new Float32Array(n), G = new Float32Array(n);
+    for (let i = 0; i < n; i++) { R[i] = p[i * 4] / 255; G[i] = p[i * 4 + 1] / 255; L[i] = (p[i * 4] * .3 + p[i * 4 + 1] * .59 + p[i * 4 + 2] * .11) / 255; }
+    // niveles automáticos (2 % y 98 %) y contraste local para que los rasgos no se pierdan en fotos oscuras
+    const sorted = Float32Array.from(L).sort(), lo = sorted[Math.floor(n * .03)], hi = sorted[Math.floor(n * .985)], bl = blur(L, W, H, 22), bs = blur(L, W, H, 5);
+    const T1 = new Float32Array(n), T2 = new Float32Array(n), T3 = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      let l = Math.min(1, Math.max(0, (L[i] - lo) / (hi - lo + 1e-4))); const b = Math.min(1, Math.max(0, (bl[i] - lo) / (hi - lo + 1e-4)));
+      l = Math.min(1, Math.max(0, .5 + (l - b) * 1.7 + (b - .5) * .75 + (bs[i] - bl[i]) * .5));
+      const dark = 1 - l, q = Math.round(dark * 5) / 5;
+      T1[i] = Math.min(1, Math.max(0, (q * .5 + dark * .5 - .3) * 1.55));
+      const warm = Math.max(0, (R[i] - G[i]) * 3.6 - .06), green = Math.max(0, (G[i] - R[i]) * 4.5);
+      T2[i] = Math.min(1, warm * (.62 + .38 * dark) * 1.05); T3[i] = Math.min(1, green * .9 + (warm < .08 ? .16 : 0));
+    }
+    for (let i = 0; i < n; i++) { p[i * 4] = Math.round(T1[i] * 255); p[i * 4 + 1] = Math.round(T2[i] * 255); p[i * 4 + 2] = Math.round(T3[i] * 255); p[i * 4 + 3] = 255; }
+    g.putImageData(d, 0, 0); return cv;
+  }
+  ['ella1.jpg', 'ella2.jpg', 'ella3.jpg'].forEach((f, i) => { const im = new Image(); im.onload = () => { try { PH.plates[i] = toPlate(im, CROPS[i]); } catch (e) { console.warn('ella:', e.message); } }; im.src = 'personal/' + f; });
+  function drawPhoto(K, s, t, dt, a) {
+    const c = K.c, list = PH.plates.filter(Boolean); if (s.pi === undefined) { s.pi = ((Math.random() * list.length) | 0); s.age = 0; } const cv = list[s.pi % list.length]; s.age += dt;
+    K.bg(3, .1); for (let i = 0; i < 28; i += 2) { const a0 = i / 28 * TAU + t * .03, a1 = (i + 1) / 28 * TAU + t * .03; K.poly([[800, 430], [800 + cos(a0) * 1900, 430 + sin(a0) * 1900], [800 + cos(a1) * 1900, 430 + sin(a1) * 1900]], { f: 2, ft: .2 }); }
+    for (let i = 0; i < 6; i++) { const k = (t * .12 + i / 6) % 1, x = 120 + (i * 271) % 1400, y = 900 - k * 1000, sz = 10 + (i % 3) * 5; K.path(c2 => { for (let j = 0; j <= 40; j++) { const q = j / 40 * TAU; const px = x + 16 * sin(q) ** 3 * sz / 10, py = y - (13 * cos(q) - 5 * cos(2 * q) - 2 * cos(3 * q) - cos(4 * q)) * sz / 10; j ? c2.lineTo(px, py) : c2.moveTo(px, py); } }, O(i % 2 ? 2 : -1, 1, 4)); }
+    const pw = 600, ph = pw * cv.height / cv.width, sw = 1 + sin(t * 1.3) * .006 + a.beat * .012, rot = -.035 + sin(t * .5) * .012;
+    c.save(); c.translate(800, 450); c.rotate(rot); c.scale(sw, sw);
+    K.rect(-pw / 2 + 18, -ph / 2 + 18, pw, ph, { f: 1, ft: .35, over: true }); K.rect(-pw / 2 - 12, -ph / 2 - 12, pw + 24, ph + 24, { f: -1, s: 1, lw: 8 });
+    c.imageSmoothingEnabled = true; c.imageSmoothingQuality = 'high'; c.globalCompositeOperation = 'lighter'; c.drawImage(cv, -pw / 2, -ph / 2, pw, ph); c.globalCompositeOperation = 'source-over';
+    K.rect(-pw / 2, -ph / 2, pw, ph, { s: 1, lw: 5 }); K.tape(-pw / 2 + 30, -ph / 2 - 6, 130, 40, -.6); K.tape(pw / 2 - 30, ph / 2 + 6, 130, 40, -.6); c.restore();
+    helpers.star(K, 330, 200 + sin(t * 2) * 12, 26 + a.beat * 12, { f: 2 }, 4, .3); helpers.star(K, 1290, 260 + sin(t * 2.4) * 12, 20 + a.beat * 10, { f: 2 }, 4, .3);
+  }
+
+  const SC = {
     id: 'ella', name: 'ella', inks: 1, phrases: ['ella se ríe y el mundo baja el volumen', 'una mirada basta para cambiar la canción', 'hay caras que parecen una promesa'],
     make: r => ({ bl: 2, blink: 0, wk: 4 + r() * 3, wink: 0, hs: r() * 6 }),
     cam(cam, t) { cam.x = sin(t * .12) * 26; cam.y = cos(t * .09) * 14; cam.z = 1.02 + sin(t * .07) * .03; cam.r = sin(t * .05) * .008; },
-    draw(K, s, t, dt, a) {
+    draw(K, s, t, dt, a) { if (PH.ready()) return drawPhoto(K, s, t, dt, a); return drawIllus(K, s, t, dt, a); },
+    _illus(K, s, t, dt, a) {
       const c = K.c;
       // fondo: rayos de tinta 2 en trama, corazones que suben y un panel de tinta 3
       K.bg(3, .12); for (let i = 0; i < 28; i += 2) { const a0 = i / 28 * TAU + t * .03, a1 = (i + 1) / 28 * TAU + t * .03; K.poly([[800, 430], [800 + cos(a0) * 1900, 430 + sin(a0) * 1900], [800 + cos(a1) * 1900, 430 + sin(a1) * 1900]], { f: 2, ft: .2 }); }
@@ -69,5 +112,6 @@
       c.restore();
       helpers.star(K, 250, 200 + sin(t * 2) * 12, 24 + a.beat * 12, { f: 2 }, 4, .3); helpers.star(K, 1360, 300 + sin(t * 2.4) * 12, 18 + a.beat * 10, { f: 2 }, 4, .3); helpers.star(K, 1300, 700, 14 + a.beat * 8, { f: -1 }, 4, .3);
     },
-  });
+  };
+  register(SC); const drawIllus = (...a) => SC._illus(...a);
 })();
