@@ -266,8 +266,11 @@ void main(){
       this.userDetail = 3; this.detail = 3; this.auto = true;
       this.cam = { x: 0, y: 0, z: 1, r: 0 }; this.cut = null; this.notes = true; this.lyric = false;
       this.fps = 60; this._acc = 0; this._n = 0; this._slow = 0; this._fast = 0; this._last = 0; this._lastChange = 0;
-      this.w = 0; this.h = 0; this.phrase = { i: 0, w: 0, at: 0 };
+      this.margin = 34; this.w = 0; this.h = 0; this.phrase = { i: 0, w: 0, at: 0 };
       this._initGL();
+      // si el navegador pierde el contexto (cambio de gpu, suspensión), se vuelve a armar solo
+      this.canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); this.ok = false; });
+      this.canvas.addEventListener('webglcontextrestored', () => { this._tex = null; this._initGL(); });
     }
     _initGL() {
       let gl = null;
@@ -331,7 +334,7 @@ void main(){
       }
       const scn = scenes[this.sceneId];
       // ---------- plancha ----------
-      Object.assign(K, { c: pc, t: this.t, dt: sdt, d: this.detail, a: A, notes: this.notes, lyric: this.lyric, _base: base, _pw: pw, _ph: ph, _cx: cx, _cy: cy });
+      Object.assign(K, { m: this.margin, c: pc, t: this.t, dt: sdt, d: this.detail, a: A, notes: this.notes, lyric: this.lyric, _base: base, _pw: pw, _ph: ph, _cx: cx, _cy: cy });
       K.v = { l: VW / 2 - pw / 2 / base, r: VW / 2 + pw / 2 / base, t: VH / 2 - ph / 2 / base, b: VH / 2 + ph / 2 / base }; K.v.w = K.v.r - K.v.l; K.v.h = K.v.b - K.v.t;
       pc.setTransform(1, 0, 0, 1, 0, 0); pc.globalCompositeOperation = 'source-over'; pc.fillStyle = '#000'; pc.fillRect(0, 0, pw, ph);
       pc.save(); pc.translate(pw / 2, ph / 2); pc.scale(base * cz, base * cz); pc.rotate(cr); pc.translate(-(VW / 2 + cx), -(VH / 2 + cy));
@@ -357,7 +360,7 @@ void main(){
     _annotate(sc, K, t) {
       if (!K.notes) return;
       K.screen(c => {
-        const v = K.v, m = 34;
+        const v = K.v, m = this.margin;
         if (sc.notes) sc.notes(K, this.state, t, A);
         K.stamp(v.r - 300 - m, v.t + m, 1);
         // frase con las palabras que se resaltan una a una

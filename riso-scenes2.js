@@ -20,7 +20,7 @@
       const c = K.c;
       K.bg(1, .8); c.fillStyle = K.lin(1, 0, -200, 0, 900, .9, .58); c.fillRect(-2000, -1400, 6000, 2600);
       K.glow(3, 380, 620, 620, .5); K.glow(2, 1240, 220, 520, .35); K.glow(3, 1300, 760, 420, .4);
-      K.layer(.4, () => { for (const q of s.stars) { const tw = .5 + .5 * sin(t * q[3] + q[2]), x = -200 + q[0] * 2000, y = -100 + q[1] * 1200; if (q[4] > .93) helpers.star(K, x, y, 7 + tw * 6, { f: 2 }, 4, .3); else K.circ(x, y, .9 + tw * 1.6 * (K.d > 1 ? 1 : 1.3), { f: -1 }); } });
+      K.layer(.4, () => { for (const q of s.stars) { const tw = .5 + .5 * sin(t * q[3] + q[2]), x = -200 + q[0] * 2000, y = -100 + q[1] * 1200; if (q[4] > .86) helpers.star(K, x, y, 8 + tw * 8, { f: q[4] > .95 ? 3 : 2 }, 4, .28); else K.circ(x, y, 1.4 + tw * 2 * (K.d > 1 ? 1 : 1.3), { f: -1 }); } });
       // el sol lejano con rayos
       K.circ(200, 150, 62 + a.beat * 5, { f: 2, s: 1, lw: 6 });
       for (let i = 0; i < 16; i++) { const an = i * TAU / 16 + t * .1, r0 = 84, r1 = 104 + (i % 2) * 24 + a.beat * 14; K.line(200 + cos(an) * r0, 150 + sin(an) * r0, 200 + cos(an) * r1, 150 + sin(an) * r1, 2, 7); }
@@ -74,7 +74,7 @@
       K.circ(0, -34, Math.floor(t * 2) % 2 ? 6 : 3, { f: 2 }); c.restore();
     },
     notes(K, s, t, a) {
-      const v = K.v, m = 34; K.card(v.l + m, v.t + m, 300, 176, .01);
+      const v = K.v, m = K.m; K.card(v.l + m, v.t + m, 300, 176, .01);
       K.code('ÓRBITA 03 · ' + String(Math.floor(t * 7) % 360).padStart(3, '0') + ' GRADOS', v.l + m + 16, v.t + m + 32, { size: 17 });
       K.circuit([[v.l + m + 16, v.t + m + 66], [v.l + m + 80, v.t + m + 66], [v.l + m + 80, v.t + m + 96], [v.l + m + 190, v.t + m + 96], [v.l + m + 190, v.t + m + 76], [v.l + m + 276, v.t + m + 76]], (t * .15) % 1.6, { i: 1, node: 2 });
       K.meter(v.l + m + 16, v.t + m + 142, 268, .35 + a.e * .6, 'SEÑAL', { n: 14 });
@@ -127,7 +127,7 @@
       for (const l of s.leaves) { l.y += dt * l.sp; l.x += sin(t + l.ph) * dt * 30; if (l.y > 980) { l.y = -60; l.x = Math.random() * 1700; } c.save(); c.translate(l.x, l.y); c.rotate(t * .8 + l.ph); helpers.leaf(K, 0, 0, 30, 9, 0, { f: 2, s: 1, lw: 3 }); c.restore(); }
     },
     notes(K, s, t, a) {
-      const v = K.v, m = 34; K.card(v.l + m, v.t + m, 300, 120, -.012);
+      const v = K.v, m = K.m; K.card(v.l + m, v.t + m, 300, 120, -.012);
       K.code('SENDERO 12 · 06:40 AM', v.l + m + 16, v.t + m + 32, { size: 17 });
       K.circuit([[v.l + m + 16, v.t + m + 68], [v.l + m + 110, v.t + m + 68], [v.l + m + 110, v.t + m + 92], [v.l + m + 276, v.t + m + 92]], (t * .17) % 1.6, { i: 1, node: 2 });
     },
@@ -188,7 +188,7 @@
       c.restore();
     },
     notes(K, s, t, a) {
-      const v = K.v, m = 34; K.card(v.l + m, v.t + m, 300, 176, .012);
+      const v = K.v, m = K.m; K.card(v.l + m, v.t + m, 300, 176, .012);
       K.code('CANAL 02 · ' + Math.round(a.bpm) + ' BPM', v.l + m + 16, v.t + m + 32, { size: 17 });
       K.circuit([[v.l + m + 16, v.t + m + 66], [v.l + m + 100, v.t + m + 66], [v.l + m + 100, v.t + m + 92], [v.l + m + 276, v.t + m + 92]], (t * .2) % 1.6, { i: 1, node: 2 });
       K.meter(v.l + m + 16, v.t + m + 142, 268, .3 + a.e * .65, 'GRAVES', { n: 14 });
@@ -213,7 +213,7 @@
       c.save(); c.translate(760, -80); c.rotate(sw); c.globalCompositeOperation = 'lighter'; c.fillStyle = K.lin(2, 0, 0, 0, 900, .32, .0); c.beginPath(); c.moveTo(-40, 0); c.lineTo(40, 0); c.lineTo(420, 900); c.lineTo(-420, 900); c.fill(); c.restore();
       K.glow(2, 760, 380, 620 + a.e * 60, .45);
       // cuadros en la pared
-      c.save(); c.translate(330, 60); c.rotate(-.02); K.rect(8, 8, 200, 250, { f: 1, ft: .3, over: true }); K.rect(0, 0, 200, 250, { f: -1, s: 1, lw: 8 }); K.rect(16, 16, 168, 218, { f: 3, ft: .5, s: 1, lw: 3 });
+      c.save(); c.translate(400, 60); c.rotate(-.02); K.rect(8, 8, 200, 250, { f: 1, ft: .3, over: true }); K.rect(0, 0, 200, 250, { f: -1, s: 1, lw: 8 }); K.rect(16, 16, 168, 218, { f: 3, ft: .5, s: 1, lw: 3 });
       K.circ(100, 100, 44, { f: -1, s: 1, lw: 4 }); K.path(c => { c.moveTo(30, 234); c.quadraticCurveTo(100, 130, 170, 234); c.closePath(); }, { f: 1, ft: .8, s: 1, lw: 4 }); c.restore();
       // piso en perspectiva
       K.rect(-1600, 770, 6400, 800, { f: 2, ft: .32 }); K.line(-1600, 770, 4800, 770, 1, 7);
@@ -229,7 +229,7 @@
       // la sábana respira con la máquina; pliegues largos y borde con trama
       const bre = 1 + sin(t * 1.3) * .006 + a.beat * .016, cy0 = 770;
       c.save(); c.translate(0, cy0); c.scale(1, bre); c.translate(0, -cy0);
-      const cloth = c => { c.moveTo(-40, 470); c.bezierCurveTo(60, 440, 120, 420, 190, 400); c.bezierCurveTo(300, 360, 420, 300, 520, 200); c.bezierCurveTo(560, 160, 620, 150, 700, 150); c.lineTo(1060, 150); c.bezierCurveTo(1120, 180, 1180, 260, 1300, 300); c.bezierCurveTo(1400, 330, 1450, 400, 1470, 480); c.lineTo(1472, 650); c.bezierCurveTo(1460, 760, 1420, 800, 1400, 794); c.bezierCurveTo(1200, 800, 1000, 770, 860, 780); c.bezierCurveTo(700, 770, 560, 700, 420, 650); c.bezierCurveTo(300, 600, 160, 590, -60, 545); c.closePath(); };
+      const cloth = c => { c.moveTo(120, 566); c.bezierCurveTo(88, 520, 130, 440, 210, 400); c.bezierCurveTo(300, 360, 420, 300, 520, 200); c.bezierCurveTo(560, 160, 620, 150, 700, 150); c.lineTo(1060, 150); c.bezierCurveTo(1120, 180, 1180, 260, 1300, 300); c.bezierCurveTo(1400, 330, 1450, 400, 1470, 480); c.lineTo(1472, 650); c.bezierCurveTo(1460, 760, 1420, 800, 1400, 794); c.bezierCurveTo(1200, 800, 1000, 770, 860, 780); c.bezierCurveTo(700, 770, 560, 700, 420, 650); c.bezierCurveTo(300, 606, 210, 596, 120, 566); c.closePath(); };
       K.path(cloth, { f: -1, s: 1, lw: 8 });
       K.shade(cloth, 1, 0, .5, 0, 150, 0, 800);
       K.clip(cloth, () => { K.path(c => { c.moveTo(-200, 660); c.bezierCurveTo(300, 780, 700, 720, 1500, 780); c.lineTo(1500, 900); c.lineTo(-200, 900); c.closePath(); }, { f: 1, ft: .55, over: true }); });
@@ -259,7 +259,7 @@
         K.rr(-28, -200, 56, 130, 22, { f: 1, s: 1, lw: 5 }); K.circ(0, -226, 24, { f: -1, s: 1, lw: 5 }); K.rect(-30, -246, 60, 10, { f: 1 }); K.rect(-20, -272, 40, 30, { f: 1 }); c.restore(); }
     },
     notes(K, s, t, a) {
-      const v = K.v, m = 34; K.card(v.l + m, v.t + m, 290, 116, .01);
+      const v = K.v, m = K.m; K.card(v.l + m, v.t + m, 290, 116, .01);
       K.code('SALA 04 · NO FLASH', v.l + m + 16, v.t + m + 34, { size: 17 });
       K.meter(v.l + m + 16, v.t + m + 76, 258, .4 + a.e * .5, 'ZUMBIDO', { n: 14 });
     },

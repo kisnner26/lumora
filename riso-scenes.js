@@ -123,7 +123,7 @@
       K.circ(1140, 700, 6, { f: 2, s: 1, lw: 3 });
     },
     notes(K, s, t, a) {
-      const v = K.v, m = 34, p = (t * .16) % 1.7;
+      const v = K.v, m = K.m, p = (t * .16) % 1.7;
       K.card(v.l + m, v.t + m, 300, 176, -.01);
       K.code('LUN 08:00 · TICKET 4471', v.l + m + 16, v.t + m + 32, { size: 17 });
       K.circuit([[v.l + m + 16, v.t + m + 66], [v.l + m + 90, v.t + m + 66], [v.l + m + 90, v.t + m + 92], [v.l + m + 200, v.t + m + 92], [v.l + m + 200, v.t + m + 74], [v.l + m + 276, v.t + m + 74]], p, { i: 1, node: 2 });
@@ -165,10 +165,10 @@
       }
       K.line(wx - 60, wy - 24, wx + ww + 60, wy - 24, 3, 8);
       // pósters con cinta
-      c.save(); c.translate(340, 130); c.rotate(-.05); K.rect(8, 8, 190, 250, { f: 1, ft: .6, over: true }); K.rect(0, 0, 190, 250, { f: -1, s: 1, lw: 4 });
+      c.save(); c.translate(420, 130); c.rotate(-.05); K.rect(8, 8, 190, 250, { f: 1, ft: .6, over: true }); K.rect(0, 0, 190, 250, { f: -1, s: 1, lw: 4 });
       K.circ(95, 96, 56, { f: 2 }); for (let i = 0; i < 6; i++) K.rect(0, 80 + i * 13, 190, 5 + i * 2, { f: -1 }); K.rect(14, 190, 162, 48, { f: 3, ft: .5 });
       K.txt('NOCHE', 95, 230, { size: 34, align: 'center', ls: 6 }); K.tape(95, 3, 90, 28, .03); c.restore();
-      c.save(); c.translate(600, 190); c.rotate(.04); K.rect(8, 8, 150, 190, { f: 1, ft: .6, over: true }); K.rect(0, 0, 150, 190, { f: 3, ft: .55, s: 1, lw: 4 });
+      c.save(); c.translate(680, 190); c.rotate(.04); K.rect(8, 8, 150, 190, { f: 1, ft: .6, over: true }); K.rect(0, 0, 150, 190, { f: 3, ft: .55, s: 1, lw: 4 });
       for (let i = 0; i < 5; i++) K.rect(20 + i * 24, 150 - (nz(i * 3.1 + t * .6) * 100 + a.e * 40), 16, 24 + nz(i * 3.1 + t * .6) * 100 + a.e * 40, { f: i % 2 ? 2 : 1 }); K.tape(75, 3, 80, 26, -.03); c.restore();
       // guirnalda de focos al ritmo
       const gy = i => 78 + sin(i * .45) * 4 + 40 * Math.pow(sin(PI * (i / 30)), .5) * 0;
@@ -213,7 +213,7 @@
       K.rr(360, 760, 60, 26, 12, { f: 3, s: 1, lw: 5 }); K.rr(430, 770, 60, 26, 12, { f: 3, s: 1, lw: 5 });
     },
     notes(K, s, t, a) {
-      const v = K.v, m = 34; K.card(v.l + m, v.t + m + 150, 300, 120, .012);
+      const v = K.v, m = K.m; K.card(v.l + m, v.t + m + 150, 300, 120, .012);
       K.code('SIN SEÑAL · 03:' + String(Math.floor(s.min) % 60).padStart(2, '0'), v.l + m + 16, v.t + m + 186, { size: 17 });
       K.meter(v.l + m + 16, v.t + m + 236, 268, .3 + a.e * .6, 'VOLUMEN', { n: 14 });
     },
@@ -272,7 +272,7 @@
       for (const b of s.birds) { b.x += dt * (90 + a.e * 40); if (b.x > 2000) b.x = -300; const fl = sin(t * 8 + b.ph) * 12; K.path(c => { c.moveTo(b.x - 22, b.y + fl * .3); c.quadraticCurveTo(b.x - 10, b.y - 12 - fl, b.x, b.y); c.quadraticCurveTo(b.x + 10, b.y - 12 - fl, b.x + 22, b.y + fl * .3); }, { s: 1, lw: 4 }); }
     },
     notes(K, s, t, a) {
-      const v = K.v, m = 34; K.card(v.l + m, v.t + m, 300, 116, -.008);
+      const v = K.v, m = K.m; K.card(v.l + m, v.t + m, 300, 116, -.008);
       K.code('SEMÁFORO 4 · LÍNEA 2', v.l + m + 16, v.t + m + 34, { size: 17 });
       K.circuit([[v.l + m + 16, v.t + m + 64], [v.l + m + 90, v.t + m + 64], [v.l + m + 90, v.t + m + 92], [v.l + m + 276, v.t + m + 92]], (t * .18) % 1.6, { i: 1, node: 2 });
     },
