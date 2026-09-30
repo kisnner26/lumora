@@ -309,6 +309,8 @@ void main(){
       const kinds = ['h', 'v', 'zin', 'zout', 'spin'], k = o.kind || kinds[(Math.random() * kinds.length) | 0];
       this.cut = { to: id, kind: k, dir: Math.random() < .5 ? 1 : -1, t: 0, swapped: false, swap: sw };
     }
+    // corte con movimiento a otra toma: swap() se llama a mitad del corte, cuando la imagen sale de cuadro
+    cutTo(swap, kind) { if (this.cut) return swap(); this.cut = { to: '_clip', kind: kind || 'h', dir: Math.random() < .5 ? 1 : -1, t: 0, swapped: false, swap: () => { swap(); this.sceneT0 = this.t; } }; }
     // un cuadro: dtReal en segundos
     frame(dtReal) {
       const dt = Math.min(.08, dtReal || .016), t0 = performance.now();

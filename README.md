@@ -10,6 +10,22 @@ página del producto: **https://kisnner26.github.io/lumora**
 
 ![una canción de amor: la pareja, los corazones y la palabra que remata el verso, elegidos por claude](docs/img/estreno.jpg)
 
+## videoclip en risografía (el lyric video nuevo)
+
+el lyric video ahora es, por defecto, un **videoclip ilustrado en risografía**: no un fondo, sino un motor de video propio que funciona igual que el de siempre (mismo reloj, letra sincronizada, guion del director por estrofa y por verso, traducción, grabación en 16:9 y 9:16) pero que dirige *tomas* hechas a mano en lugar de escenarios de partículas.
+
+| | |
+|---|---|
+| ![toma de objeto: corazón, flor y reloj que se dibujan solos, con la letra escrita y la palabra clave en tinta](docs/img/clip-objeto.jpg) | ![palabra gigante sobreimpresa y mal registrada sobre rayos en trama](docs/img/clip-gigante.jpg) |
+| ![toma con el fondo en tinta plana y el objeto dentro de un círculo](docs/img/clip-tinta.jpg) | ![toma de escena completa con la letra en una etiqueta de papel](docs/img/clip-escena.jpg) |
+
+- **tomas por verso.** el motor lee lo que dice cada verso y lo que decidió el director (objetos, ánimo, energía, escenario) y arma la toma: un **objeto** que se dibuja solo (sol, flor, corazón, luna, lluvia, fuego, ciudad, teléfono, reloj, calavera, ojo… 30 objetos con trazo tembloroso y doble pasada, que «hierve» ocho veces por segundo como una animación a mano), una **escena completa** (oficina, cuarto, ciudad, espacio, bosque, retrato, museo) con paneos y zoom, una **palabra gigante** en los ganchos y una **portada** al inicio y al cierre con el título y el artista.
+- **la letra se escribe a mano**, palabra por palabra al compás del verso, con la palabra clave en la segunda tinta y subrayada con un garabato; la traducción va debajo.
+- **cortes con movimiento**, nunca fundidos: paneo, zoom o giro con borrón, más bruscos cuanto más energía tiene la estrofa.
+- **una combinación de tintas por estrofa** según su ánimo (índigo y naranja, carmín y petróleo, verde y rosa…), sobre papel crema con grano, halftone y desalineo de registro.
+- **capa de anotaciones con datos reales de la canción:** tiempo, tempo, energía y ánimo de la estrofa, número de estrofa, sello «en vivo» con reloj, post-its con de qué trata, códigos, circuitos que se dibujan solos y medidores que siguen el audio.
+- se elige en ajustes › imagen › *estilo del video* (risografía o clásico); el clásico queda intacto.
+
 ## el menú de inicio y los fondos animados
 
 ![menú de inicio: cuatro tarjetas sobre una escena ilustrada en risografía; la seleccionada se agranda](docs/img/menu-inicio.jpg)

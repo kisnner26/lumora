@@ -8,7 +8,7 @@ const CFG_DEFAULT = {
   intensity: 1, camera: true, cameraAmt: 1, transitions: 'todas', flashes: true,
   lyricSize: 1, typo: 'variada', letterAnim: true, trMode: 'ambas', kinetic: true,
   instruments: true, cards: true, symbols: true, echo: true, np: true,
-  palette: 'auto', variation: 'nueva', ai: false, recFormat: 'horizontal',
+  palette: 'auto', variation: 'nueva', ai: false, recFormat: 'horizontal', clip: 'riso',
 };
 const CFG = window.CFG = (() => { try { return { ...CFG_DEFAULT, ...JSON.parse(localStorage.getItem('tc_cfg') || '{}') }; } catch (e) { return { ...CFG_DEFAULT }; } })();
 const saveCfg = () => { try { localStorage.setItem('tc_cfg', JSON.stringify(CFG)); } catch (e) {} };
@@ -179,6 +179,7 @@ const OPTS = [
     ['rec', 'Modo grabación', 'sw', null, '30 fps estables y menos carga para grabar con OBS'],
     ['recFormat', 'Formato de los clips', 'seg', [['horizontal', '16:9'], ['vertical', '9:16']], 'horizontal para YouTube y pantallas; vertical para historias y TikTok'],
     ['fps', 'Mostrar FPS', 'sw'],
+    ['clip', 'Estilo del video', 'seg', [['riso', 'risografía'], ['clasico', 'clásico']], 'risografía: videoclip ilustrado a mano, con objetos que se dibujan solos. clásico: los escenarios de siempre'],
   ]],
   ['efectos', [
     ['intensity', 'Intensidad de capas', 'range', [.3, 1.5, .05]],

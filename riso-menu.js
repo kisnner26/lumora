@@ -20,7 +20,7 @@
   // ---------- opciones del menú ----------
   const svg = p => `<svg viewBox="0 0 64 64" aria-hidden="true">${p}</svg>`;
   const OPTS = [
-    { id: 'lyric', name: 'lyric video', scene: 'retrato', desc: 'la letra se vuelve video, verso por verso, con lo que suena en tu mac',
+    { id: 'lyric', name: 'lyric video', scene: 'retrato', desc: 'videoclip ilustrado en risografía, verso por verso, con lo que suena en tu mac',
       icon: svg('<rect x="6" y="10" width="52" height="38" rx="3"/><path d="M14 22h24M14 30h30M14 38h18"/><path d="M44 36l9 6-9 6z" class="f"/><path d="M14 56h36"/>') },
     { id: 'cover', name: 'modo carátula', scene: 'cuarto', desc: 'la portada de protagonista, con vinilo que gira, letra y luces',
       icon: svg('<rect x="6" y="6" width="52" height="52" rx="3"/><circle cx="32" cy="32" r="16"/><circle cx="32" cy="32" r="5" class="f"/><path d="M40 20l8-4"/>') },
