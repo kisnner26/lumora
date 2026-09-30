@@ -44,17 +44,25 @@
   const storyOf = text => (typeof STORY !== 'undefined' && STORY.on && STORY.forText(text)) || null;
   const keyWord = (text, L) => { const w = (L?.word || (typeof salient === 'function' ? salient(text) : '') || '').replace(/[^\p{L}\p{N}'’-]/gu, ''); return w.toLowerCase(); };
 
+  // la escena que piden las palabras del verso (y, si no hay, las de la estrofa)
+  function sceneByWords(text, block) {
+    let best = null, bs = 0;
+    for (const [id, rx] of Object.entries(R.SCENE_RX || {})) { if (!R.scenes[id]) continue; const g = new RegExp(rx.source, 'gi'); const n = (text.match(g) || []).length * 2 + (block ? Math.min(2, (block.match(g) || []).length) * .5 : 0); if (n > bs) { bs = n; best = id; } }
+    return bs >= 1.5 || (bs >= 1 && !text) ? best : null;
+  }
   function makeShot(li, sec, time, why) {
     const plan = SEM.plans[sec] || null, text = li >= 0 ? IN.lines[li].text : '', L = text ? storyOf(text) : null, seed = hash(ext.key() + '|' + li + '|' + sec + '|' + Math.floor(time / 4));
     const r = rngS(seed), mood = plan?.mood || 'sereno', energy = plan?.energy ?? 5, inkList = MOOD_INKS[mood] || [0, 1, 2];
     const shot = { kind: 'prop', li, sec, t0: timeNow(), k0: st.t, seed, plan, mood, energy, inks: inkList[(sec + (plan?.color === 'oscuro' ? 1 : 0)) % inkList.length], bg: 'paper', layout: 0, why };
     const own = typeof LEX !== 'undefined' && text ? LEX.filter(([, re]) => re.test(text)).map(q => q[0]) : [];
     const objs = [...new Set([...own, ...(L?.objects || []), ...(plan?.objects || [])])].map(id => PROP_OF[id] || id).filter(hasProp);
-    const prev = RC.kindHist.slice(-2);
+    const prev = RC.kindHist.slice(-2), blockTxt = IN.lines.filter(l => l.text && l.t >= (IN.cuts[sec] ?? 0) && l.t < (IN.cuts[sec + 1] ?? 1e9)).map(l => l.text).join(' ');
+    const byWords = sceneByWords(text, blockTxt), recent = RC.recentScenes || (RC.recentScenes = []);
     let kind;
     if (why === 'title') kind = 'title'; else if (why === 'outro') kind = 'outro';
     else if (li < 0) kind = objs.length && r() < .5 ? 'prop' : 'scene';
     else if (L?.big && keyWord(text, L)) kind = 'giant';
+    else if (byWords && !recent.slice(-2).includes(byWords) && prev[1] !== 'scene' && r() < .8) kind = 'scene';
     else {
       const w = { prop: 1.7, scene: energy >= 7 ? .7 : .5 };
       if (prev[1] === 'prop') w.prop = .9; if (prev[1] === 'scene') w.scene = .15; if (prev[0] === 'giant') w.prop += .3;
@@ -70,10 +78,10 @@
       shot.layout = (r() * 3) | 0; shot.flip = r() < .5;
     }
     if (kind === 'scene') {
-      let id = plan && SCENE_MAP[plan.scene] || (R.scenes[plan?.scene] ? plan.scene : null) || MOOD_SCENE[mood] || 'ciudad';
+      let id = byWords || plan && SCENE_MAP[plan.scene] || (R.scenes[plan?.scene] ? plan.scene : null) || MOOD_SCENE[mood] || 'ciudad';
       if (/eyes|woman|man|couple/.test((objs || []).join(',')) || (mood === 'romantico' && r() < .4)) id = 'retrato';
       if (li >= 0 && RC.lastScene === id && r() < .6) { const alt = R.order.filter(x => x !== id); id = alt[(r() * alt.length) | 0]; }
-      shot.scene = id; RC.lastScene = id; shot.inks = R.scenes[id].inks;
+      shot.scene = id; RC.lastScene = id; recent.push(id); if (recent.length > 6) recent.shift(); shot.inks = R.scenes[id].inks;
       if (r() < .45) shot.inks = inkList[(sec + 1) % inkList.length];
     }
     if (kind === 'giant') { shot.word = keyWord(text, L).toUpperCase(); shot.bg = r() < .5 ? 'burst' : 'flood'; shot.cut = 'zin'; }
@@ -239,7 +247,7 @@
   function frame(dt) {
     const time = timeNow(), sec = secOf(time), li = lineIdx(time), key = ext.key() + '|' + (proc.dur || 0);
     RC.time = time;
-    if (RC.lastKey !== key) { RC.lastKey = key; RC.shot = null; RC.pending = null; RC.kindHist.length = 0; RC.sceneState = {}; RC.lastScene = ''; RC.count = 0; }
+    if (RC.lastKey !== key) { RC.lastKey = key; RC.recentScenes = []; RC.shot = null; RC.pending = null; RC.kindHist.length = 0; RC.sceneState = {}; RC.lastScene = ''; RC.count = 0; }
     if (st.sceneId !== 'clip') st.setScene('clip', { instant: true });
     const cur = RC.shot, dur = proc.dur || 0, lyricT0 = IN.lines.find(l => l.text)?.t ?? 99;
     let why = '';
