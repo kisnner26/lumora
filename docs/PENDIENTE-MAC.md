@@ -23,3 +23,7 @@ no sé si Música y Spotify informan de la canción nueva al empezar o al termin
 ## fase 6 (compartir y memoria)
 - activar GitHub Pages sobre la carpeta `docs/` del repositorio (o poner tu propia página en ajustes > imagen > «Página del enlace»); hasta entonces el enlace de ver.html no abre desde fuera.
 - probar «compartir» y «copiar enlace» en Safari/Chrome del Mac (el portapapeles y share sheet no se pueden probar aquí).
+
+## fase 7 (exploración)
+- ver en el Mac la criatura animada (se repinta cada 140 ms con el Stage auxiliar); si se nota pesada con el clip sonando, bajar la frecuencia en `riso-explorar.js` (`setTimeout(tick, 140)`).
+- el historial y las letras se llenan con el uso real: probar el mapa y el atlas después de oír varias canciones para ver que las ciudades de las letras se encienden.

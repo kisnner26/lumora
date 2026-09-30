@@ -70,6 +70,14 @@ la risografía no es solo el fondo: la bienvenida, los ajustes, la consola de re
 |---|---|
 | ![bienvenida sobre una escena viva, con etiquetas de papel](docs/img/bienvenida-riso.jpg) | ![ajustes en papel crema: fichas, teclas cuadradas y faders con regla](docs/img/ajustes-riso.jpg) |
 
+## explorar
+
+la tarjeta **explorar** del menú (o ajustes > contenido) abre tres vistas hechas con lo que ya escuchaste:
+
+- **mapa**: un planisferio ilustrado con 71 ciudades; se encienden las que nombran las letras de tus canciones. ![mapa](docs/img/exp-mapa.jpg)
+- **atlas de tu música**: un archipiélago con una isla por ánimo y un pueblito por canción. ![atlas](docs/img/exp-atlas.jpg)
+- **criatura**: nace y crece con lo que escuchas; su tamaño, colores, orejas y manchas salen de tus escuchas, y se pone triste si pasas días sin música. ![criatura](docs/img/exp-criatura.jpg)
+
 ## compartir y memoria
 
 - **colección de pósters**: los pósters de las canciones que terminan se guardan solos en este navegador (hasta 60). ajustes > imagen > colección de pósters, o el botón «colección» del póster. ![colección](docs/img/share-coleccion.jpg)
