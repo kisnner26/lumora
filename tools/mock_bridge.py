@@ -11,6 +11,8 @@ control desde la prueba (GET):
   /mock?scn=crossfade   pasa a la canción B con la posición ya en 7 s (mezcla)
   /mock?scn=repetir     la misma canción vuelve a 0
   /mock?scn=sinletra    canción instrumental (sin letra)
+  /mock?scn=solo        artista del catálogo (Shakira)
+  /mock?scn=colab       colaboración: Bad Bunny, Daddy Yankee, Los Ejemplos y (feat. Adele)
   /mock?scn=larga       canción de 9 minutos
   /mock?scn=corta       canción de 45 segundos
   /mock?song=<id>&pos=<s>&state=playing|paused|stopped   control fino
@@ -44,10 +46,12 @@ SONGS = {
     'a': dict(name='Noche de Neón', artist='Los Ejemplos', album='Prueba I', dur=200, lines=A_LINES, bpm=104, genre='pop', art=1),
     'b': dict(name='Tren de Medianoche', artist='Banda Simulada', album='Prueba II', dur=185, lines=B_LINES, bpm=92, genre='rock', art=2),
     'c': dict(name='Ambiente sin Voz', artist='Instrumental Co.', album='Prueba III', dur=150, lines=None, bpm=78, genre='ambient', art=3),
+    'solo': dict(name='Canción de Prueba', artist='Shakira', album='Prueba VI', dur=200, lines=A_LINES, bpm=104, genre='pop', art=1),
+    'colab': dict(name='Dueto de Prueba (feat. Adele)', artist='Bad Bunny, Daddy Yankee & Los Ejemplos', album='Prueba VII', dur=200, lines=A_LINES, bpm=104, genre='pop', art=2),
     'larga': dict(name='La Suite Eterna', artist='Los Ejemplos', album='Prueba IV', dur=540, lines=A_LINES * 3, bpm=88, genre='pop', art=4),
     'corta': dict(name='Relámpago', artist='Banda Simulada', album='Prueba V', dur=45, lines=B_LINES[:4], bpm=120, genre='electronic', art=5),
 }
-SONGS['a']['synced'] = lrc(A_LINES); SONGS['b']['synced'] = lrc(B_LINES)
+SONGS['a']['synced'] = lrc(A_LINES); SONGS['b']['synced'] = lrc(B_LINES); SONGS['solo']['synced'] = lrc(A_LINES); SONGS['colab']['synced'] = lrc(A_LINES)
 SONGS['larga']['synced'] = lrc(A_LINES * 3, step=6.5); SONGS['corta']['synced'] = lrc(B_LINES[:4], t0=4, step=8)
 
 ST = {'song': 'a', 'state': 'playing', 'base': 0.0, 't0': time.time(), 'src': 'music'}
@@ -112,6 +116,8 @@ class H(SimpleHTTPRequestHandler):
             elif scn == 'crossfade': set_song('b', 7.0)
             elif scn == 'repetir': set_song(ST['song'], 0)
             elif scn == 'sinletra': set_song('c', 0)
+            elif scn == 'solo': set_song('solo', 0)
+            elif scn == 'colab': set_song('colab', 0)
             elif scn == 'larga': set_song('larga', 0)
             elif scn == 'corta': set_song('corta', 0)
             elif q.get('song') in SONGS: set_song(q['song'], q.get('pos', 0), q.get('state', 'playing'))
