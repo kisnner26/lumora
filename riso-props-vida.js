@@ -107,7 +107,7 @@
   P('camisa', 'CAMISA', /\b(camisas?|shirts?|camiseta|t-?shirt|blusa|blouse|polera|playera|jersey|remera)\b/i, [
     { p: 'M-70 -110 L-160 -60 L-130 -10 L-90 -30 V130 H90 V-30 L130 -10 L160 -60 L70 -110 C50 -70 -50 -70 -70 -110 Z', f: 3, ft: .6, s: 10 }, { p: 'M-50 -100 L0 -40 L50 -100', s: 6 }, { p: 'M0 -40 V130', s: 4 }, ...[-10, 30, 70, 110].map(y => ({ c: [0, y, 4], f: 1, s: 0 })), { p: 'M-70 -110 C-50 -70 50 -70 70 -110', s: 8 },
   ], { moods: ['nostalgico'] });
-  P('pantalon', 'PANTALÓN', /\b(pantalones?|pants|jeans|vaqueros?|trousers|mezclilla|denim|shorts?|bermudas?)\b/i, [
+  P('pantalon', 'PANTALÓN', /\b(pantalones?|pants|jeans|vaqueros?|trousers|mezclilla|denim|shorts|bermudas?)\b/i, [
     { p: 'M-90 -130 H90 L100 170 H30 L0 -20 L-30 170 H-100 Z', f: 1, ft: .8, s: 10 }, { p: 'M-90 -100 H90', s: 6 }, ...[-60, -30, 30, 60].map(x => ({ c: [x, -115, 4], f: -1, s: 0 })), { p: 'M-60 -90 V-40 M60 -90 V-40', s: 4 }, { p: 'M-100 150 H-30 M30 150 H100', s: 4, i: 2 }, { p: 'M0 -130 V-20', s: 4 },
   ], { moods: ['nostalgico'] });
   P('vestido', 'VESTIDO', /\b(vestidos?|dress(es)?|falda|skirt|traje de noche|evening gown|gown|minifalda|miniskirt)\b/i, [

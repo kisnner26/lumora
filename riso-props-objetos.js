@@ -19,7 +19,7 @@
     { c: [55, 10, 12], f: 2, ft: .95, s: 5, m: 'beat', a: .15, o: [55, 10] }, { p: 'M-95 170 H95', s: 9 },
     { p: 'M95 -170 L150 -140 V190 L95 170 Z', f: 1, ft: .5, s: 7, m: 'sway', a: .02, o: [95, 0] },
   ]);
-  A('ventana', 'VENTANA', /\b(ventanas?|windows?|cristal|pan(es)?)\b/i, [
+  A('ventana', 'VENTANA', /\b(ventanas?|windows?|cristal)\b/i, [
     { p: L.rr(-110, -140, 220, 280, 12), f: 3, ft: .35, s: 9 }, { p: 'M0 -140 V140 M-110 0 H110', s: 8 },
     { p: 'M-80 -100 L-30 -100 L-80 -50 Z M10 30 L80 30 L10 100 Z', f: -1, s: 3, m: 'bob', a: 3 },
     { p: L.rect(-135, 140, 270, 22), f: 2, ft: .8, s: 7 },
@@ -78,7 +78,7 @@
     { p: L.rr(-120, -150, 240, 300, 8), f: -1, s: 9, m: 'sway', a: .03, o: [0, 150] }, { p: 'M-80 -100 H80 M-80 -60 H80 M-80 -20 H30 M-80 20 H80 M-80 60 H10', s: 5 },
     { p: 'M40 70 L110 20 L130 40 L60 110 Z', f: 2, ft: .85, s: 6, m: 'wag', a: .05, o: [60, 110] }, { p: L.heart(60, 90, 3), f: 2, ft: .85, s: 0 },
   ], { moods: ['romantico', 'nostalgico', 'triste'] });
-  A('sobre', 'SOBRE', /\b(sobres?|envelopes?|mailed|by mail|correo|mail)\b/i, [
+  A('sobre', 'SOBRE', /\b(sobres|sobre de (?:carta|cartas|papel|dinero)|envelopes?|mailed|by mail|correo|mail)\b/i, [
     { p: L.rr(-160, -95, 320, 200, 12), f: 3, ft: .5, s: 9 }, { p: 'M-160 -95 L0 30 L160 -95', s: 8, m: 'flap', a: 0, o: [0, -95] }, { p: 'M-160 105 L-40 5 M160 105 L40 5', s: 5 },
     { p: L.heart(0, 40, 4), f: 2, ft: .9, s: 5, m: 'pulse', a: .2, o: [0, 40] },
   ]);
@@ -87,7 +87,7 @@
     { p: 'M-50 -145 C-50 -80 -8 -40 0 -20 C8 -40 50 -80 50 -145 Z', f: 2, ft: .85, s: 0, m: 'pulse', a: .03, o: [0, -100] }, { p: 'M0 -20 V110', s: 4, m: 'fall', a: 30 },
     { p: 'M-60 160 C-30 100 30 100 60 160 Z', f: 2, ft: .85, s: 0 },
   ], { moods: ['nostalgico', 'triste'] });
-  A('brujula', 'BRÚJULA', /\b(br[uú]jula|compass|north|norte|rumbo|direction|sin rumbo|lost)\b/i, [
+  A('brujula', 'BRÚJULA', /\b(br[uú]jula|compass|north|norte|rumbo|sin rumbo|lost my way|i'?m lost|estoy perdid[oa])\b/i, [
     { c: [0, 0, 150], f: 2, ft: .65, s: 10 }, { c: [0, 0, 118], f: -1, s: 6 },
     { p: 'M0 -100 L22 0 L0 100 L-22 0 Z', f: 3, ft: .5, s: 5 }, { p: 'M0 -100 L22 0 L-22 0 Z', f: 1, ft: .95, s: 5, m: 'sway', a: .5, o: [0, 0], v: .7 },
     { p: 'M0 -118 V-100 M0 100 V118 M-118 0 H-100 M100 0 H118', s: 5 }, { c: [0, 0, 8], f: 1, s: 4 }, { p: 'M0 -150 V-185', s: 9 },
@@ -156,7 +156,7 @@
     { e: [-110, -70, 60, 34, -.5], s: 12, m: 'sway', a: .03, o: [0, 0] }, { e: [-30, -20, 60, 34, .1], s: 12, m: 'sway', a: .03, o: [0, 0] }, { e: [50, 30, 60, 34, -.4], s: 12, m: 'sway', a: .03, o: [0, 0] },
     { e: [125, 85, 60, 34, .2], s: 12, m: 'sway', a: .03, o: [0, 0] }, { e: [-110, -70, 36, 14, -.5], f: -1, s: 0 },
   ], { moods: ['desafiante', 'oscuro'] });
-  A('bombilla', 'BOMBILLA', /\b(bombillas?|light ?bulbs?|bulb|idea|bright idea|foco)\b/i, [
+  A('bombilla', 'BOMBILLA', /\b(bombillas?|light ?bulbs?|bulb|bright idea|gran idea|buena idea|foco)\b/i, [
     { p: 'M0 -160 C-90 -160 -110 -70 -60 -10 C-45 10 -40 30 -40 50 H40 C40 30 45 10 60 -10 C110 -70 90 -160 0 -160 Z', f: 2, ft: .55, s: 9, m: 'pulse', a: .04, o: [0, -50] },
     { p: L.rr(-38, 50, 76, 60, 8), f: 1, ft: .75, s: 8 }, { p: 'M-30 78 H30', s: 4 }, { p: 'M-30 -30 L-15 20 L0 -10 L15 20 L30 -30', s: 5, m: 'beat', a: .1, o: [0, 0] },
     { p: 'M-125 -125 L-150 -140 M125 -125 L150 -140 M-140 -50 H-165 M140 -50 H165', s: 6, m: 'pulse', a: .12, o: [0, -60] },
@@ -195,7 +195,7 @@
     { c: [0, 0, 130], f: -1, s: 10, m: 'bob', a: 10 }, { p: L.star(0, 0, 55, 5, .95), f: 1, ft: .9, s: 6, m: 'spin', a: 1.2, o: [0, 0] },
     { p: 'M0 -55 V-130 M52 -17 L124 -40 M32 45 L76 106 M-32 45 L-76 106 M-52 -17 L-124 -40', s: 6, m: 'spin', a: 1.2, o: [0, 0] },
   ]);
-  A('dados', 'DADOS', /\b(dados?|dice|gambl\w*|apostar|apuesta|bet|roll the dice|suerte|luck)\b/i, [
+  A('dados', 'DADOS', /\b(dados?|dice|gambl\w*|apostar|apuesta|roll the dice|suerte|luck)\b/i, [
     { p: L.rr(-140, -80, 130, 130, 20), f: -1, s: 9, m: 'sway', a: .1, o: [-75, -15], v: .8 }, { c: [-110, -50, 11], f: 1 }, { c: [-40, 20, 11], f: 1 }, { c: [-75, -15, 11], f: 1 },
     { p: L.rr(10, 10, 130, 130, 20), f: 2, ft: .7, s: 9, m: 'sway', a: -.1, o: [75, 75], v: .8 }, { c: [40, 40, 11], f: -1 }, { c: [110, 40, 11], f: -1 }, { c: [40, 110, 11], f: -1 }, { c: [110, 110, 11], f: -1 },
   ]);
@@ -221,7 +221,7 @@
     { c: [-150, -70, 16], f: 3, ft: .85, s: 6, m: 'pulse', a: .2, o: [-150, -70] }, { c: [0, -130, 18], f: 3, ft: .85, s: 6, m: 'pulse', a: .2, o: [0, -130] }, { c: [150, -70, 16], f: 3, ft: .85, s: 6, m: 'pulse', a: .2, o: [150, -70] },
     { c: [-60, 110, 8], f: -1, s: 0 }, { c: [0, 110, 8], f: -1, s: 0 }, { c: [60, 110, 8], f: -1, s: 0 },
   ], { moods: ['desafiante', 'euforico'] });
-  A('trofeo', 'TROFEO', /\b(trofeos?|trophy|champions?|campe[oó]n\w*|winner|ganador|copa del mundo|world cup|victory|victoria|win\w*)\b/i, [
+  A('trofeo', 'TROFEO', /\b(trofeos?|trophy|champions?|campe[oó]n\w*|winner|ganador|copa del mundo|world cup|victory|victoria|wins?|winning)\b/i, [
     { p: 'M-90 -150 H90 C90 -50 60 20 0 30 C-60 20 -90 -50 -90 -150 Z', f: 2, ft: .85, s: 10 }, { p: 'M-90 -130 C-160 -130 -150 -50 -80 -40 M90 -130 C160 -130 150 -50 80 -40', s: 9 },
     { p: 'M0 30 V90', s: 14 }, { p: L.rr(-60, 90, 120, 34, 8), f: 1, ft: .85, s: 9 }, { p: L.rr(-85, 124, 170, 30, 8), f: 1, ft: .6, s: 9 }, { p: L.star(0, -70, 30, 5, .45), f: -1, s: 5, m: 'pulse', a: .2, o: [0, -70] },
   ], { moods: ['euforico', 'desafiante'] });
@@ -261,7 +261,7 @@
     { p: 'M-150 -40 H-10 C-10 40 -40 80 -80 80 C-120 80 -150 40 -150 -40 Z', f: 1, ft: .95, s: 9 }, { p: 'M10 -40 H150 C150 40 120 80 80 80 C40 80 10 40 10 -40 Z', f: 1, ft: .95, s: 9 },
     { p: 'M-10 -30 C-3 -50 3 -50 10 -30', s: 9 }, { p: 'M-150 -30 L-180 -60 M150 -30 L180 -60', s: 9 }, { p: 'M-125 -15 L-90 -15 M35 -15 L70 -15', s: 4, m: 'drift', a: 8, i: 2 },
   ], { moods: ['euforico', 'desafiante'] });
-  A('reloj_pulsera', 'RELOJ', /\b(reloj de pulsera|wristwatch|watch|rolex|smartwatch)\b/i, [
+  A('reloj_pulsera', 'RELOJ', /\b(reloj de pulsera|wristwatch|rolex|smartwatch)\b/i, [
     { p: 'M-50 -150 H50 L60 -60 H-60 Z', f: 1, ft: .7, s: 8 }, { p: 'M-50 150 H50 L60 60 H-60 Z', f: 1, ft: .7, s: 8 }, { c: [0, 0, 82], f: 2, ft: .55, s: 10 }, { c: [0, 0, 62], f: -1, s: 6 },
     { p: 'M0 0 V-40', s: 7, m: 'spin', a: .1, o: [0, 0] }, { p: 'M0 0 H36', s: 5, m: 'spin', a: 1, o: [0, 0] }, { p: 'M0 -62 V-52 M0 52 V62 M-62 0 H-52 M52 0 H62', s: 4 },
   ]);
@@ -270,7 +270,7 @@
     { e: [-90, -100, 44, 30, -.5], f: 1, ft: .9, s: 8, m: 'wag', a: .1, o: [-90, -100] }, { e: [90, -100, 44, 30, .5], f: 1, ft: .9, s: 8, m: 'wag', a: -.1, o: [90, -100] }, { p: 'M-70 130 L-95 170 M70 130 L95 170', s: 9 },
     { p: 'M-150 -60 L-175 -75 M150 -60 L175 -75', s: 5, m: 'pulse', a: .2, o: [0, 0], v: 3 },
   ]);
-  A('calendario', 'CALENDARIO', /\b(calendarios?|calendar|date|fecha|monday|lunes|birthday date|d[ií]as?)\b/i, [
+  A('calendario', 'CALENDARIO', /\b(calendarios?|calendar|fecha|monday|lunes)\b/i, [
     { p: L.rr(-130, -120, 260, 270, 14), f: -1, s: 9 }, { p: L.rect(-130, -120, 260, 70), f: 2, ft: .85, s: 9 }, { p: 'M-70 -150 V-100 M70 -150 V-100', s: 11 },
     { p: 'M-90 -10 H90 M-90 40 H90 M-90 90 H90 M-30 -30 V120 M30 -30 V120', s: 3 }, { c: [30, 65, 22], s: 6, i: 2, m: 'pulse', a: .1, o: [30, 65] }, { p: 'M-20 55 L30 75', s: 0 },
   ]);
@@ -283,7 +283,7 @@
     { p: 'M-140 -20 C-140 -120 140 -120 140 -20 Z', f: 2, ft: .75, s: 10, m: 'flap', a: 0, o: [0, -20] }, { p: L.rect(-140, -20, 280, 150), f: 2, ft: .55, s: 10 }, { p: 'M-60 -20 V130 M60 -20 V130', s: 7 },
     { p: L.rr(-24, -10, 48, 56, 8), f: 1, ft: .9, s: 7 }, { c: [0, 20, 8], f: -1 }, { p: L.star(-100, -80, 16, 4, .3), f: 3, ft: .9, s: 4, m: 'pulse', a: .4, o: [-100, -80], v: 3 }, { p: L.star(100, -100, 12, 4, .3), f: 3, ft: .9, s: 4, m: 'pulse', a: .4, o: [100, -100], v: 2 },
   ]);
-  A('lupa', 'LUPA', /\b(lupas?|magnifying glass|search|buscar|detective|investigat\w*|looking for|busco|find)\b/i, [
+  A('lupa', 'LUPA', /\b(lupas?|magnifying glass|search|buscar|detective|investigat\w*|looking for)\b/i, [
     { c: [-40, -40, 100], f: 3, ft: .3, s: 11 }, { c: [-40, -40, 80], s: 4, i: 2 }, { p: 'M30 30 L140 140', s: 20 }, { p: 'M35 35 L120 120', s: 8, i: 2 },
     { p: 'M-90 -60 C-70 -95 -40 -105 -10 -95', s: 5, m: 'pulse', a: .06, o: [-40, -40] },
   ]);
@@ -303,7 +303,7 @@
     { c: [0, 0, 140], f: 1, ft: .9, s: 11, m: 'spin', a: 1.6, o: [0, 0] }, { c: [0, 0, 92], f: 3, ft: .5, s: 7, m: 'spin', a: 1.6, o: [0, 0] }, { c: [0, 0, 22], f: 2, ft: .9, s: 6 },
     { p: 'M0 -92 V92 M-92 0 H92 M-65 -65 L65 65 M65 -65 L-65 65', s: 5, m: 'spin', a: 1.6, o: [0, 0] },
   ]);
-  A('cuna', 'CUNA', /\b(cunas?|cradle|crib|beb[eé]s?|newborn|reci[eé]n nacido|lullaby|canci[oó]n de cuna)\b/i, [
+  A('cuna', 'CUNA', /\b(cunas?|cradle|crib|newborn|reci[eé]n nacido|lullaby|canci[oó]n de cuna)\b/i, [
     { p: 'M-150 -20 C-150 100 150 100 150 -20 Z', f: 3, ft: .7, s: 10, m: 'sway', a: .05, o: [0, -100], v: .8 }, { p: 'M-150 -20 V-110 M150 -20 V-110', s: 10, m: 'sway', a: .05, o: [0, -100], v: .8 },
     { p: 'M-100 -20 C-100 -90 100 -90 100 -20', f: 2, ft: .6, s: 7, m: 'sway', a: .05, o: [0, -100], v: .8 }, { p: L.heart(0, 30, 3.5), f: 2, ft: .9, s: 0 }, { p: 'M-170 100 C-100 130 100 130 170 100', s: 8 },
   ], { moods: ['sereno', 'romantico'] });
@@ -315,7 +315,7 @@
     { p: 'M-90 -20 C-90 -140 90 -140 90 -20 V90 H-90 Z', f: 1, ft: .85, s: 10 }, { p: 'M-50 -20 H50', s: 8 }, { p: L.rect(-50, -20, 100, 20), f: -1, s: 6 }, { p: 'M0 90 V170 M-40 170 H40', s: 12 },
     { p: L.rect(-60, -110, 60, 40), f: 2, ft: .85, s: 5, m: 'sway', a: -.1, o: [-60, -70] }, { p: 'M40 30 L70 0', s: 4 },
   ]);
-  A('semaforo', 'SEMÁFORO', /\b(sem[aá]foros?|traffic lights?|red light|luz roja|green light|luz verde|stoplight|stop)\b/i, [
+  A('semaforo', 'SEMÁFORO', /\b(sem[aá]foros?|traffic lights?|red light|luz roja|green light|luz verde|stoplight|stop sign)\b/i, [
     { p: L.rr(-50, -170, 100, 260, 20), f: 1, ft: .9, s: 10 }, { c: [0, -120, 28], f: 2, ft: .95, s: 6, m: 'pulse', a: .1, o: [0, -120] }, { c: [0, -50, 28], f: 3, ft: .6, s: 6 }, { c: [0, 20, 28], f: 3, ft: .3, s: 6 },
     { p: 'M0 90 V180 M-30 180 H30', s: 12 },
   ]);

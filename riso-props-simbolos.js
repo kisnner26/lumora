@@ -33,12 +33,12 @@
     { p: 'M130 -30 C160 -50 160 -100 130 -120 M160 -10 C210 -50 210 -110 160 -150', s: 6, m: 'pulse', a: .1, o: [100, -60], v: 3 }, { p: 'M-130 -30 C-160 -50 -160 -100 -130 -120', s: 6, m: 'pulse', a: .1, o: [-100, -60], v: 3 },
     { p: L.rr(-24, -140, 48, 60, 24), s: 0 },
   ], { moods: ['euforico', 'desafiante'] });
-  A('cerebro', 'MENTE', /\b(cerebro|brain|mente|mind|pensamientos?|thoughts?|overthink\w*|pensar|think\w*|cabeza|head)\b/i, [
+  A('cerebro', 'MENTE', /\b(cerebro|brain|mente|mind|pensamientos?|thoughts?|overthink\w*)\b/i, [
     { p: 'M0 -130 C-80 -160 -160 -100 -140 -30 C-170 10 -150 80 -100 90 C-90 130 -30 150 0 120 C30 150 90 130 100 90 C150 80 170 10 140 -30 C160 -100 80 -160 0 -130 Z', f: 2, ft: .6, s: 10, m: 'pulse', a: .03, o: [0, 0], b: 1.5 },
     { p: 'M0 -130 V120 M-100 -60 C-60 -70 -40 -40 -70 -10 M100 -60 C60 -70 40 -40 70 -10 M-110 30 C-70 20 -50 50 -80 70 M110 30 C70 20 50 50 80 70', s: 5 },
     { p: 'M40 -180 L20 -150 L45 -150 L25 -120', s: 5, m: 'beat', a: .2, o: [30, -150], i: 2 },
   ]);
-  A('corazon_anat', 'LATIDO', /\b(latido|latidos|heartbeat|beating heart|pulse|pulso|latiendo|beats?\b|coraz[oó]n latiendo)\b/i, [
+  A('corazon_anat', 'LATIDO', /\b(latido|latidos|heartbeat|beating heart|pulse|pulso|latiendo|coraz[oó]n latiendo)\b/i, [
     { p: 'M0 -100 C-70 -170 -170 -100 -110 0 C-70 70 -20 100 0 150 C20 100 70 70 110 0 C170 -100 70 -170 0 -100 Z', f: 2, ft: .85, s: 10, m: 'beat', a: .12, o: [0, 0] },
     { p: 'M-30 -120 C-30 -170 -60 -190 -70 -170 M30 -120 C30 -180 70 -180 80 -160', s: 9 }, { p: 'M-60 -30 C-30 -60 0 -30 -20 0', s: 4 },
     { p: 'M-180 170 H-90 L-70 130 L-40 200 L-10 150 H180', s: 5, m: 'drift', a: 8 },
@@ -119,7 +119,7 @@
     { c: [0, 0, 150], f: 3, ft: .25, s: 12, m: 'pulse', a: .03, o: [0, 0] }, { p: 'M0 -150 V150 M0 0 L-105 105 M0 0 L105 105', s: 12 },
     { p: 'M-60 -180 C-30 -200 30 -200 60 -180', s: 5, i: 2, m: 'drift', a: 6 },
   ], { moods: ['sereno', 'feliz'] });
-  A('fantasma', 'FANTASMA', /\b(fantasmas?|ghosts?|spirits?|esp[ií]ritus?|haunt\w*|apariciones?|apparition|boo)\b/i, [
+  A('fantasma', 'FANTASMA', /\b(fantasmas?|ghosts?|spirits?|esp[ií]ritus?|haunt\w*|apariciones?|apparition)\b/i, [
     { p: 'M-100 150 V-20 C-100 -160 100 -160 100 -20 V150 L70 120 L35 150 L0 120 L-35 150 L-70 120 Z', f: -1, s: 10, m: 'bob', a: 8 }, { c: [-36, -40, 16], f: 1, m: 'blink', o: [-36, -40] }, { c: [36, -40, 16], f: 1, m: 'blink', o: [36, -40] },
     { e: [0, 30, 20, 26], f: 1, ft: .9, s: 0, m: 'pulse', a: .2, o: [0, 30] }, { p: 'M-140 -60 L-170 -50 M140 -60 L170 -50', s: 5 },
   ], { moods: ['oscuro'] });
@@ -168,7 +168,7 @@
     { p: 'M-40 -175 C60 -190 130 -110 120 0 C110 90 150 140 110 190 C90 130 60 80 70 0 C80 -70 30 -130 -40 -175 Z', f: 1, ft: .9, s: 9, m: 'sway', a: -.03, o: [-40, -175] },
     { p: 'M-30 -120 C-10 -60 -30 20 -10 80 M30 -110 C50 -50 30 30 50 90', s: 4, i: 2, m: 'sway', a: .03, o: [0, -120] },
   ]);
-  A('pulgar_arriba', 'ME GUSTA', /\b(likes?|me gusta|thumbs? up|pulgar|good job|bien hecho|approved|aprobad[oa]|great)\b/i, [
+  A('pulgar_arriba', 'ME GUSTA', /\b(me gusta|thumbs? up|pulgar|good job|bien hecho|approved|aprobad[oa])\b/i, [
     { p: 'M-130 20 H-60 V170 H-130 Z', f: 3, ft: .7, s: 9 }, { p: 'M-60 40 C-10 20 20 -40 20 -110 C20 -160 80 -150 80 -100 C80 -70 60 -40 60 -20 H130 C160 -20 160 30 130 40 C150 60 150 100 120 110 C140 130 130 170 100 170 H-60', f: 2, ft: .8, s: 9, m: 'bob', a: 4, b: 2 },
     { p: 'M60 60 H110 M50 110 H100', s: 4 },
   ]);

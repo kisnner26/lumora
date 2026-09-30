@@ -125,7 +125,7 @@
     { e: [0, 0, 55, 145], f: 2, ft: .85, s: 10 }, ...[-30, 0, 30].flatMap(x => [-90, -50, -10, 30, 70].map(y => ({ c: [x, y, 9], f: -1, s: 4 }))),
     { p: 'M-30 150 C-130 100 -110 -30 -50 -90 M30 150 C130 100 110 -30 50 -90', f: 1, ft: .8, s: 8, m: 'sway', a: .02, o: [0, 150] },
   ], { moods: ['nostalgico', 'feliz'] });
-  A('papa', 'PAPA', /\b(papas?|patatas?|potato(es)?|tub[eé]rculos?|fries|papas fritas|french fries)\b/i, [
+  A('papa', 'PAPA', /\b(papas|papas? fritas?|patatas?|potato(es)?|tub[eé]rculos?|fries|french fries)\b/i, [
     { p: 'M-140 10 C-140 -70 -40 -100 40 -90 C120 -80 160 -20 140 50 C120 120 20 130 -60 110 C-120 100 -140 60 -140 10 Z', f: 2, ft: .6, s: 10 },
     { c: [-40, -20, 8], f: 1, ft: .8, s: 0 }, { c: [30, 30, 10], f: 1, ft: .8, s: 0 }, { c: [70, -30, 7], f: 1, ft: .8, s: 0 }, { c: [-70, 50, 8], f: 1, ft: .8, s: 0 },
   ], { moods: ['nostalgico'] });
@@ -210,7 +210,7 @@
     { p: 'M-105 -60 C-125 -110 -70 -130 -50 -100 C-40 -140 20 -140 30 -105 C60 -120 80 -80 60 -60 Z', f: -1, s: 8 }, { p: 'M-50 0 V110 M-15 0 V110 M20 0 V110', s: 3 },
     { c: [-30, 60, 5], s: 3, m: 'steam', a: 50 }, { c: [10, 90, 4], s: 3, m: 'steam', a: 60, ph: .5 },
   ], { moods: ['euforico', 'feliz'] });
-  A('vino', 'VINO', /\b(vino|vinos|wine|tinto|red wine|merlot|vineyard|whisky|whiskey|rum|tequila|vodka|licor|liquor|brandy|cognac|champ[aá]n|champagne|shots?)\b/i, [
+  A('vino', 'VINO', /\b((?<=\b(?:de|con|un|el|tu|mi|este|ese|copa|copas|botella|botellas|tomando|bebiendo|beber|tomar|sirve|tinto|blanco|rosado)\s)vinos?|vino (?:tinto|blanco|rosado)|wine|tinto|red wine|merlot|vineyard|whisky|whiskey|rum|tequila|vodka|licor|liquor|brandy|cognac|champ[aá]n|champagne|shots)\b/i, [
     { p: 'M-70 -160 H70 C80 -60 60 10 0 20 C-60 10 -80 -60 -70 -160 Z', f: 1, ft: .55, s: 9 }, { p: 'M-75 -80 C-40 -60 40 -100 75 -80 C70 -30 50 10 0 15 C-50 10 -72 -30 -75 -80 Z', f: 1, ft: .95, s: 0, m: 'drift', a: 2 },
     { p: 'M0 20 V140 M-60 165 H60', s: 10 }, { p: 'M-50 -130 C-55 -100 -50 -70 -45 -50', s: 4 },
   ], { moods: ['romantico', 'melancolico'] });

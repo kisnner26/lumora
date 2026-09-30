@@ -22,15 +22,19 @@
     if (info[e.id]) { const m = 'riso-catalog: id repetido «' + e.id + '»'; if (window.RISO_DEV) throw new Error(m); console.warn(m); return; }
     if (R.props && R.props.DEFS && !R.props.DEFS[e.id] && window.RISO_DEV) throw new Error('riso-catalog: «' + e.id + '» no tiene dibujo');
     const prio = e.prio ?? PRIO[e.cat] ?? 4, rx = e.alias instanceof RegExp ? e.alias : new RegExp(e.alias, 'i');
-    info[e.id] = { ...e, prio, alias: rx }; (cats[e.cat] = cats[e.cat] || []).push(e.id); names[e.id] = e.label || e.id.toUpperCase();
+    info[e.id] = { ...e, prio, alias: rx, global: new RegExp(rx.source, rx.flags.includes('g') ? rx.flags : rx.flags + 'g') }; (cats[e.cat] = cats[e.cat] || []).push(e.id); names[e.id] = e.label || e.id.toUpperCase();
     let i = RX.length; while (i > 0 && RX[i - 1][2] > prio) i--; RX.splice(i, 0, [e.id, rx, prio]);     // estable: dentro de una prioridad, el orden de registro
     for (const m of e.moods || []) (moodProps[m] = moodProps[m] || []).push(e.id);
     if (e.variantes?.length) R.props.variants[e.id] = [e.id, ...e.variantes];
   };
   const off = cat => { try { if (!window.CFG) return false; if (cat === 'banderas' && CFG.symbols === false) return true; return !!(CFG.catOn && CFG.catOn[cat] === false); } catch (e) { return false; } };
+  // la regla debe coincidir con una palabra completa: ni una letra (con o sin acento) antes, ni después
+  const letra = /\p{L}/u;
+  const entera = (g, t) => { g.lastIndex = 0; let m; while ((m = g.exec(t))) { const a = t[m.index - 1], b = t[m.index + m[0].length]; const ap = b && /['’]/.test(b) && letra.test(t[m.index + m[0].length + 1] || '');            // won't, don't, l'amour: el apóstrofo une la palabra
+      if (!(a && letra.test(a)) && !(b && letra.test(b)) && !ap) return true; if (!m[0].length) g.lastIndex++; } return false; };
   const detect = (text, limit = 3) => {
     if (!text) return []; const out = [];
-    for (const [id, rx] of RX) { if (out.length >= limit) break; if (off(info[id]?.cat)) continue; if (rx.test(text)) out.push(id); }
+    for (const [id, rx] of RX) { if (out.length >= limit) break; if (off(info[id]?.cat)) continue; if (entera(info[id].global, text)) out.push(id); }
     const f = window.CFG && CFG.catFreq != null ? +CFG.catFreq : 1;               // 0 a 1: probabilidad de mostrar lo que se nombra
     return f >= 1 || !out.length ? out : (Math.random() < f ? out : []);
   };
