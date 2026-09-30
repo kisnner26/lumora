@@ -13,12 +13,13 @@
 
   // ---------- guardado ----------
   const artUrl = cv => { try { const c = document.createElement('canvas'); c.width = c.height = 180; c.getContext('2d').drawImage(cv, 0, 0, 180, 180); return c.toDataURL('image/jpeg', .7); } catch (e) { return ''; } };
-  const ser = it => ({ id: it.id, key: it.key, name: it.name, artist: it.artist, album: it.album, dur: it.dur, frames: (it.frames || []).map(f => f ? { url: f.url, t: f.t, txt: f.txt, sid: f.sid } : null),
+  const ser = it => ({ opts: it.opts || null, id: it.id, key: it.key, name: it.name, artist: it.artist, album: it.album, dur: it.dur, frames: (it.frames || []).map(f => f ? { url: f.url, t: f.t, txt: f.txt, sid: f.sid } : null),
     art: it.artUrl || (it.artCv ? artUrl(it.artCv) : ''), lines: (it.lines || []).slice(0, 80), moods: it.moods || {}, cuts: it.cuts || 0, first: it.first || 0, live: !!it.live, bpm: it.bpm || 0, fin: it.fin, num: it.num || 0, dedic: it.dedic || '', why: it.why });
   // changed = la dedicatoria acaba de cambiar (queda también en la colección «dedicatorias»)
   SH.save = async (it, changed) => {
     if (!it || !it.id) return; it._saved = true;
-    try { await ST.set('posters', it.id, ser(it)); if (changed && it.dedic) await ST.add('dedicatorias', { texto: it.dedic, cancion: it.name }); } catch (e) {}
+    try { const row = ser(it); try { row.thumb = await POS.thumb(it); } catch (e) {}                  // miniatura de la lámina tal como quedó, para la colección
+      await ST.set('posters', it.id, row); if (changed && it.dedic) await ST.add('dedicatorias', { texto: it.dedic, cancion: it.name }); } catch (e) {}
   };
   const imgOf = url => new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ok(null); i.src = url; });
   SH.hydrate = async row => {                                   // de la fila guardada al objeto que entiende el póster

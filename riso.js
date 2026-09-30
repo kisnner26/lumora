@@ -406,7 +406,7 @@ void main(){
       // desalineo de registro: cada tinta con su desvío (en píxeles de salida), respira y salta un poco con el beat
       const boost = 1 + (this.regBoost || 0), rg = (ax, ay, k) => [((ax + Math.sin(t * .7 + k) * .7 + A.beat * (k - 1) * 1.2) * boost + (k - 1) * (this.regBoost || 0) * 5) / w, ((ay + Math.cos(t * .6 + k * 2) * .6) * boost - (k - 1) * (this.regBoost || 0) * 4) / h];
       const s = h / 900;
-      gl.uniform1i(U.uP, 0); gl.uniform2f(U.uRes, w, h); gl.uniform3fv(U.uPaper, inks.paper);
+      gl.uniform1i(U.uP, 0); gl.uniform2f(U.uRes, w, h); gl.uniform3fv(U.uPaper, this.paper || inks.paper);
       gl.uniform3fv(U.uI1, inks.i[0]); gl.uniform3fv(U.uI2, inks.i[1]); gl.uniform3fv(U.uI3, inks.i[2]);
       const r1 = rg(0, 0, 0), r2 = rg(-3.2 * s, 2.4 * s, 1), r3 = rg(2.6 * s, -2.8 * s, 2);
       gl.uniform2f(U.uR1, r1[0], r1[1]); gl.uniform2f(U.uR2, r2[0], r2[1]); gl.uniform2f(U.uR3, r3[0], r3[1]);

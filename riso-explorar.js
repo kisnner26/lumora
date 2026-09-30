@@ -65,7 +65,7 @@
   function paint(W, H, ink, draw, extra = {}) {
     if (!POS.stage) POS.stage = new R.Stage(); const st = POS.stage; st.auto = false; st.notes = false; st.lyric = true; st.margin = 0;
     st.setDetail(W > 1500 ? 3 : 2, true); const dpr = st.dpr || 1; st.resize(W / dpr, H / dpr); st.setDetail(W > 1500 ? 3 : 2, true); st.resize(W / (st.dpr || 1), H / (st.dpr || 1));
-    st.setInks(ink); EXP.job = { draw, ...extra }; st.setScene('exp', { instant: true }); st.speed = extra.speed || 0; st.frame(1 / 30); st.frame(extra.dt || 1 / 30);
+    st.paper = null; st.setInks(ink); EXP.job = { draw, ...extra }; st.setScene('exp', { instant: true }); st.speed = extra.speed || 0; st.frame(1 / 30); st.frame(extra.dt || 1 / 30);
     return st.canvas;
   }
 
@@ -177,68 +177,191 @@
   const starPts = (x, y, r, n) => Array.from({ length: n * 2 }, (_, i) => { const a = -Math.PI / 2 + i * Math.PI / n, q = i % 2 ? r * .45 : r; return [x + cos(a) * q, y + sin(a) * q]; });
   const heartPts = (cx, cy, s) => Array.from({ length: 33 }, (_, i) => { const a = i / 32 * TAU; return [cx + 16 * sin(a) ** 3 * s, cy - (13 * cos(a) - 5 * cos(2 * a) - 2 * cos(3 * a) - cos(4 * a)) * s]; });
 
-  // ---------- ventana ----------
+  // ---------- ventana a pantalla completa ----------
   const css = document.createElement('style'); css.textContent = `
-    #expWin { position:fixed; inset:0; z-index:31; display:none; background:rgba(33,43,128,.6); padding:18px; } #expWin.on { display:flex; justify-content:center; align-items:center; }
-    #expWin .ex-in { width:min(1240px,100%); max-height:100%; display:grid; grid-template-columns:1fr 300px; grid-template-rows:auto 1fr; gap:12px 16px; background:var(--rkp,#f7edd8); border:4px solid var(--rk1,#212b80); box-shadow:10px 10px 0 -1px var(--rk1,#212b80); padding:16px; overflow:auto; }
-    #expWin .ex-tabs { grid-column:1/3; display:flex; gap:8px; align-items:center; } #expWin .ex-tabs .sp { flex:1; }
-    #expWin button { padding:8px 14px; border:3px solid var(--rk1,#212b80); background:var(--rkl,#faf3e4); color:var(--rk1,#212b80); font:700 13px 'Anybody',sans-serif; font-stretch:80%; text-transform:uppercase; letter-spacing:.05em; cursor:pointer; } #expWin button:hover, #expWin button.on { background:var(--rk1,#212b80); color:var(--rkl,#faf3e4); }
-    #expWin .ex-view { min-width:0; } #expWin canvas { position:static !important; inset:auto !important; display:block; width:100%; height:auto; max-height:76vh; object-fit:contain; border:3px solid var(--rk1,#212b80); background:#f4ead4; cursor:pointer; }
-    #expWin .ex-side { font:500 12px 'Martian Mono',monospace; letter-spacing:.05em; text-transform:uppercase; color:var(--rk1,#212b80); overflow:auto; max-height:76vh; } #expWin .ex-side h3 { margin:0 0 8px; font:800 24px/1 'Anybody',sans-serif; font-stretch:70%; }
-    #expWin .ex-side li { list-style:none; margin:0 0 8px; padding:6px 8px; border:2px solid var(--rk1,#212b80); background:var(--rkl,#faf3e4); cursor:pointer; text-transform:none; letter-spacing:0; font-size:12px; } #expWin .ex-side li b { text-transform:uppercase; font-size:13px; } #expWin .ex-side li.on { background:var(--rk2,#f97a2a); }
-    #expWin .ex-side ul { margin:0; padding:0; } #expWin .ex-side input { width:100%; padding:8px; border:3px solid var(--rk1,#212b80); background:#fff; color:var(--rk1,#212b80); font:600 20px 'Caveat',cursive; margin-bottom:10px; }
-    #expWin .ex-side p { text-transform:none; letter-spacing:0; font-size:12px; line-height:1.4; margin:0 0 8px; }
-    @media (max-width:820px) { #expWin .ex-in { grid-template-columns:1fr; } #expWin .ex-tabs { grid-column:1; flex-wrap:wrap; } }`;
+    #expWin { position:fixed; inset:0; z-index:31; display:none; background:var(--rkp,#f4ead4); color:var(--rk1,#212b80); font-family:'Anybody',sans-serif; } #expWin.on { display:grid; grid-template-rows:auto 1fr auto; }
+    #expWin::before { content:''; position:absolute; inset:0; pointer-events:none; opacity:.14; background-image:radial-gradient(#6b8fb3 1.3px, transparent 1.7px); background-size:9px 9px; }
+    #expWin .ex-bar { position:relative; display:flex; gap:10px; align-items:center; padding:12px 16px; border-bottom:4px solid var(--rk1,#212b80); background:var(--rkp,#f4ead4); z-index:3; flex-wrap:wrap; } #expWin .ex-tabs { display:flex; gap:8px; flex-wrap:wrap; } #expWin .sp { flex:1; }
+    #expWin button { padding:8px 14px; border:3px solid var(--rk1,#212b80); background:var(--rkl,#faf3e4); color:var(--rk1,#212b80); box-shadow:3px 3px 0 -1px var(--rk1,#212b80); font:700 13px 'Anybody',sans-serif; font-stretch:80%; text-transform:uppercase; letter-spacing:.05em; cursor:pointer; }
+    #expWin button:hover { background:var(--rk2,#f97a2a); } #expWin button.on { background:var(--rk1,#212b80); color:var(--rkl,#faf3e4); } #expWin button:active { transform:translate(2px,2px); box-shadow:1px 1px 0 -1px var(--rk1,#212b80); }
+    #expWin #exQ { width:min(260px,36vw); padding:8px 11px; border:3px solid var(--rk1,#212b80); background:#fffdf6; color:var(--rk1,#212b80); font:600 18px 'Caveat',cursive; outline:none; } #expWin #exQ:focus { border-color:var(--rk2,#f97a2a); background:#fff; }
+    #expWin .ex-main { position:relative; overflow:hidden; min-height:0; touch-action:none; } #expWin .ex-stage { position:absolute; left:0; top:0; transform-origin:0 0; will-change:transform; border:3px solid var(--rk1,#212b80); background:#f4ead4; box-shadow:8px 8px 0 -1px var(--rk1,#212b80); cursor:grab; }
+    #expWin .ex-stage.drag { cursor:grabbing; } #expWin .ex-stage.pin { cursor:pointer; } #expWin .ex-stage canvas { position:static !important; inset:auto !important; display:block; width:100%; height:100%; }
+    #expWin[data-mode=criatura] .ex-stage { cursor:pointer; } #expWin[data-mode=coleccion] .ex-stage, #expWin[data-mode=coleccion] .ex-zoom, #expWin[data-mode=coleccion] .ex-side { display:none; } #expWin[data-mode=criatura] .ex-zoom { display:none; }
+    #expWin .ex-zoom { position:absolute; left:16px; bottom:16px; display:flex; gap:8px; z-index:2; } #expWin .ex-zoom button { padding:8px 13px; font-size:16px; }
+    #expWin .ex-tip { position:absolute; z-index:4; pointer-events:none; padding:6px 10px; border:3px solid var(--rk1,#212b80); background:var(--rkl,#faf3e4); box-shadow:4px 4px 0 -1px var(--rk1,#212b80); font:600 12px 'Martian Mono',monospace; letter-spacing:.04em; opacity:0; transition:opacity .12s; max-width:280px; }
+    #expWin .ex-tip.on { opacity:1; } #expWin .ex-tip b { display:block; font:800 18px/1.05 'Anybody',sans-serif; font-stretch:75%; text-transform:uppercase; }
+    #expWin .ex-side { position:absolute; right:14px; top:14px; bottom:14px; width:min(330px,82vw); padding:14px; overflow:auto; background:var(--rkp,#f4ead4); border:4px solid var(--rk1,#212b80); box-shadow:8px 8px 0 -1px var(--rk1,#212b80); z-index:2; transition:transform .25s; font:500 12px 'Martian Mono',monospace; text-transform:uppercase; letter-spacing:.05em; }
+    #expWin .ex-side.off { transform:translateX(calc(100% + 40px)); } #expWin .ex-side h3 { margin:0 0 8px; font:800 26px/1 'Anybody',sans-serif; font-stretch:70%; } #expWin .ex-side p { text-transform:none; letter-spacing:0; font-size:12px; line-height:1.4; margin:0 0 8px; } #expWin .ex-side ul { margin:0; padding:0; }
+    #expWin .ex-side li { list-style:none; margin:0 0 7px; padding:6px 8px; border:2px solid var(--rk1,#212b80); background:var(--rkl,#faf3e4); cursor:pointer; text-transform:none; letter-spacing:0; font-size:12px; } #expWin .ex-side li:hover, #expWin .ex-side li.on { background:var(--rk2,#f97a2a); color:#fff; } #expWin .ex-side li b { text-transform:uppercase; letter-spacing:.04em; }
+    #expWin .ex-side input { width:100%; padding:8px; border:3px solid var(--rk1,#212b80); background:#fff; color:var(--rk1,#212b80); font:600 20px 'Caveat',cursive; margin-bottom:10px; }
+    #expWin .ex-col { position:absolute; inset:0; overflow:auto; padding:20px 24px 30px; display:none; } #expWin[data-mode=coleccion] .ex-col { display:block; }
+    #expWin .ex-col h3 { margin:0 0 4px; font:800 34px/1 'Anybody',sans-serif; font-stretch:70%; text-transform:uppercase; } #expWin .ex-col .sub { font:500 12px 'Martian Mono',monospace; letter-spacing:.08em; text-transform:uppercase; opacity:.8; margin-bottom:14px; }
+    #expWin .ex-col .orden { display:flex; gap:8px; margin:0 0 18px; align-items:center; font:500 11px 'Martian Mono',monospace; letter-spacing:.1em; text-transform:uppercase; } #expWin .ex-col h4 { margin:18px 0 10px; font:500 11px 'Martian Mono',monospace; letter-spacing:.18em; text-transform:uppercase; opacity:.75; }
+    #expWin .pgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:18px; } #expWin .pc { border:3px solid var(--rk1,#212b80); background:var(--rkl,#faf3e4); box-shadow:5px 5px 0 -1px var(--rk1,#212b80); display:flex; flex-direction:column; transition:transform .15s; } #expWin .pc:hover { transform:translateY(-4px) rotate(-.4deg); }
+    #expWin .pc img, #expWin .pc i { display:block; width:100%; aspect-ratio:1/1.41; object-fit:cover; object-position:top; border-bottom:3px solid var(--rk1,#212b80); background:repeating-linear-gradient(45deg,#dfe4ee,#dfe4ee 6px,#f4ead4 6px,#f4ead4 12px); cursor:pointer; }
+    #expWin .pc b { padding:8px 10px 0; font:800 17px/1.05 'Anybody',sans-serif; font-stretch:75%; text-transform:uppercase; } #expWin .pc span { padding:2px 10px 8px; font:500 11px 'Martian Mono',monospace; letter-spacing:.05em; text-transform:uppercase; opacity:.85; }
+    #expWin .pc div { display:flex; gap:6px; padding:0 10px 10px; flex-wrap:wrap; } #expWin .pc button { padding:5px 9px; font-size:11px; box-shadow:none; } #expWin .pc.pend { border-style:dashed; } #expWin .vacio { font:600 24px 'Caveat',cursive; padding:30px 0; }
+    #expWin .ex-hint { position:relative; z-index:3; padding:8px 16px; border-top:4px solid var(--rk1,#212b80); background:var(--rkp,#f4ead4); font:500 11px 'Martian Mono',monospace; letter-spacing:.08em; text-transform:uppercase; opacity:.9; } #expWin kbd { padding:1px 6px; border:2px solid var(--rk1,#212b80); background:var(--rkl,#faf3e4); font:inherit; }`;
   document.head.appendChild(css);
   const win = document.createElement('div'); win.id = 'expWin'; win.setAttribute('role', 'dialog'); win.setAttribute('aria-label', 'explorar'); document.body.appendChild(win);
-  win.innerHTML = `<div class="ex-in"><div class="ex-tabs"><button data-t="mapa">mapa</button><button data-t="atlas">atlas de tu música</button><button data-t="criatura">criatura</button><span class="sp"></span><button data-a="x">cerrar</button></div><div class="ex-view" id="exView"></div><div class="ex-side" id="exSide"></div></div>`;
-  const $ = id => document.getElementById(id);
-  let anim = 0, cv = null;
-  const canvasFor = (c) => { const v = $('exView'); let out = v.querySelector('canvas'); if (!out) { out = document.createElement('canvas'); v.append(out); } out.width = c.width; out.height = c.height; out.getContext('2d').drawImage(c, 0, 0); return out; };
+  win.innerHTML = `<div class="ex-bar"><div class="ex-tabs"><button data-t="mapa">mapa</button><button data-t="atlas">atlas</button><button data-t="criatura">criatura</button><button data-t="coleccion">colección</button></div>
+    <input id="exQ" type="search" placeholder="buscar ( / )" aria-label="buscar" spellcheck="false" autocomplete="off"><span class="sp"></span><button data-a="side" title="mostrar u ocultar el panel (p)">panel</button><button data-a="x">cerrar · esc</button></div>
+    <div class="ex-main" id="exMain"><div class="ex-stage" id="exStage"></div><div class="ex-col" id="exCol"></div><div class="ex-zoom"><button data-a="zin" aria-label="acercar">+</button><button data-a="zout" aria-label="alejar">−</button><button data-a="zfit">ajustar</button></div>
+      <div class="ex-tip" id="exTip"></div><aside class="ex-side" id="exSide"></aside></div><div class="ex-hint" id="exHint"></div>`;
+  const $ = id => document.getElementById(id), TABS = ['mapa', 'atlas', 'criatura', 'coleccion'];
+  const V = { k: 1, tx: 0, ty: 0, sw: 0, sh: 0 }; let aspect = 16 / 9, drag = null, anim = 0;
+  const HINTS = { mapa: '<kbd>rueda</kbd> acercar · <kbd>arrastrar</kbd> moverte · <kbd>doble clic</kbd> zoom · <kbd>/</kbd> buscar · <kbd>←</kbd><kbd>→</kbd> pestañas · <kbd>p</kbd> panel · <kbd>esc</kbd> cerrar',
+    atlas: '<kbd>rueda</kbd> acercar · <kbd>arrastrar</kbd> moverte · pasa el cursor sobre un pueblito · <kbd>/</kbd> buscar · <kbd>←</kbd><kbd>→</kbd> pestañas · <kbd>esc</kbd> cerrar', criatura: 'toca a tu criatura para acariciarla · <kbd>←</kbd><kbd>→</kbd> pestañas · <kbd>esc</kbd> cerrar',
+    coleccion: 'toca una lámina para abrirla y personalizarla · <kbd>/</kbd> buscar · <kbd>←</kbd><kbd>→</kbd> pestañas · <kbd>esc</kbd> cerrar' };
+  // ancho libre: con el panel abierto el lienzo se centra en el espacio que queda a su izquierda
+  const avail = () => { const sd = $('exSide'), m = $('exMain'); return m.clientWidth - (sd.classList.contains('off') || win.dataset.mode === 'coleccion' ? 0 : sd.offsetWidth + 26); };
+  const togglePanel = () => { $('exSide').classList.toggle('off'); place(); };
+  // el lienzo se centra y el arrastre no deja que se salga de la vista
+  function place() {
+    const main = $('exMain'), mw = avail(), mh = main.clientHeight, pad = 28; V.sw = Math.max(200, Math.min(mw - pad * 2, (mh - pad * 2) * aspect)); V.sh = V.sw / aspect;
+    const cl = (t, m, sz) => sz * V.k <= m ? (m - sz * V.k) / 2 : Math.min(pad, Math.max(m - sz * V.k - pad, t));
+    V.tx = cl(V.tx, mw, V.sw); V.ty = cl(V.ty, mh, V.sh);
+    const st = $('exStage'); st.style.width = V.sw + 'px'; st.style.height = V.sh + 'px'; st.style.transform = `translate(${V.tx}px,${V.ty}px) scale(${V.k})`;
+  }
+  function zoomAt(cx, cy, f) { cancelAnimationFrame(anim); const k2 = clamp(V.k * f, 1, 6), r = k2 / V.k; V.tx = cx - (cx - V.tx) * r; V.ty = cy - (cy - V.ty) * r; V.k = k2; place(); }
+  function fly(vx, vy, k = 2.6) {                                                        // anima el encuadre hacia un punto del lienzo (coordenadas 1600x900)
+    cancelAnimationFrame(anim); const main = $('exMain'), mw = avail(), mh = main.clientHeight, lx = V.sw / 2 + (vx - 800) * (V.sh / 900), ly = vy * (V.sh / 900);
+    const a = { k: V.k, tx: V.tx, ty: V.ty }, t = { k, tx: mw / 2 - lx * k, ty: mh / 2 - ly * k }, t0 = performance.now();
+    const step = now => { const u = Math.min(1, (now - t0) / 420), e = 1 - Math.pow(1 - u, 3); V.k = a.k + (t.k - a.k) * e; V.tx = a.tx + (t.tx - a.tx) * e; V.ty = a.ty + (t.ty - a.ty) * e; place(); if (u < 1) anim = requestAnimationFrame(step); }; anim = requestAnimationFrame(step);
+  }
+  const putCanvas = c => { const st = $('exStage'); let out = st.querySelector('canvas'); if (!out) { out = document.createElement('canvas'); st.append(out); } out.width = c.width; out.height = c.height; out.getContext('2d').drawImage(c, 0, 0); return out; };
   const toV = (e, out) => { const r = out.getBoundingClientRect(), px = (e.clientX - r.left) / r.width * out.width, py = (e.clientY - r.top) / r.height * out.height, sK = out.height / 900; return [(px - out.width / 2) / sK + 800, py / sK]; };
-  async function show(tab, keepSel) {
-    if (EXP.busy) return; EXP.busy = true; try {
-      EXP.tab = tab; if (!keepSel) EXP.sel = null; cancelAnimationFrame(anim); clearTimeout(EXP.timer); win.classList.add('on');
-      for (const b of win.querySelectorAll('[data-t]')) b.classList.toggle('on', b.dataset.t === tab);
-      const d = EXP.data = await load(), side = $('exSide');
-      if (tab === 'mapa') {
-        cv = canvasFor(paint(2400, 1350, 0, drawMap, { data: d, sel: EXP.sel, t: 0 })); EXP.pts = EXP.job.pts;
-        const list = CITIES.filter(c => d.hits[c.id]).sort((a, b) => d.hits[b.id].n - d.hits[a.id].n);
-        side.innerHTML = `<h3>ciudades</h3><p>${list.length} de ${CITIES.length} nombradas en las letras que guardaste. toca un pin o una ciudad.</p><ul>${list.map(c => `<li data-c="${c.id}" class="${EXP.sel === c.id ? 'on' : ''}"><b>${esc(c.name)}</b> · ${d.hits[c.id].n} ${d.hits[c.id].n === 1 ? 'verso' : 'versos'}</li>`).join('')}</ul>` +
-          (EXP.sel && d.hits[EXP.sel] ? `<h3 style="margin-top:14px">${esc(CITIES.find(c => c.id === EXP.sel).name)}</h3><ul>${[...d.hits[EXP.sel].songs.values()].map(s => `<li><b>${esc(s.name)}</b><br>${esc(s.artist)}<br><i>«${esc(s.line)}»</i></li>`).join('')}</ul>` : '');
-      } else if (tab === 'atlas') {
-        cv = canvasFor(paint(2400, 1350, 2, drawAtlas, { data: d, sel: EXP.sel })); EXP.pts = EXP.job.pts; const cells = EXP.job.cells, sel = cells.find(c => c.m === EXP.sel);
-        side.innerHTML = `<h3>islas</h3><p>una isla por ánimo; cada pueblito es una canción, más grande cuanto más la escuchas.</p><ul>${cells.map(c => `<li data-m="${esc(c.m)}" class="${EXP.sel === c.m ? 'on' : ''}"><b>${MOODS[c.m]}</b> · ${c.g.length} canciones</li>`).join('')}</ul>` +
-          (sel ? `<h3 style="margin-top:14px">${MOODS[sel.m]}</h3><ul>${[...sel.g].sort((a, b) => (b.veces || 1) - (a.veces || 1)).map(s => `<li><b>${esc(s.name)}</b><br>${esc(s.artist)} · ${s.veces || 1}×</li>`).join('')}</ul>` : '');
-      } else { await creatureView(d); }
+  const nearest = (e, maxPx = 18) => {                                                   // el pin más cercano al cursor, medido en píxeles de pantalla
+    const out = $('exStage').querySelector('canvas'); if (!out || !EXP.pts) return null; const [vx, vy] = toV(e, out), u = out.getBoundingClientRect().height / 900; let best = null, bd = maxPx / u;
+    for (const p of EXP.pts) { const dd = Math.hypot(p.x - vx, p.y - vy); if (dd < bd) { bd = dd; best = p; } } return best;
+  };
+
+  // ---------- datos de cada pestaña ----------
+  const fecha = t => { const d = new Date(t || 0); return d.getFullYear() + '.' + String(d.getMonth() + 1).padStart(2, '0') + '.' + String(d.getDate()).padStart(2, '0'); };
+  const songOf = id => (EXP.data?.songs || []).find(s => s.id === id);
+  function sideHTML() {
+    const d = EXP.data, q = norm(EXP.q || ''), tab = EXP.tab; if (!d) return '';
+    if (tab === 'mapa') {
+      const lit = CITIES.filter(c => d.hits[c.id]), list = (q ? CITIES.filter(c => norm(c.name).includes(q)) : lit).sort((a, b) => (d.hits[b.id]?.n || 0) - (d.hits[a.id]?.n || 0)), sel = EXP.sel && CITIES.find(c => c.id === EXP.sel);
+      return `<h3>ciudades</h3><p>${lit.length} de ${CITIES.length} nombradas en las letras que guardaste. rueda para acercar, arrastra para moverte, toca un pin.</p><ul>${list.map(c => `<li data-c="${c.id}" class="${EXP.sel === c.id ? 'on' : ''}"><b>${esc(c.name)}</b> · ${d.hits[c.id] ? d.hits[c.id].n + (d.hits[c.id].n === 1 ? ' verso' : ' versos') : 'sin versos aún'}</li>`).join('') || '<li>ninguna coincide</li>'}</ul>` +
+        (sel ? `<h3 style="margin-top:14px">${esc(sel.name)}</h3>` + (d.hits[sel.id] ? `<ul>${[...d.hits[sel.id].songs.values()].map(x => `<li><b>${esc(x.name)}</b><br>${esc(x.artist)}<br><i>«${esc(x.line)}»</i></li>`).join('')}</ul>` : '<p>todavía ninguna letra la nombra.</p>') : '');
+    }
+    if (tab === 'atlas') {
+      const cells = EXP.job?.cells || [], sel = cells.find(c => c.m === EXP.sel), songs = q ? d.songs.filter(s => norm(s.name + ' ' + s.artist).includes(q)).slice(0, 40) : [];
+      return `<h3>islas</h3><p>una isla por ánimo; cada pueblito es una canción, más grande cuanto más la escuchas. rueda para acercar.</p>` + (q ? `<ul>${songs.map(s => `<li data-s="${esc(s.id)}"><b>${esc(s.name)}</b><br>${esc(s.artist)} · ${s.veces || 1}×</li>`).join('') || '<li>ninguna coincide</li>'}</ul>` :
+        `<ul>${cells.map(c => `<li data-m="${esc(c.m)}" class="${EXP.sel === c.m ? 'on' : ''}"><b>${MOODS[c.m]}</b> · ${c.g.length} canciones · ${c.plays} escuchas</li>`).join('')}</ul>`) +
+        (sel ? `<h3 style="margin-top:14px">${MOODS[sel.m]}</h3><ul>${[...sel.g].sort((a, b) => (b.veces || 1) - (a.veces || 1)).map(s => `<li data-s="${esc(s.id)}"><b>${esc(s.name)}</b><br>${esc(s.artist)} · ${s.veces || 1}×</li>`).join('')}</ul>` : '');
+    }
+    if (tab === 'criatura' && EXP.st) { const st = EXP.st, dias = st.days > 900 ? 'nunca' : st.days === 0 ? 'hoy' : st.days === 1 ? 'ayer' : 'hace ' + st.days + ' días';
+      return `<h3>tu criatura</h3><input id="exName" maxlength="14" value="${esc(st.name)}" aria-label="nombre de la criatura" spellcheck="false"><p>nivel <b>${st.level}</b> de 12 · ${st.state}</p><p>${st.total} escuchas · ${st.songs} canciones · ${st.artists} artistas</p><p>ánimo dominante: ${esc(MOODS[st.top] || '—')}<br>género dominante: ${esc(st.genre || '—')}<br>última música: ${dias}</p>
+        <p>crece con lo que escuchas: más nivel, más grande; antenas al 3, corona al 10. sus manchas son tus artistas, sus orejas tu género, sus colores tu ánimo.</p><button data-a="pet">acariciar</button>`; }
+    return '';
+  }
+  const renderSide = () => { const sd = $('exSide'); if (sd && EXP.tab !== 'coleccion') { const keep = sd.scrollTop; sd.innerHTML = sideHTML(); sd.scrollTop = keep; } };
+  async function collectionView() {
+    const rows = EXP.rows = await (window.RISOSHARE ? RISOSHARE.list() : []), pend = (POS.ready || []).filter(x => !x._saved), q = norm(EXP.q || ''), sort = EXP.sort || 'recientes';
+    const list = rows.filter(r => !q || norm((r.name || '') + ' ' + (r.artist || '')).includes(q)).sort(sort === 'nombre' ? (a, b) => String(a.name).localeCompare(b.name) : sort === 'artista' ? (a, b) => String(a.artist).localeCompare(b.artist) : (a, b) => (b.fin || 0) - (a.fin || 0));
+    const img = r => { const f = (r.frames || []).find(Boolean); return r.thumb || (f && f.url) || ''; };
+    $('exCol').innerHTML = `<h3>colección de pósters</h3><div class="sub">${rows.length} guardados en este navegador · caben hasta ${ST.caps.posters}, lo más viejo se borra primero</div>
+      <div class="orden">ordenar:${[['recientes', 'recientes'], ['nombre', 'canción'], ['artista', 'artista']].map(([v, t]) => ` <button data-sort="${v}" class="${sort === v ? 'on' : ''}">${t}</button>`).join('')}</div>
+      ${pend.length ? `<h4>sin guardar · de esta sesión (${pend.length})</h4><div class="pgrid">${pend.map(x => `<div class="pc pend" data-pid="${esc(x.id)}">${(x.frames || []).find(Boolean) ? `<img alt="" data-a="pedit" src="${(x.frames || []).find(Boolean).url}">` : '<i data-a="pedit"></i>'}<b>${esc(x.name)}</b><span>${esc(x.artist)} · sin guardar</span><div><button data-a="pedit">personalizar</button><button data-a="psave">guardar</button><button data-a="pdrop">descartar</button></div></div>`).join('')}</div><h4>guardados</h4>` : ''}
+      ${list.length ? `<div class="pgrid">${list.map(r => `<div class="pc" data-id="${esc(r.id)}">${img(r) ? `<img alt="" data-a="cedit" src="${img(r)}">` : '<i data-a="cedit"></i>'}<b>${esc((r.opts && r.opts.title) || r.name)}</b><span>${esc((r.opts && r.opts.artist) || r.artist)} · ${fecha(r.fin)}${r.dedic ? ' · con dedicatoria' : ''}</span><div><button data-a="cedit">abrir</button><button data-a="cdel">borrar</button></div></div>`).join('')}</div>` :
+        `<div class="vacio">${rows.length ? 'ninguna lámina coincide con la búsqueda.' : 'todavía no guardaste ningún póster. al terminar una canción te avisaré y tú eliges si lo guardas.'}</div>`}`;
+    // láminas guardadas con la versión anterior no traen miniatura propia: se imprimen ahora, una a una, y quedan guardadas
+    for (const r of list.filter(x => !x.thumb).slice(0, 24)) (async () => { try {
+      const it = await RISOSHARE.hydrate(r); if (!it.opts) it.opts = { ...POS.DEF, layout: 'clasico', inks: 0 }; const url = await POS.thumb(it); r.thumb = url; r.opts = it.opts; await ST.set('posters', r.id, r);
+      const card = $('exCol').querySelector(`.pc[data-id="${CSS.escape(r.id)}"]`), old = card && card.querySelector('img, i'); if (old) { const im = document.createElement('img'); im.alt = ''; im.dataset.a = 'cedit'; im.src = url; old.replaceWith(im); } } catch (e) {} })();
+  }
+
+  // ---------- abrir una pestaña ----------
+  async function open(tab, keep) {
+    if (EXP.busy) return; EXP.busy = true;
+    try {
+      tab = TABS.includes(tab) ? tab : 'mapa'; const cambio = tab !== EXP.tab || !win.classList.contains('on'); EXP.tab = tab;
+      if (cambio) { EXP.sel = null; V.k = 1; V.tx = V.ty = 0; EXP.q = ''; $('exQ').value = ''; }
+      cancelAnimationFrame(anim); clearTimeout(EXP.timer); win.classList.add('on'); win.dataset.mode = tab; aspect = tab === 'criatura' ? 1 : 16 / 9;
+      for (const b of win.querySelectorAll('[data-t]')) b.classList.toggle('on', b.dataset.t === tab); $('exHint').innerHTML = HINTS[tab]; $('exTip').classList.remove('on');
+      const d = EXP.data = await load(); EXP.pts = null; if (!keep) $('exSide').classList.remove('off'); renderSide();
+      if (tab === 'mapa') { putCanvas(paint(2400, 1350, 0, drawMap, { data: d, sel: EXP.sel, t: 0 })); EXP.pts = EXP.job.pts; }
+      else if (tab === 'atlas') { putCanvas(paint(2400, 1350, 2, drawAtlas, { data: d, sel: EXP.sel })); EXP.pts = EXP.job.pts; }
+      else if (tab === 'criatura') { const st = EXP.st = stats(d); EXP.pet = 0; const tick = () => { if (EXP.tab !== 'criatura' || !win.classList.contains('on')) return; EXP.t = (EXP.t || 0) + .16; EXP.pet = Math.max(0, EXP.pet - .05);
+        putCanvas(paint(720, 720, MOOD_INK[st.top] || 0, drawCreature, { st: EXP.st, t: EXP.t, petting: EXP.pet })); EXP.timer = setTimeout(tick, 140); }; tick(); }
+      else await collectionView();
+      place(); renderSide();
     } finally { EXP.busy = false; }
   }
-  async function creatureView(d) {
-    const st = EXP.st = stats(d); EXP.pet = 0; const side = $('exSide');
-    const dias = st.days > 900 ? 'nunca' : st.days === 0 ? 'hoy' : st.days === 1 ? 'ayer' : 'hace ' + st.days + ' días';
-    side.innerHTML = `<h3>tu criatura</h3><input id="exName" maxlength="14" value="${esc(st.name)}" aria-label="nombre de la criatura" spellcheck="false"><p>nivel <b>${st.level}</b> de 12 · ${st.state}</p><p>${st.total} escuchas · ${st.songs} canciones · ${st.artists} artistas</p><p>ánimo dominante: ${esc(MOODS[st.top] || '—')}<br>género dominante: ${esc(st.genre || '—')}<br>última música: ${dias}</p>
-      <p>crece con lo que escuchas: más nivel, más grande; antenas al 3, corona al 10. sus manchas son tus artistas, sus orejas tu género, sus colores tu ánimo.</p><button data-a="pet">acariciar</button>`;
-    const tick = () => { if (EXP.tab !== 'criatura' || !win.classList.contains('on')) return; EXP.t = (EXP.t || 0) + .16; EXP.pet = Math.max(0, EXP.pet - .05);
-      cv = canvasFor(paint(720, 720, MOOD_INK[st.top] || 0, drawCreature, { st: EXP.st, t: EXP.t, petting: EXP.pet })); EXP.timer = setTimeout(tick, 140); };
-    tick();
-  }
+  // elegir un pin o una isla (desde el lienzo o desde la lista) y volver a pintar sin perder el encuadre
+  async function choose(sel, fx, fy) { EXP.sel = sel; await open(EXP.tab, true); if (fx != null) fly(fx, fy); }
+
+  // ---------- interacción ----------
   win.addEventListener('click', async e => {
-    const b = e.target.closest('button'), li = e.target.closest('li');
-    if (e.target === win || b?.dataset.a === 'x') return EXP.close();
-    if (b?.dataset.t) return show(b.dataset.t);
-    if (b?.dataset.a === 'pet') { EXP.pet = 1; return; }
-    if (li?.dataset.c) { EXP.sel = li.dataset.c; return show('mapa', true); }
-    if (li?.dataset.m !== undefined) { EXP.sel = li.dataset.m; return show('atlas', true); }
-    const out = e.target.closest('canvas'); if (out && EXP.pts && EXP.tab !== 'criatura') {
-      const [vx, vy] = toV(e, out); let best = null, bd = 30; for (const p of EXP.pts) { const dd = Math.hypot(p.x - vx, p.y - vy); if (dd < bd) { bd = dd; best = p; } }
-      if (EXP.tab === 'mapa') { if (best && EXP.data.hits[best.id]) { EXP.sel = best.id; return show('mapa', true); } }
-      else { const cell = EXP.job.cells.find(c => Math.hypot((c.cx - vx) / 1.25, (c.cy - vy) / .85) < c.r); if (cell) { EXP.sel = cell.m; return show('atlas', true); } }
+    const b = e.target.closest('button'), li = e.target.closest('li'), a = b?.dataset.a || e.target.dataset?.a, card = e.target.closest('.pc');
+    if (e.target === win) return EXP.close();
+    if (b?.dataset.t) return open(b.dataset.t);
+    if (a === 'x') return EXP.close();
+    if (a === 'side') return togglePanel();
+    if (a === 'zin') return zoomAt(avail() / 2, $('exMain').clientHeight / 2, 1.5);
+    if (a === 'zout') return zoomAt(avail() / 2, $('exMain').clientHeight / 2, 1 / 1.5);
+    if (a === 'zfit') { cancelAnimationFrame(anim); V.k = 1; V.tx = V.ty = 0; return place(); }
+    if (a === 'pet') { EXP.pet = 1; return; }
+    if (b?.dataset.sort) { EXP.sort = b.dataset.sort; return collectionView(); }
+    if (card && a && EXP.tab === 'coleccion') {
+      const id = card.dataset.id, pid = card.dataset.pid;
+      if (a === 'cedit') { const row = EXP.rows.find(r => r.id === id); if (row) POS.openWin(await RISOSHARE.hydrate(row)); return; }
+      if (a === 'cdel') { if (b.dataset.armed !== '1') { b.dataset.armed = '1'; b.textContent = '¿seguro?'; setTimeout(() => { b.dataset.armed = ''; b.textContent = 'borrar'; }, 3000); return; } await ST.del('posters', id); return collectionView(); }
+      const it = (POS.ready || []).find(x => x.id === pid); if (!it) return collectionView();
+      if (a === 'pedit') return POS.openWin(it);
+      if (a === 'psave') { b.textContent = 'guardando…'; await RISOSHARE.save(it); POS.ready = POS.ready.filter(x => x !== it); return collectionView(); }
+      if (a === 'pdrop') { POS.ready = POS.ready.filter(x => x !== it); return collectionView(); }
     }
+    if (li?.dataset.c) { const c = CITIES.find(x => x.id === li.dataset.c), [px, py] = proj(c.lon, c.lat); return choose(c.id, px, py); }
+    if (li?.dataset.m !== undefined) { const cell = EXP.job?.cells.find(c => c.m === li.dataset.m); return choose(li.dataset.m, cell?.cx, cell?.cy); }
+    if (li?.dataset.s) { const s = songOf(li.dataset.s), pt = EXP.pts?.find(p => p.id === li.dataset.s); return choose(s ? (MOODS[s.mood] ? s.mood : '') : EXP.sel, pt?.x, pt?.y); }
   });
+  // arrastrar mueve el lienzo; un toque sin mover elige; la criatura se acaricia con un toque
+  $('exStage').addEventListener('pointerdown', e => { if (EXP.tab === 'criatura') { EXP.pet = 1; return; } drag = { x: e.clientX, y: e.clientY, tx: V.tx, ty: V.ty, moved: false }; $('exStage').setPointerCapture(e.pointerId); });
+  $('exStage').addEventListener('pointermove', e => {
+    const tip = $('exTip'), st = $('exStage');
+    if (drag) { const dx = e.clientX - drag.x, dy = e.clientY - drag.y; if (Math.abs(dx) + Math.abs(dy) > 5) drag.moved = true; if (drag.moved) { st.classList.add('drag'); V.tx = drag.tx + dx; V.ty = drag.ty + dy; place(); tip.classList.remove('on'); } return; }
+    if (EXP.tab === 'criatura') return; const p = nearest(e); st.classList.toggle('pin', !!p);
+    if (!p) return tip.classList.remove('on');
+    const r = $('exMain').getBoundingClientRect(), d = EXP.data; let html = '';
+    if (EXP.tab === 'mapa') { const h = d.hits[p.id]; html = `<b>${esc(p.name)}</b>${h ? h.n + (h.n === 1 ? ' verso' : ' versos') + ' en tus letras' : 'ninguna letra la nombra aún'}`; }
+    else { const s = songOf(p.id); html = `<b>${esc(p.name)}</b>${esc(p.artist || '')}${s ? ' · ' + (s.veces || 1) + ' escuchas' : ''} · ${esc(MOODS[p.m] || '')}`; }
+    tip.innerHTML = html; tip.style.left = Math.min(r.width - 290, e.clientX - r.left + 16) + 'px'; tip.style.top = Math.max(8, e.clientY - r.top - 12) + 'px'; tip.classList.add('on');
+  });
+  $('exStage').addEventListener('pointerleave', () => $('exTip').classList.remove('on'));
+  const finish = async e => {
+    const d = drag; drag = null; $('exStage').classList.remove('drag'); if (!d || d.moved || EXP.tab === 'criatura') return;
+    const p = nearest(e, 26);
+    if (EXP.tab === 'mapa') { if (p) return choose(p.id, p.x, p.y); }
+    else if (p) { const s = songOf(p.id); return choose(s && MOODS[s.mood] ? s.mood : p.m, p.x, p.y); }
+    else { const out = $('exStage').querySelector('canvas'), [vx, vy] = toV(e, out), cell = EXP.job?.cells.find(c => Math.hypot((c.cx - vx) / 1.25, (c.cy - vy) / .85) < c.r); if (cell) return choose(cell.m, cell.cx, cell.cy); }
+  };
+  $('exStage').addEventListener('pointerup', finish); $('exStage').addEventListener('pointercancel', () => { drag = null; $('exStage').classList.remove('drag'); });
+  $('exStage').addEventListener('dblclick', e => { if (EXP.tab === 'criatura') return; const r = $('exMain').getBoundingClientRect(); if (V.k > 2) { cancelAnimationFrame(anim); V.k = 1; V.tx = V.ty = 0; place(); } else zoomAt(e.clientX - r.left, e.clientY - r.top, 2.2); });
+  $('exMain').addEventListener('wheel', e => { if (EXP.tab === 'criatura' || EXP.tab === 'coleccion') return; e.preventDefault(); const r = $('exMain').getBoundingClientRect(); zoomAt(e.clientX - r.left, e.clientY - r.top, Math.exp(-e.deltaY * .0018)); }, { passive: false });
+  $('exQ').addEventListener('input', e => { EXP.q = e.target.value; if (EXP.tab === 'coleccion') collectionView(); else renderSide(); });
+  $('exQ').addEventListener('keydown', e => { if (e.key === 'Enter') { const first = $('exSide').querySelector('li[data-c], li[data-s], li[data-m]'); if (first) first.click(); } });
   win.addEventListener('change', async e => { if (e.target.id === 'exName') { const nombre = e.target.value.trim().slice(0, 14); const cri = (await ST.get('criatura', 'estado')) || {}; cri.nombre = nombre; await ST.set('criatura', 'estado', cri); if (EXP.st) EXP.st.name = nombre || autoName(EXP.data); } });
+  addEventListener('resize', () => { if (win.classList.contains('on')) place(); });
+  for (const ev of ['riso:poster-guardado', 'riso:poster-cerrado']) addEventListener(ev, () => { if (win.classList.contains('on') && EXP.tab === 'coleccion') collectionView(); });
   win.addEventListener('keydown', e => e.stopPropagation());
-  EXP.open = tab => show(tab || EXP.tab);
+  EXP.open = tab => open(tab || EXP.tab);
   EXP.close = () => { cancelAnimationFrame(anim); clearTimeout(EXP.timer); win.classList.remove('on'); };
-  addEventListener('keydown', e => { if (e.key === 'Escape' && win.classList.contains('on')) { e.stopImmediatePropagation(); EXP.close(); } }, true);
-  if (window.SETUI) SETUI.addRow('contenido', ['explorar', 'Explorar tu música', 'btn', { texto: 'mapa, atlas y criatura', fn: () => EXP.open() }, 'un mapa con las ciudades de tus letras, el atlas de tu música y una criatura que crece con lo que escuchas']);
+  addEventListener('keydown', e => {
+    if (!win.classList.contains('on')) return; const typing = /INPUT|TEXTAREA/.test(document.activeElement?.tagName || ''), posterOpen = document.getElementById('posterWin')?.classList.contains('on');
+    if (posterOpen) return;
+    if (e.key === 'Escape') { e.stopImmediatePropagation(); if (typing && $('exQ').value) { $('exQ').value = ''; EXP.q = ''; return EXP.tab === 'coleccion' ? collectionView() : renderSide(); } return EXP.close(); }
+    if (typing) return; const k = e.key;
+    if (k === 'ArrowRight' || k === 'ArrowLeft') { e.preventDefault(); return open(TABS[(TABS.indexOf(EXP.tab) + (k === 'ArrowRight' ? 1 : TABS.length - 1)) % TABS.length]); }
+    if (/^[1-4]$/.test(k)) return open(TABS[+k - 1]);
+    if (k === '/') { e.preventDefault(); return $('exQ').focus(); }
+    if (k === 'p' || k === 'P') return togglePanel();
+    const cx = avail() / 2, cy = $('exMain').clientHeight / 2;
+    if (k === '+' || k === '=') return zoomAt(cx, cy, 1.4); if (k === '-' || k === '_') return zoomAt(cx, cy, 1 / 1.4); if (k === '0') { cancelAnimationFrame(anim); V.k = 1; V.tx = V.ty = 0; place(); }
+  }, true);
+  if (window.RISOSHARE) RISOSHARE.openGallery = () => EXP.open('coleccion');                     // el botón «colección» de ajustes y del póster abre esta pestaña
+  if (window.SETUI) SETUI.addRow('contenido', ['explorar', 'Explorar tu música', 'btn', { texto: 'mapa, atlas, criatura y colección', fn: () => EXP.open() }, 'un mapa con las ciudades de tus letras, el atlas de tu música, una criatura que crece con lo que escuchas y tu colección de pósters']);
 })();

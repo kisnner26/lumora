@@ -89,15 +89,17 @@ el panel de ajustes (tecla `,`) tiene nueve secciones: imagen, efectos, letra, c
 
 ## explorar
 
-la tarjeta **explorar** del menú (o ajustes > contenido) abre tres vistas hechas con lo que ya escuchaste:
+la tarjeta **explorar** del menú (o ajustes > contenido) abre a pantalla completa cuatro vistas hechas con lo que ya escuchaste. se maneja con el mouse y el teclado: la rueda acerca y aleja, arrastrar mueve el lienzo, doble clic hace zoom, al pasar el cursor sobre un pin o un pueblito sale su nombre, `/` busca, `←` `→` o `1` a `4` cambian de pestaña, `p` oculta el panel y `esc` cierra. al elegir una ciudad o una isla en la lista, el lienzo vuela hasta ella.
 
 - **mapa**: un planisferio ilustrado con 71 ciudades; se encienden las que nombran las letras de tus canciones. ![mapa](docs/img/exp-mapa.jpg)
 - **atlas de tu música**: un archipiélago con una isla por ánimo y un pueblito por canción. ![atlas](docs/img/exp-atlas.jpg)
+- **colección**: tus pósters guardados, con su miniatura real, buscador y orden (recientes, canción, artista). toca una lámina para abrirla y volver a personalizarla. arriba salen los pósters de esta sesión que todavía no guardaste.
 - **criatura**: nace y crece con lo que escuchas; su tamaño, colores, orejas y manchas salen de tus escuchas, y se pone triste si pasas días sin música. ![criatura](docs/img/exp-criatura.jpg)
 
 ## compartir y memoria
 
-- **colección de pósters**: los pósters de las canciones que terminan se guardan solos en este navegador (hasta 60). ajustes > imagen > colección de pósters, o el botón «colección» del póster. ![colección](docs/img/share-coleccion.jpg)
+- **póster de la canción, a tu medida**: al terminar una canción aparece un aviso con tres opciones: *personalizar*, *guardar* o *descartar*; ya no se guarda solo (en ajustes > imagen > «qué hacer con el póster» puedes pedir que se guarde sin preguntar). el editor deja cambiar el título, el artista y la palabra grande (o elegir una de las más repetidas), la dedicatoria, la composición (clásico, cartel, palabra), el tamaño de la portada, el borde, el papel (crema, blanco, kraft, periódico), las tintas (seis combinaciones), qué mostrar (tomas, palabra, datos, sello y fecha, pie) y el formato (A4 o 9:16); la vista previa se actualiza al instante y «sorpréndeme» mezcla todo al azar.
+- **colección de pósters**: lo que guardas queda en este navegador (hasta 60) con sus opciones, así que se reabre igual y se sigue editando. vive en **explorar > colección**; también se abre desde ajustes > imagen o con el botón «colección» del póster. ![colección](docs/img/share-coleccion.jpg)
 - **dedicatoria**: escribe una línea en la ventana del póster y se imprime a mano sobre la lámina.
 - **enlace pequeño**: «copiar enlace» genera una dirección corta (unos 260 caracteres) que abre `docs/ver.html` con la lámina de la canción y tu dedicatoria. los datos viajan en el fragmento `#` y no llegan a ningún servidor. para que abra desde fuera, activa GitHub Pages sobre `docs/` o cambia la página en ajustes. ![ver.html](docs/img/share-ver.jpg)
 

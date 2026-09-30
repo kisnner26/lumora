@@ -17,13 +17,13 @@ let rows = await p.evaluate(() => RISOSHARE.list());
 chk('(a) el póster queda guardado en la colección', rows.length === 1 && rows[0].name === 'Noche de Neón' && rows[0].frames.filter(Boolean).length === 4, rows.length + ' filas');
 // (b) colección
 await p.evaluate(() => RISOSHARE.openGallery()); await espera(600); await p.screenshot({ path: '/tmp/share-coleccion.jpg', type: 'jpeg', quality: 80 });
-chk('(b) la ventana de colección muestra la tarjeta', await p.evaluate(() => document.querySelectorAll('#colWin .card').length) === 1);
+chk('(b) la ventana de colección muestra la tarjeta', await p.evaluate(() => document.querySelectorAll('#expWin[data-mode=coleccion] .pgrid .pc').length) === 1);
 // (c) ver: rehidrata y abre el póster
-await p.click('#colWin .card button[data-a=ver]'); await p.waitForSelector('#posterWin canvas', { timeout: 120000 }); await espera(500);
+await p.click('#expWin .pgrid .pc button[data-a=cedit]'); await p.waitForSelector('#posterWin canvas', { timeout: 120000 }); await espera(500);
 chk('(c) «ver» abre el póster guardado', await p.evaluate(() => !!document.querySelector('#posterWin canvas') && RISOPOSTER.open.item.id === 'ptest1'));
 // (d) dedicatoria
-await p.fill('#pwDed', 'para Ana, con cariño'); await p.press('#pwDed', 'Enter'); await p.waitForSelector('#posterWin canvas', { timeout: 120000 }); await espera(800);
-const ded = await p.evaluate(async () => ({ it: RISOPOSTER.open.item.dedic, input: document.getElementById('pwDed')?.value, st: (await RISOSHARE.list())[0].dedic, ded: (await RISOSTORE.list('dedicatorias')).length }));
+await p.fill('#posterWin [data-d=dedic]', 'para Ana, con cariño'); await p.press('#posterWin [data-d=dedic]', 'Enter'); await p.waitForSelector('#posterWin canvas', { timeout: 120000 }); await espera(800);
+const ded = await p.evaluate(async () => ({ it: RISOPOSTER.open.item.dedic, input: document.querySelector('#posterWin [data-d=dedic]')?.value, st: (await RISOSHARE.list())[0].dedic, ded: (await RISOSTORE.list('dedicatorias')).length }));
 chk('(d) la dedicatoria se guarda en el póster, en la colección y en el historial de dedicatorias', ded.it === 'para Ana, con cariño' && ded.input === ded.it && ded.st === ded.it && ded.ded === 1, JSON.stringify(ded));
 await p.evaluate(() => { const cv = document.querySelector('#posterWin canvas'); const s = document.createElement('canvas'); s.width = 800; s.height = Math.round(800 * cv.height / cv.width); s.getContext('2d').drawImage(cv, 0, 0, s.width, s.height); window.__png = s.toDataURL('image/jpeg', .8); });
 const png = await p.evaluate(() => window.__png); (await import('node:fs')).writeFileSync('/tmp/share-poster-dedicatoria.jpg', Buffer.from(png.split(',')[1], 'base64'));
@@ -50,7 +50,7 @@ await p.evaluate(() => { CFG.shareBase = 'https://ejemplo.org/l/ver.html'; }); c
 chk('(g) la página del enlace se puede cambiar', l2.startsWith('https://ejemplo.org/l/ver.html#'), l2.slice(0, 40)); await p.evaluate(() => { CFG.shareBase = ''; });
 // (h) borrar
 await p.evaluate(() => { document.querySelector('#posterWin button[data-a=x]').click(); RISOSHARE.openGallery(); }); await espera(500);
-await p.click('#colWin button[data-a=del]'); await p.click('#colWin button[data-a=del]'); await espera(700);
+await p.click('#expWin .pc button[data-a=cdel]'); await p.click('#expWin .pc button[data-a=cdel]'); await espera(700);
 chk('(h) borrar de la colección (con confirmación)', (await p.evaluate(() => RISOSHARE.list())).length === 0);
 chk('sin errores de consola', errores.length === 0, errores.join(' | '));
 await b.close(); srv.stop(); process.exit(ok ? 0 : 1);

@@ -76,36 +76,44 @@
     if (window.CFG && CFG.poster === false) return;
     const item = { id: 'p' + Date.now().toString(36), ...c, why, fin: Date.now() };
     POS.ready.push(item); if (POS.ready.length > 6) POS.ready.shift();
-    showToast(item); if (window.RISOSHARE) RISOSHARE.save(item);
+    const auto = window.CFG && CFG.posterGuardar === 'auto'; if (auto && window.RISOSHARE) RISOSHARE.save(item);
+    showToast(item, auto);
     window.dispatchEvent(new CustomEvent('riso:poster-listo', { detail: item }));
   }
 
   // ---------- la escena del póster ----------
   const mood = c => Object.entries(c.moods).sort((a, b) => b[1] - a[1])[0]?.[0] || '';
   const INK_ORDER = [0, 1, 2, 3, 4, 5];
+  // lo que el usuario puede cambiar del póster; se guarda con cada lámina (item.opts) para poder volver a abrirla igual
+  const DEF = { layout: 'clasico', inks: -1, paper: 'crema', frame: 'doble', cover: 'm', shots: true, word: true, facts: true, date: true, foot: true, title: '', artist: '', wordText: '' };
+  const PAPERS = { crema: null, blanco: [.985, .98, .965], kraft: [.80, .66, .47], periodico: [.87, .86, .81] };
+  POS.DEF = DEF; POS.PAPERS = PAPERS;
+  // sin opciones guardadas, la «variante» de antes decide composición y tintas (así las láminas viejas se ven igual)
+  const resolve = (item, variant) => { const o = { ...DEF, ...(item.opts || {}) }; if (!item.opts || item.opts.layout === undefined) o.layout = variant % 2 ? 'cartel' : 'clasico'; if (o.inks < 0) o.inks = (variant >> 1) % INK_ORDER.length; return o; };
+  POS.resolve = resolve;
   R.register({ id: 'poster', name: 'póster', inks: 0, phrases: [], make: () => ({}),
     cam(cam) { cam.x = 0; cam.y = 0; cam.z = 1; cam.r = 0; },
     draw(K, s) { drawPoster(K, POS.job); } });
   R.order.splice(R.order.indexOf('poster'), 1);
 
   function drawPoster(K, job) {
-    const { c, v: variant } = job, v = K.v, m = 34, W = v.w, sc = Math.min(1, W / 639), x0 = v.l + m, w = W - m * 2, yTop = 30;
+    const { c, v: variant, o } = job, v = K.v, m = 34, W = v.w, sc = Math.min(1, W / 639), x0 = v.l + m, w = W - m * 2, yTop = 30;
     const slots = job.slots = [];                                                // rectángulos de las miniaturas, para pegarlas después
     K.bg(3, .05);
     // marco de la hoja
-    K.rect(v.l + 12, 12, W - 24, 876, { s: 1, lw: 5 });
-    K.rect(v.l + 22, 22, W - 44, 856, { s: 1, lw: 2, st: .7 });
+    if (o.frame === 'doble') { K.rect(v.l + 12, 12, W - 24, 876, { s: 1, lw: 5 }); K.rect(v.l + 22, 22, W - 44, 856, { s: 1, lw: 2, st: .7 }); } else if (o.frame === 'simple') K.rect(v.l + 14, 14, W - 28, 872, { s: 1, lw: 9 });
     const dat = new Date(c.fin || Date.now()), fecha = `${dat.getFullYear()}.${String(dat.getMonth() + 1).padStart(2, '0')}.${String(dat.getDate()).padStart(2, '0')}`;
-    const words = topWord(c.lines, (c.name.split(/\s+/)[0] || c.name)), Wd = (words.w || c.name).toUpperCase();
+    const words = topWord(c.lines, (c.name.split(/\s+/)[0] || c.name)), custom = (o.wordText || '').trim(), Wd = (custom || words.w || c.name).toUpperCase(), ttl = (o.title || '').trim() || c.name, art = (o.artist || '').trim() || c.artist || 'artista';
     const mm = Math.floor((c.dur || 0) / 60), ss = String(Math.floor((c.dur || 0) % 60)).padStart(2, '0');
     // ---- bloques (alto fijo cada uno); el espacio que sobra se reparte como aire ----
     const rowHeader = { h: 56, draw: y => {
       K.txt('LUMORA', x0, y + 42, { size: 46, w: 900, i: 1, font: 'display' }); K.circ(x0 + K.measure('LUMORA', { size: 46, w: 900, font: 'display' }) + 12, y + 30, 6, { f: 2 });
-      K.code('LÁMINA N° ' + String(1000 + (job.n || 1)).slice(-4), v.r - m, y + 20, { align: 'right', size: 14, bg: true }); K.code(fecha, v.r - m, y + 46, { align: 'right', size: 14, i: 2 }); } };
-    const coverSide = Math.round(Math.min(300, w * .5)), tx = x0 + coverSide + 26, tw = x0 + w - tx;
-    const ff = fit(c.name, tw, 190, { size: 84, w: 800, font: 'display', stretch: 'condensed' }, 4), af = fit(c.artist || 'artista', tw, 60, { size: 40, w: 600, font: 'hand' }, 2);
+      if (o.date) { K.code('LÁMINA N° ' + String(1000 + (job.n || 1)).slice(-4), v.r - m, y + 20, { align: 'right', size: 14, bg: true }); K.code(fecha, v.r - m, y + 46, { align: 'right', size: 14, i: 2 }); } } };
+    const coverSide = Math.round(Math.min(o.cover === 'l' ? 390 : o.cover === 's' ? 210 : 300, w * (o.cover === 'l' ? .64 : o.cover === 's' ? .36 : .5))), tx = x0 + coverSide + 26, tw = x0 + w - tx;
+    const ff = fit(ttl, tw, 190, { size: 84, w: 800, font: 'display', stretch: 'condensed' }, 4), af = fit(art, tw, 60, { size: 40, w: 600, font: 'hand' }, 2);
     const facts = [['DURACIÓN', `${mm}:${ss}`], ['VERSOS', c.lines ? String(c.lines.length) : '—'], ['ESTROFAS', c.cuts ? String(c.cuts) : '—'], ['ÁNIMO', (mood(c) || '—').toUpperCase()]];
     if (c.live && c.bpm) facts.push(['TEMPO', Math.round(c.bpm) + ' BPM']);
+    if (!o.facts) facts.length = 0;
     const textH = 20 + ff.lines.length * ff.size * 1.02 + 14 + af.lines.length * af.size * 1.05 + 20 + facts.length * 26 + 8;
     const rowCover = { h: Math.max(coverSide + 20, textH), draw: y => {
       const cx = x0, cy = y + 10, side = coverSide;
@@ -118,18 +126,18 @@
       af.lines.forEach((ln, i) => K.txt(ln.join(' '), tx, ty + af.size * .8 + i * af.size * 1.05, { font: 'hand', size: af.size, w: 600, i: 2 })); ty += af.lines.length * af.size * 1.05 + 30;
       facts.forEach(([a, b2], i) => { const yy = ty + i * 26; K.code(a, tx, yy, { size: 13, tone: .75 }); K.txt(b2, tx + tw, yy, { font: 'mono', size: 17, w: 500, align: 'right' }); K.line(tx, yy + 6, tx + tw, yy + 6, 3, 1.5, .8); });
     } };
-    const rowWord = { h: c.dedic ? 128 : 150, draw: y => {
-      const size = Math.min(140, (w - 10) / Math.max(3, K.measure(Wd, { size: 100, w: 900, font: 'display' })) * 100), cx = v.l + W / 2, cy = y + 128 - (140 - size) * .25;
+    const big = o.layout === 'palabra', rowWord = { h: (c.dedic ? 128 : 150) + (big ? 60 : 0), draw: y => {
+      const size = Math.min(big ? 200 : 140, (w - 10) / Math.max(3, K.measure(Wd, { size: 100, w: 900, font: 'display' })) * 100), cx = v.l + W / 2, cy = y + 128 + (big ? 60 : 0) - ((big ? 200 : 140) - size) * .25;
       const wo = { size, w: 900, font: 'display', align: 'center', stretch: 'condensed' }; K.txt(Wd, cx + 6, cy + 6, { ...wo, i: 3 }); K.txt(Wd, cx - 4, cy - 3, { ...wo, i: 2 });
       K.c.save(); K.c.strokeStyle = K.ink(1); K.c.lineWidth = 4; K.c.lineJoin = 'round'; K.c.font = `900 ${size}px ${R.FONTS.display}`; try { K.c.fontStretch = 'condensed'; } catch (e) {} K.c.textAlign = 'center'; K.c.strokeText(Wd, cx, cy); K.c.restore();
-      K.code(words.n > 1 ? `LA PALABRA MÁS REPETIDA · ${words.n} VECES` : 'LA PALABRA DE LA CANCIÓN', v.l + W / 2, y + 146, { align: 'center', size: 13 }); } };
+      K.code(custom ? 'LA PALABRA DE ESTA LÁMINA' : words.n > 1 ? `LA PALABRA MÁS REPETIDA · ${words.n} VECES` : 'LA PALABRA DE LA CANCIÓN', v.l + W / 2, y + 146 + (big ? 60 : 0), { align: 'center', size: 13 }); } };
     const dedic = (c.dedic || '').trim().slice(0, 90);
     const rowDedic = { h: dedic ? 70 : 0, draw: y => {
       if (!dedic) return; const df = fit('«' + dedic + '»', w - 70, 44, { size: 36, w: 600, font: 'hand' }, 2), bw = Math.max(...df.lines.map(l => K.measure(l.join(' '), { size: df.size, w: 600, font: 'hand' }))) + 44, bx = v.l + W / 2 - bw / 2, bh = df.lines.length * df.size * 1.05 + 20;
       K.c.save(); K.c.translate(v.l + W / 2, y + 30); K.c.rotate(-.012); K.c.translate(-(v.l + W / 2), -(y + 30));
       K.rect(bx + 6, y + 6, bw, bh, { f: 1, ft: .3, over: true }); K.rect(bx, y, bw, bh, { f: -1, s: 1, lw: 3 }); K.tape(bx - 12, y - 8, 70, 24, -.5);
       df.lines.forEach((ln, i) => K.txt(ln.join(' '), v.l + W / 2, y + 8 + df.size * .85 + i * df.size * 1.05, { font: 'hand', size: df.size, w: 600, i: 2, align: 'center' })); K.c.restore(); } };
-    const gap = 14, fixedH = 56 + rowCover.h + rowWord.h + 30 + rowDedic.h, availTh = 856 - fixedH - 6 * 8;
+    const gap = 14, fixedH = 56 + rowCover.h + (o.word ? rowWord.h : 0) + 30 + rowDedic.h, availTh = 856 - fixedH - 6 * 8;
     let th2 = Math.min((w - gap) / 2 * 9 / 16, (availTh - gap - 26 - 12) / 2), tw2 = th2 * 16 / 9; th2 = Math.max(60, th2); tw2 = th2 * 16 / 9;
     const thx = x0 + (w - (tw2 * 2 + gap)) / 2;                                    // centradas si hubo que achicarlas
     const rowThumbs = { h: th2 * 2 + gap + 26, draw: y => {
@@ -138,84 +146,147 @@
         if (!c.frames[i]) { K.hatch(cx, cy, tw2, th2, 1, 14, -.7, 2, .5); }
         K.code(String(i + 1).padStart(2, '0') + ' · ' + SLOTS[i].toUpperCase(), cx, cy + th2 + 14, { size: 12, tone: .8 }); } } };
     const rowFoot = { h: 30, draw: y => { const tx = 'IMPRESO EN LUMORA · RISOGRAFÍA PROCEDURAL', z = Math.min(12, w / K.measure(tx, { font: 'mono', size: 12, w: 500, ls: 1.5 }) * 12); K.code(tx, v.l + W / 2, y + 22, { align: 'center', size: z, tone: .8 }); } };
-    const rows = (variant % 2 === 0 ? [rowHeader, rowCover, rowWord, rowThumbs, rowDedic, rowFoot] : [rowHeader, rowWord, rowThumbs, rowCover, rowDedic, rowFoot]).filter(r => r.h);
+    const orden = { clasico: [rowHeader, rowCover, rowWord, rowThumbs, rowDedic, rowFoot], cartel: [rowHeader, rowWord, rowThumbs, rowCover, rowDedic, rowFoot], palabra: [rowHeader, rowWord, rowCover, rowThumbs, rowDedic, rowFoot] }[o.layout] || [rowHeader, rowCover, rowWord, rowThumbs, rowDedic, rowFoot];
+    const rows = orden.filter(r => r.h && !(r === rowThumbs && !o.shots) && !(r === rowWord && !o.word) && !(r === rowFoot && !o.foot));
     const total = rows.reduce((a, r) => a + r.h, 0), air = Math.max(6, (856 - total) / (rows.length + 1));
     let y = 22 + air; for (const r of rows) { r.draw(y); y += r.h + air; }
     // grano de tinta: una post-it con la frase de la canción
     const line = c.frames.find(f => f && f.txt)?.txt; if (line && !dedic) K.postit(v.r - m - 250, 800 - (variant % 2 ? 0 : 0) - 30, 230, 92, .05, H.wrap ? [line.slice(0, 22), line.slice(22, 44)].filter(Boolean) : [line], { size: 22, fill: 3, ft: .5, font: 'hand' });
   }
 
-  // ---------- renderizado a tamaño exacto ----------
+  // ---------- renderizado a tamaño exacto (scale < 1 para la vista previa) ----------
   const FORMATS = { a4: [2480, 3508, 'A4 vertical'], story: [1620, 2880, '9:16'] };
   const imgOf = url => new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ok(null); i.src = url; });
-  async function render(item, fmt = 'a4', variant = 0) {
-    const [W, Hh] = FORMATS[fmt]; if (!POS.stage) POS.stage = new R.Stage();
-    const st = POS.stage; st.auto = false; st.notes = false; st.lyric = true;
-    st.setDetail(3, true); const dpr = st.dpr || 1; st.resize(W / dpr, Hh / dpr); st.setDetail(3, true);
-    st.resize(W / (st.dpr || 1), Hh / (st.dpr || 1));
-    const inks = INK_ORDER[(variant >> 1) % INK_ORDER.length]; st.setInks(inks);
-    POS.job = { c: item, v: variant, n: (POS.count = (POS.count || 0) + 1) }; POS.job.n = item.num || (item.num = POS.job.n);
+  async function render_(item, fmt, variant, scale) {
+    const [W, Hh] = FORMATS[fmt] || FORMATS.a4; if (!POS.stage) POS.stage = new R.Stage();
+    const o = resolve(item, variant), st = POS.stage; st.auto = false; st.notes = false; st.lyric = true; st.paper = PAPERS[o.paper] || null;
+    const w = Math.round(W * scale), h = Math.round(Hh * scale), det = scale < .5 ? 2 : 3;
+    st.setDetail(det, true); const dpr = st.dpr || 1; st.resize(w / dpr, h / dpr); st.setDetail(det, true); st.resize(w / (st.dpr || 1), h / (st.dpr || 1));
+    st.setInks(o.inks);
+    POS.job = { c: item, v: variant, o, n: (POS.count = (POS.count || 0) + 1) }; POS.job.n = item.num || (item.num = POS.job.n);
     st.setScene('poster', { instant: true }); st.speed = 0; st.frame(1 / 30); st.frame(1 / 30);
     const out = document.createElement('canvas'); out.width = st.canvas.width; out.height = st.canvas.height; const g = out.getContext('2d'); g.drawImage(st.canvas, 0, 0);
     // las miniaturas van encima, ya impresas
-    const sK = out.height / 900, inkc = R.INKS[inks].i[0].map(x => Math.round(x * 255)).join(',');
+    const sK = out.height / 900, inkc = R.INKS[o.inks].i[0].map(x => Math.round(x * 255)).join(',');
     for (const sl of POS.job.slots || []) { const f = item.frames[sl.i]; if (!f) continue; const im = await imgOf(f.url); if (!im) continue;
       const px = out.width / 2 + (sl.x - 800) * sK, py = sl.y * sK, pw = sl.w * sK, ph = sl.h * sK;
-      g.drawImage(im, px, py, pw, ph); g.strokeStyle = `rgb(${inkc})`; g.lineWidth = Math.max(3, 4 * sK); g.strokeRect(px, py, pw, ph); }
-    return out;
+      g.drawImage(im, px, py, pw, ph); g.strokeStyle = `rgb(${inkc})`; g.lineWidth = Math.max(2, 4 * sK); g.strokeRect(px, py, pw, ph); }
+    st.paper = null; return out;
   }
+  // una sola cola: la vista previa y el guardado comparten el mismo Stage y no pueden pisarse
+  let chain = Promise.resolve();
+  const render = (item, fmt = 'a4', variant = 0, scale = 1) => { const p = chain.then(() => render_(item, fmt, variant, scale)); chain = p.catch(() => {}); return p; };
   POS.render = render; POS.formats = FORMATS;
+  POS.thumb = async it => (await render(it, 'a4', POS.variant || 0, .12)).toDataURL('image/jpeg', .72);
 
-  // ---------- aviso y ventana ----------
+  // ---------- aviso de fin de canción y editor ----------
+  const esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const topWords = (lines, n) => { const cnt = {}; for (const l of lines || []) for (const w of (norm(l).match(/[a-zñ']{4,}/g) || [])) if (!STOP.has(w.replace(/'/g, ''))) cnt[w] = (cnt[w] || 0) + 1; return Object.entries(cnt).sort((a, b) => b[1] - a[1] || b[0].length - a[0].length).slice(0, n).map(q => q[0]); };
+  const OPT = { layout: [['clasico', 'clásico'], ['cartel', 'cartel'], ['palabra', 'palabra']], cover: [['s', 'chica'], ['m', 'media'], ['l', 'grande']], frame: [['doble', 'doble'], ['simple', 'simple'], ['ninguno', 'sin borde']], paper: [['crema', 'crema'], ['blanco', 'blanco'], ['kraft', 'kraft'], ['periodico', 'periódico']] };
+  const SHOW = [['shots', 'tomas'], ['word', 'palabra'], ['facts', 'datos'], ['date', 'sello y fecha'], ['foot', 'pie']];
   const css = document.createElement('style'); css.textContent = `
-    #posterToast { position:fixed; right:20px; bottom:20px; z-index:9; padding:12px 16px; background:var(--rkp,#f7edd8); color:var(--rk1,#212b80); border:3px solid var(--rk1,#212b80); box-shadow:6px 6px 0 -1px var(--rk1,#212b80);
-      font:600 13px 'Martian Mono',monospace; letter-spacing:.08em; text-transform:uppercase; cursor:pointer; opacity:0; transform:translateY(12px); transition:opacity .4s, transform .4s; pointer-events:none; }
-    #posterToast.on { opacity:1; transform:none; pointer-events:auto; } #posterToast:hover { background:var(--rk2,#f97a2a); }
-    #posterWin { position:fixed; inset:0; z-index:30; display:none; align-items:center; justify-content:center; gap:28px; background:rgba(33,43,128,.55); padding:20px; }
-    #posterWin.on { display:flex; } #posterWin canvas { position:static !important; inset:auto !important; height:min(86vh,900px); width:auto; max-width:60vw; border:4px solid var(--rk1,#212b80); box-shadow:10px 10px 0 -1px var(--rk1,#212b80); background:#f4ead4; }
-    #posterWin .pw-side { display:flex; flex-direction:column; gap:12px; min-width:220px; font-family:'Anybody',sans-serif; }
-    #posterWin .pw-side b { color:var(--rkl,#faf3e4); font:800 30px/1 'Anybody',sans-serif; font-stretch:70%; text-transform:uppercase; }
-    #posterWin .pw-side span { color:var(--rkl,#faf3e4); font:500 12px 'Martian Mono',monospace; letter-spacing:.08em; text-transform:uppercase; }
-    #posterWin button { padding:11px 16px; border:3px solid var(--rk1,#212b80); background:var(--rkl,#faf3e4); color:var(--rk1,#212b80); box-shadow:4px 4px 0 -1px var(--rk1,#212b80); font:700 13px 'Anybody',sans-serif; font-stretch:80%; text-transform:uppercase; letter-spacing:.05em; cursor:pointer; text-align:left; }
-    #posterWin input { padding:10px 12px; border:3px solid var(--rk1,#212b80); background:var(--rkl,#faf3e4); color:var(--rk1,#212b80); font:600 15px 'Caveat',cursive; outline:none; }
-    #posterWin input:focus { background:#fff; }
-    #posterWin button:hover { background:var(--rk2,#f97a2a); } #posterWin button.on { background:var(--rk1,#212b80); color:var(--rkl,#faf3e4); }`;
+    #posterToast { position:fixed; right:20px; bottom:20px; z-index:9; max-width:min(420px,calc(100vw - 40px)); padding:12px 14px; background:var(--rkp,#f7edd8); color:var(--rk1,#212b80); border:3px solid var(--rk1,#212b80); box-shadow:6px 6px 0 -1px var(--rk1,#212b80);
+      font:600 13px 'Martian Mono',monospace; letter-spacing:.06em; text-transform:uppercase; opacity:0; transform:translateY(12px); transition:opacity .4s, transform .4s; pointer-events:none; }
+    #posterToast.on { opacity:1; transform:none; pointer-events:auto; } #posterToast div { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+    #posterToast button { padding:7px 11px; border:3px solid var(--rk1,#212b80); background:var(--rkl,#faf3e4); color:var(--rk1,#212b80); font:700 12px 'Anybody',sans-serif; font-stretch:80%; text-transform:uppercase; letter-spacing:.05em; cursor:pointer; }
+    #posterToast button:hover, #posterToast button[data-t=save] { background:var(--rk2,#f97a2a); }
+    #posterWin { position:fixed; inset:0; z-index:33; display:none; background:rgba(33,43,128,.72); } #posterWin.on { display:flex; }
+    #posterWin .pw-view { flex:1; min-width:0; display:flex; align-items:center; justify-content:center; padding:22px; } #posterWin .pw-view canvas { position:static !important; inset:auto !important; max-width:100%; max-height:100%; width:auto; height:auto; border:4px solid var(--rk1,#212b80); box-shadow:10px 10px 0 -1px var(--rk1,#212b80); background:#f4ead4; }
+    #posterWin .pw-side { width:min(400px,44vw); background:var(--rkp,#f7edd8); border-left:4px solid var(--rk1,#212b80); padding:18px 18px 22px; overflow:auto; display:flex; flex-direction:column; gap:9px; font-family:'Anybody',sans-serif; color:var(--rk1,#212b80); }
+    #posterWin .pw-head b { display:block; font:800 32px/1 'Anybody',sans-serif; font-stretch:70%; text-transform:uppercase; } #posterWin .pw-head span { font:500 11px 'Martian Mono',monospace; letter-spacing:.08em; text-transform:uppercase; }
+    #posterWin .pw-head em { display:inline-block; margin-left:8px; padding:2px 7px; background:var(--rk2,#f97a2a); color:#fff; font:700 10px 'Martian Mono',monospace; letter-spacing:.08em; text-transform:uppercase; font-style:normal; } #posterWin .pw-head em.ok { background:var(--rk1,#212b80); }
+    #posterWin h4 { margin:8px 0 0; font:500 10px 'Martian Mono',monospace; letter-spacing:.18em; text-transform:uppercase; opacity:.75; }
+    #posterWin .pw-row { display:flex; flex-wrap:wrap; gap:6px; }
+    #posterWin input { padding:9px 11px; border:3px solid var(--rk1,#212b80); background:#fffdf6; color:var(--rk1,#212b80); font:600 16px 'Caveat',cursive; outline:none; } #posterWin input:focus { background:#fff; border-color:var(--rk2,#f97a2a); }
+    #posterWin button { padding:8px 12px; border:3px solid var(--rk1,#212b80); background:var(--rkl,#faf3e4); color:var(--rk1,#212b80); box-shadow:3px 3px 0 -1px var(--rk1,#212b80); font:700 12px 'Anybody',sans-serif; font-stretch:80%; text-transform:uppercase; letter-spacing:.05em; cursor:pointer; }
+    #posterWin button:hover { background:var(--rk2,#f97a2a); } #posterWin button.on { background:var(--rk1,#212b80); color:var(--rkl,#faf3e4); } #posterWin button.sm { padding:4px 8px; font-size:11px; box-shadow:none; }
+    #posterWin button.sq { width:38px; height:28px; padding:0; } #posterWin button.main { background:var(--rk2,#f97a2a); color:#fff; border-color:var(--rk1,#212b80); } #posterWin .pw-msg { font:500 11px 'Martian Mono',monospace; min-height:16px; }
+    @media (max-width:820px) { #posterWin.on { flex-direction:column; } #posterWin .pw-side { width:auto; max-height:52vh; border-left:0; border-top:4px solid var(--rk1,#212b80); } }`;
   document.head.appendChild(css);
   const toast = document.createElement('div'); toast.id = 'posterToast'; document.body.appendChild(toast);
   const win = document.createElement('div'); win.id = 'posterWin'; win.setAttribute('role', 'dialog'); win.setAttribute('aria-label', 'póster de la canción'); document.body.appendChild(win);
   let toastT = 0;
-  function showToast(item) { toast.textContent = 'póster listo · ' + item.name; toast.classList.add('on'); toast.onclick = () => openWin(item); clearTimeout(toastT); toastT = setTimeout(() => toast.classList.remove('on'), 14000); }
+  function showToast(item, auto) {
+    toast.innerHTML = `<span>${auto ? 'guardado en tu colección' : 'póster listo'} · ${esc(item.name)}</span><div>${auto ? '<button data-t="edit">ver</button>' : '<button data-t="edit">personalizar</button><button data-t="save">guardar</button><button data-t="drop">descartar</button>'}</div>`;
+    toast.dataset.id = item.id; toast.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => toast.classList.remove('on'), auto ? 10000 : 26000);
+  }
+  toast.addEventListener('click', async e => {
+    const b = e.target.closest('button'); if (!b) return; const it = POS.ready.find(x => x.id === toast.dataset.id); if (!it) return toast.classList.remove('on');
+    if (b.dataset.t === 'edit') return openWin(it);
+    if (b.dataset.t === 'drop') { POS.ready = POS.ready.filter(x => x !== it); return toast.classList.remove('on'); }
+    if (b.dataset.t === 'save') { toast.querySelector('span').textContent = 'guardando…'; await RISOSHARE.save(it); toast.querySelector('span').textContent = 'guardado en tu colección · ' + it.name; toast.querySelector('div').innerHTML = '<button data-t="edit">ver</button>'; clearTimeout(toastT); toastT = setTimeout(() => toast.classList.remove('on'), 5000); }
+  });
 
+  const chips = (k, list, cur) => list.map(([v, t]) => `<button data-set="${k}" data-v="${v}" class="${String(cur) === v ? 'on' : ''}">${t}</button>`).join('');
+  function panel(it) {
+    const o = it.opts, words = topWords(it.lines, 6);
+    return `<div class="pw-head"><b>póster</b><span>${esc(it.name)} · ${esc(it.artist)}</span><em id="pwEstado">${it._saved ? 'en tu colección' : 'sin guardar'}</em></div>
+      <h4>texto</h4><input data-k="title" maxlength="60" placeholder="título: ${esc(it.name)}" value="${esc(o.title)}"><input data-k="artist" maxlength="40" placeholder="artista: ${esc(it.artist)}" value="${esc(o.artist)}">
+      <input data-k="wordText" maxlength="18" placeholder="palabra grande (vacío: la más repetida)" value="${esc(o.wordText)}">${words.length ? `<div class="pw-row">${words.map(w => `<button data-word="${esc(w)}" class="sm">${esc(w)}</button>`).join('')}</div>` : ''}
+      <input data-d="dedic" maxlength="90" placeholder="dedicatoria (opcional)" value="${esc(it.dedic || '')}">
+      <h4>composición</h4><div class="pw-row">${chips('layout', OPT.layout, o.layout)}</div><h4>portada</h4><div class="pw-row">${chips('cover', OPT.cover, o.cover)}</div>
+      <h4>borde</h4><div class="pw-row">${chips('frame', OPT.frame, o.frame)}</div><h4>papel</h4><div class="pw-row">${chips('paper', OPT.paper, o.paper)}</div>
+      <h4>tintas</h4><div class="pw-row">${R.INKS.map((k, i) => `<button data-set="inks" data-v="${i}" class="sq ${o.inks === i ? 'on' : ''}" title="${esc(k.name)}" style="background:linear-gradient(90deg,rgb(${k.i[0].map(x => Math.round(x * 255))}) 50%,rgb(${k.i[1].map(x => Math.round(x * 255))}) 50%)"></button>`).join('')}</div>
+      <h4>mostrar</h4><div class="pw-row">${SHOW.map(([k, t]) => `<button data-tg="${k}" class="${o[k] ? 'on' : ''}">${t}</button>`).join('')}</div>
+      <h4>formato</h4><div class="pw-row"><button data-fmt="a4">A4</button><button data-fmt="story">9:16</button></div>
+      <div class="pw-row" style="margin-top:8px"><button data-a="save" class="main">guardar en mi colección</button><button data-a="png">descargar png</button></div>
+      <div class="pw-row"><button data-a="copy">copiar</button><button data-a="share">compartir</button><button data-a="link">enlace</button></div>
+      <div class="pw-row"><button data-a="shuffle">sorpréndeme</button><button data-a="reset">restablecer</button><button data-a="x">cerrar</button></div><div class="pw-msg" id="pwMsg"></div>`;
+  }
+  function sync() {
+    const o = POS.open; if (!o) return; const op = o.item.opts;
+    for (const b of win.querySelectorAll('[data-set]')) b.classList.toggle('on', String(op[b.dataset.set]) === b.dataset.v);
+    for (const b of win.querySelectorAll('[data-tg]')) b.classList.toggle('on', !!op[b.dataset.tg]);
+    for (const b of win.querySelectorAll('[data-fmt]')) b.classList.toggle('on', b.dataset.fmt === o.fmt);
+    const e = document.getElementById('pwEstado'); if (e) { e.textContent = o.item._saved ? 'en tu colección' : 'sin guardar'; e.classList.toggle('ok', !!o.item._saved); }
+  }
+  let rt = 0, st2 = 0;
+  function refresh() {                                                                    // vista previa en baja resolución, con un respiro para no repintar a cada tecla
+    clearTimeout(rt); sync();
+    rt = setTimeout(async () => { const o = POS.open; if (!o) return; const cv = await render(o.item, o.fmt, 0, .28); if (POS.open !== o) return; o.canvas = cv; document.getElementById('pwView')?.replaceChildren(cv); }, 120);
+    const o = POS.open; if (o && o.item._saved && window.RISOSHARE) { clearTimeout(st2); st2 = setTimeout(() => RISOSHARE.save(o.item), 1200); }   // si ya estaba en la colección, los cambios se guardan solos
+  }
   async function openWin(item, fmt = 'a4', variant = POS.variant) {
-    toast.classList.remove('on'); POS.open = { item, fmt, variant }; win.classList.add('on'); win.innerHTML = '<div class="pw-side"><b>armando el póster…</b></div>';
-    const cv = await render(item, fmt, variant); POS.open.canvas = cv;
-    win.innerHTML = ''; win.append(cv);
-    const side = document.createElement('div'); side.className = 'pw-side';
-    side.innerHTML = `<b>póster</b><span>${item.name} · ${item.artist}</span><input id="pwDed" type="text" maxlength="90" placeholder="dedicatoria (opcional)" value="${(item.dedic || '').replace(/"/g, '&quot;')}" spellcheck="false"><button data-a="save">guardar png</button><button data-a="copy">copiar</button>${navigator.share ? '<button data-a="share">compartir</button>' : ''}<button data-a="var">otra variante</button><button data-a="link">copiar enlace</button><button data-a="col">colección</button><button data-a="fmt" class="${fmt === 'story' ? 'on' : ''}">${fmt === 'a4' ? 'pasar a 9:16' : 'pasar a a4'}</button><button data-a="x">cerrar</button><span id="pwMsg"></span>`;
-    win.append(side);
+    toast.classList.remove('on');
+    if (!item.opts) item.opts = { ...DEF, layout: variant % 2 ? 'cartel' : 'clasico', inks: (variant >> 1) % INK_ORDER.length };     // la lámina queda con las opciones con que se ve
+    else item.opts = { ...DEF, ...item.opts }; if (item.opts.inks < 0) item.opts.inks = (variant >> 1) % INK_ORDER.length;
+    POS.open = { item, fmt, variant }; win.classList.add('on'); win.innerHTML = `<div class="pw-view" id="pwView"></div><div class="pw-side">${panel(item)}</div>`; refresh();
   }
   const msg = t => { const m = document.getElementById('pwMsg'); if (m) m.textContent = t; };
   const blobOf = cv => new Promise(ok => cv.toBlob(ok, 'image/png'));
   win.addEventListener('click', async e => {
-    if (e.target === win) return close();
-    const a = e.target.closest('button')?.dataset.a; if (!a || !POS.open) return; const o = POS.open;
+    if (e.target === win || e.target.id === 'pwView') return close();
+    const b = e.target.closest('button'); if (!b || !POS.open) return; const o = POS.open, it = o.item, op = it.opts, d = b.dataset;
+    if (d.set) { op[d.set] = d.set === 'inks' ? +d.v : d.v; return refresh(); }
+    if (d.tg) { op[d.tg] = !op[d.tg]; return refresh(); }
+    if (d.word) { op.wordText = d.word; const i = win.querySelector('[data-k=wordText]'); if (i) i.value = d.word; return refresh(); }
+    if (d.fmt) { o.fmt = d.fmt; return refresh(); }
+    const a = d.a; if (!a) return;
     if (a === 'x') return close();
-    if (a === 'link') { const u = window.RISOSHARE && RISOSHARE.link(o.item); if (!u) return msg('sin enlace'); try { await navigator.clipboard.writeText(u); msg('enlace copiado (' + u.length + ' letras)'); } catch (err) { msg(u); } return; }
-    if (a === 'col') { close(); return window.RISOSHARE && RISOSHARE.openGallery(); }
-    if (a === 'var') { POS.variant = o.variant + 1; return openWin(o.item, o.fmt, POS.variant); }
-    if (a === 'fmt') return openWin(o.item, o.fmt === 'a4' ? 'story' : 'a4', o.variant);
-    const blob = await blobOf(o.canvas), nm = `lumora-poster-${(o.item.name || 'cancion').toLowerCase().replace(/[^a-z0-9]+/g, '-')}.png`;
-    if (a === 'save') { const u = URL.createObjectURL(blob), l = document.createElement('a'); l.href = u; l.download = nm; l.click(); setTimeout(() => URL.revokeObjectURL(u), 6000); msg('guardado'); }
+    if (a === 'reset') { it.opts = { ...DEF, layout: 'clasico', inks: 0 }; win.querySelector('.pw-side').innerHTML = panel(it); return refresh(); }
+    if (a === 'shuffle') { const pick = l => l[Math.floor(Math.random() * l.length)][0]; Object.assign(op, { layout: pick(OPT.layout), cover: pick(OPT.cover), frame: pick(OPT.frame), paper: pick(OPT.paper), inks: Math.floor(Math.random() * R.INKS.length) }); return refresh(); }
+    if (a === 'link') { const u = window.RISOSHARE && RISOSHARE.link(it); if (!u) return msg('sin enlace'); try { await navigator.clipboard.writeText(u); msg('enlace copiado (' + u.length + ' letras)'); } catch (err) { msg(u); } return; }
+    if (a === 'save') { msg('guardando…'); await RISOSHARE.save(it); POS.ready = POS.ready.filter(x => x !== it); sync(); msg('guardado en tu colección'); window.dispatchEvent(new CustomEvent('riso:poster-guardado', { detail: it })); return; }
+    msg('armando la lámina completa…'); const full = await render(it, o.fmt, 0, 1), blob = await blobOf(full), nm = `lumora-poster-${(it.opts.title || it.name || 'cancion').toLowerCase().replace(/[^a-z0-9]+/g, '-')}.png`;
+    if (a === 'png') { const u = URL.createObjectURL(blob), l = document.createElement('a'); l.href = u; l.download = nm; l.click(); setTimeout(() => URL.revokeObjectURL(u), 6000); msg('descargado'); }
     if (a === 'copy') { try { await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]); msg('copiado'); } catch (err) { msg('no se pudo copiar aquí'); } }
-    if (a === 'share') { try { await navigator.share({ files: [new File([blob], nm, { type: 'image/png' })], title: o.item.name }); } catch (err) {} }
-    window.dispatchEvent(new CustomEvent('riso:poster-exportado', { detail: { item: o.item, fmt: o.fmt, variant: o.variant, canvas: o.canvas, blob } }));
+    if (a === 'share') { try { await navigator.share({ files: [new File([blob], nm, { type: 'image/png' })], title: it.name }); msg(''); } catch (err) { msg('compartir no está disponible aquí'); } }
+    window.dispatchEvent(new CustomEvent('riso:poster-exportado', { detail: { item: it, fmt: o.fmt, variant: o.variant, canvas: full, blob } }));
   });
-  win.addEventListener('change', e => { if (e.target.id === 'pwDed' && POS.open) { const o = POS.open; o.item.dedic = e.target.value.trim().slice(0, 90); if (window.RISOSHARE) RISOSHARE.save(o.item, true); openWin(o.item, o.fmt, o.variant); } });
-  win.addEventListener('keydown', e => { if (e.target.id === 'pwDed' && e.key === 'Enter') e.target.blur(); e.stopPropagation(); });
-  const close = () => { win.classList.remove('on'); win.innerHTML = ''; POS.open = null; };
+  win.addEventListener('input', e => {
+    if (!POS.open) return; const t = e.target, it = POS.open.item;
+    if (t.dataset.k) { it.opts[t.dataset.k] = t.value; refresh(); }
+    else if (t.dataset.d) { it.dedic = t.value.trim().slice(0, 90); refresh(); }
+  });
+  win.addEventListener('change', e => { if (e.target.dataset.d && POS.open && POS.open.item._saved && window.RISOSHARE) RISOSHARE.save(POS.open.item, true); });
+  win.addEventListener('keydown', e => { if (e.target.tagName === 'INPUT' && e.key === 'Enter') e.target.blur(); e.stopPropagation(); });
+  const close = () => { clearTimeout(rt); win.classList.remove('on'); win.innerHTML = ''; POS.open = null; window.dispatchEvent(new CustomEvent('riso:poster-cerrado')); };
   addEventListener('keydown', e => { if (e.key === 'Escape' && win.classList.contains('on')) { e.stopImmediatePropagation(); close(); } }, true);
   POS.openWin = openWin; POS.finalize = finalize; POS.hydrate = null;
 
-  // ajuste
-  if (window.SETUI) SETUI.addRow('imagen', ['poster', 'Póster al terminar', 'sw', null, 'al acabar cada canción arma una lámina imprimible con la portada y cuatro tomas del clip'], true);
+  // ajustes
+  if (window.SETUI) {
+    SETUI.addRow('imagen', ['poster', 'Póster al terminar', 'sw', null, 'al acabar cada canción arma una lámina imprimible con la portada y cuatro tomas del clip'], true);
+    SETUI.addRow('imagen', ['posterGuardar', 'Qué hacer con el póster', 'seg', [['preguntar', 'preguntar'], ['auto', 'guardar solo']], 'preguntar: te avisa y eliges si lo guardas en tu colección. guardar solo: queda guardado sin preguntar'], 'preguntar');
+  }
 })();
