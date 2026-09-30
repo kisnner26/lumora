@@ -4,11 +4,7 @@ lyric videos en vivo para lo que suena en tu mac. le das play en apple music o s
 
 página del producto: **https://kisnner26.github.io/lumora**
 
-[![promo de lumora: el coro con la letra cinética y los subtítulos traducidos](docs/img/promo.gif)](https://kisnner26.github.io/lumora/#demo)
-
 **[ver el promo completo (67 s)](https://kisnner26.github.io/lumora/#demo)** · hecho con una grabación real de lumora, con sonido.
-
-![una canción de amor: la pareja, los corazones y la palabra que remata el verso, elegidos por claude](docs/img/estreno.jpg)
 
 ## videoclip en risografía (el lyric video nuevo)
 
@@ -122,33 +118,13 @@ para agregar uno: escribe `add(id, categoría, etiqueta, /palabras/i, [figuras],
 
 ## capturas reales
 
-| | |
-|---|---|
-| ![palabra gigante en el gancho del verso](docs/img/palabra-gigante.jpg) | ![composición tipográfica con la palabra que se repite](docs/img/composicion.jpg) |
-| ![la pareja en el estadio, en el verso donde le pide que no se vaya](docs/img/estadio.jpg) | ![subtítulos traducidos con la palabra clave resaltada](docs/img/subtitulos.jpg) |
-
 todas salen de la app corriendo con canciones reales, sin retoques.
 
 ## la interfaz
 
-![bienvenida con una canción sonando: el título se vuelve el titular y la carátula va en la barra](docs/img/sonando.jpg)
-
 la bienvenida se escribe con luz: mientras espera muestra frases que se encienden letra por letra; cuando suena algo, el título de la canción pasa a ser el titular. el estado del sistema (música, claude, luces) cabe en una línea, y lo secundario vive en paneles laterales.
 
-![panel de cómo funciona abierto sobre la bienvenida](docs/img/como-funciona.jpg)
-
-<img src="docs/img/ajustes.jpg" alt="ajustes: canales numerados, teclas con led, faders y selectores" width="49%"> <img src="docs/img/color.jpg" alt="ajustes de color con muestras reales de cada paleta" width="49%">
-
-![consola de reproducción: carátula, escena actual, origen del guion, controles, herramientas y barra con las estrofas marcadas](docs/img/reproductor.jpg)
-
 la consola de reproducción aparece centrada abajo al mover el mouse: la escena que suena y de dónde sale el guion, los controles, herramientas (traducción, letra, modo autor, luces, grabar en 16:9 o 9:16, carátula, pantalla completa, ajustes, inicio) y una barra con cada estrofa marcada.
-
-![modo carátula: la portada de protagonista con la barra flotante, el corazón de me gusta y las opciones](docs/img/caratula.jpg)
-
-| | |
-|---|---|
-| ![modo carátula con el menú de opciones](docs/img/caratula-menu.jpg) | ![en el drop la portada se parte en pedazos](docs/img/caratula-drop.jpg) |
-| ![cd tornasol detrás de la portada](docs/img/caratula-cd.jpg) | ![cassette detrás de la portada](docs/img/caratula-cassette.jpg) |
 
 el modo carátula pone la portada de protagonista: siete fondos (difuminado, ambiente con los colores de la portada, escena con el video corriendo detrás, mínimo, y la portada con un vinilo, un cassette o un cd que asoman y giran), la letra en una línea o completa al lado (avanza sola y un clic salta a ese verso), tamaño de portada, latido y reloj. la portada sigue la canción: brilla en el coro, se apaga en lo triste y se parte en el drop. con apple music muestra qué canción sigue en los últimos segundos, y un corazón marca la canción como favorita (en spotify usa su atajo de teclado). los controles van en una barra flotante que se oculta sola; las opciones, en un menú que sale de ella. se abre con la tecla `c`.
 
@@ -160,11 +136,7 @@ las figuras de cada artista se ven igual en todas sus canciones: mismo color de 
 
 ## modo autor
 
-![modo autor: vista previa en vivo, línea de tiempo con estrofas y versos, e inspector](docs/img/modo-autor.jpg)
-
 un editor para armar el video de cualquier canción a mano y al detalle. el video corre en vivo mientras editas: abajo una línea de tiempo con cada estrofa y cada verso; a la derecha un inspector para elegir, por estrofa, escenario, escenario secundario, objetos, ambiente, energía, ánimo, color, hora y transición, y por verso, la palabra clave (se elige tocándola), si va en gigante, sus objetos y una persona famosa. se parte del guion de claude o de cero, con deshacer ilimitado; se guarda solo y la próxima vez que suene esa canción manda tu versión. taxi cab de twenty one pilots queda como ejemplo de lo que se puede lograr a mano. se abre con la tecla `e`.
-
-![modo autor: inspector del verso con la palabra clave elegida](docs/img/modo-autor-verso.jpg)
 
 ## qué hace
 
@@ -191,7 +163,6 @@ un editor para armar el video de cualquier canción a mano y al detalle. el vide
 - grabar clips en mp4 de la duración que quieras, en horizontal 16:9 o vertical 9:16
 - modo grabación para obs (30 fps estables)
 - ajustes para todo lo de arriba, calidad automática según tu mac
-
 
 ## cómo funciona
 
