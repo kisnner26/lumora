@@ -79,6 +79,10 @@
   #settings .reset { border:2.5px solid var(--rk1) !important; padding:9px 14px !important; background:var(--rkl); box-shadow:3px 3px 0 -1px var(--rk1); color:var(--rk1) !important; display:inline-block; }
   #settings .reset:hover { background:var(--rk2) !important; }
   #settings ::-webkit-scrollbar { width:10px; } #settings ::-webkit-scrollbar-thumb { background:var(--rk1); } #settings::-webkit-scrollbar { width:10px; } #settings::-webkit-scrollbar-thumb { background:var(--rk1); }
+  .opt input.txt { background:var(--rkl) !important; border:3px solid var(--rk1) !important; border-radius:0 !important; color:var(--rk1) !important; }
+  .seg.chips button { font-size:10px !important; }
+  .actbtn { border:2.5px solid var(--rk1) !important; border-radius:0 !important; background:var(--rkl) !important; box-shadow:3px 3px 0 -1px var(--rk1); color:var(--rk1) !important; font-weight:600 !important; }
+  .actbtn:hover, .actbtn[data-armed="1"] { background:var(--rk2) !important; }
   #fps { background:var(--rkp) !important; color:var(--rk1) !important; border:2.5px solid var(--rk1); border-radius:0 !important; box-shadow:3px 3px 0 -1px var(--rk1); }
 
   /* ---------- bienvenida: escena viva detrás, etiquetas de papel encima ---------- */
@@ -167,6 +171,10 @@
   .cv-prog, .cv-prog span { color:var(--rk1) !important; }
   .cv-bar { background:linear-gradient(var(--rk1),var(--rk1)) center/100% 4px no-repeat !important; }
   .cv-bar i { background:var(--rk2) !important; box-shadow:none !important; height:8px !important; margin-top:-4px !important; border:2px solid var(--rk1); border-left:0; border-radius:0 !important; }
+  .cv-tools #cvLike svg { stroke:var(--rk1) !important; fill:none !important; }
+  .cv-tools #cvLike.on { background:var(--rk1) !important; }
+  .cv-tools #cvLike.on svg { fill:var(--rk2) !important; stroke:var(--rkl) !important; }
+  .cv-tools #cvLike:hover:not(.on) { background:var(--rk2) !important; }
   .cv-menu { border-radius:0 !important; }
   .cv-menu::-webkit-scrollbar-thumb { background:var(--rk1) !important; border-radius:0 !important; }
   .cv-tabs, .cv-segs { border:3px solid var(--rk1) !important; border-radius:0 !important; background:var(--rkl) !important; padding:3px !important; gap:3px; }

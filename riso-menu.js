@@ -20,12 +20,14 @@
   // ---------- opciones del menú ----------
   const svg = p => `<svg viewBox="0 0 64 64" aria-hidden="true">${p}</svg>`;
   const OPTS = [
-    { id: 'lyric', name: 'lyric video', scene: 'retrato', desc: 'la letra se vuelve video, verso por verso, con lo que suena en tu mac',
+    { id: 'lyric', name: 'lyric video', scene: 'retrato', desc: 'videoclip ilustrado en risografía, verso por verso, con lo que suena en tu mac',
       icon: svg('<rect x="6" y="10" width="52" height="38" rx="3"/><path d="M14 22h24M14 30h30M14 38h18"/><path d="M44 36l9 6-9 6z" class="f"/><path d="M14 56h36"/>') },
     { id: 'cover', name: 'modo carátula', scene: 'cuarto', desc: 'la portada de protagonista, con vinilo que gira, letra y luces',
       icon: svg('<rect x="6" y="6" width="52" height="52" rx="3"/><circle cx="32" cy="32" r="16"/><circle cx="32" cy="32" r="5" class="f"/><path d="M40 20l8-4"/>') },
     { id: 'fx', name: 'fondos animados', scene: 'espacio', desc: 'escenas ilustradas a pantalla completa, para dejar de fondo o grabar',
       icon: svg('<rect x="6" y="10" width="52" height="42" rx="3"/><circle cx="42" cy="24" r="6" class="f"/><path d="M6 46l14-16 10 10 8-8 20 20"/><path d="M14 58h36"/>') },
+    { id: 'explore', name: 'explorar', scene: 'museo', desc: 'un mapa con las ciudades de tus letras, el atlas de tu música y una criatura que crece con lo que escuchas',
+      icon: svg('<circle cx="32" cy="32" r="24"/><path d="M8 32h48M32 8c-10 10-10 38 0 48M32 8c10 10 10 38 0 48"/><circle cx="42" cy="22" r="4" class="f"/>') },
     { id: 'settings', name: 'ajustes', scene: 'oficina', desc: 'calidad, color, luces y tipografía; todo se aplica en vivo',
       icon: svg('<path d="M8 16h48M8 32h48M8 48h48"/><circle cx="22" cy="16" r="5" class="f"/><circle cx="42" cy="32" r="5" class="f"/><circle cx="28" cy="48" r="5" class="f"/>') },
   ];
@@ -208,7 +210,8 @@
       }
       else if (id === 'fx') { hideHome(); showFx(); }
       else if (id === 'settings') { home.classList.remove('leave'); if (typeof toggleSettings === 'function') toggleSettings(true); }
-    }, id === 'settings' ? 0 : 230);
+      else if (id === 'explore') { home.classList.remove('leave'); if (window.RISOEXP) RISOEXP.open(); }
+    }, id === 'settings' || id === 'explore' ? 0 : 230);
   }
 
   // ============================================================
@@ -286,7 +289,7 @@
     if (H.on) {
       if (k === 'ArrowRight' || k === 'd') select(H.sel + 1); else if (k === 'ArrowLeft' || k === 'a') select(H.sel - 1);
       else if (k === 'Enter' || k === ' ') open(OPTS[H.sel].id);
-      else if (/^[1-4]$/.test(k)) { select(+k - 1); open(OPTS[+k - 1].id); }
+      else if (/^[1-5]$/.test(k)) { select(+k - 1); open(OPTS[+k - 1].id); }
       else if (k === ',' || k === 'f') return;                                      // los atajos de siempre siguen
       else if (k === 'Escape') { return; }
       else return;

@@ -10,6 +10,24 @@ página del producto: **https://kisnner26.github.io/lumora**
 
 ![una canción de amor: la pareja, los corazones y la palabra que remata el verso, elegidos por claude](docs/img/estreno.jpg)
 
+## videoclip en risografía (el lyric video nuevo)
+
+el lyric video ahora es, por defecto, un **videoclip ilustrado en risografía**: no un fondo, sino un motor de video propio que funciona igual que el de siempre (mismo reloj, letra sincronizada, guion del director por estrofa y por verso, traducción, grabación en 16:9 y 9:16) pero que dirige *tomas* hechas a mano en lugar de escenarios de partículas.
+
+| | |
+|---|---|
+| ![toma de objeto: corazón, flor y reloj que se dibujan solos, con la letra escrita y la palabra clave en tinta](docs/img/clip-objeto.jpg) | ![palabra gigante sobreimpresa y mal registrada sobre rayos en trama](docs/img/clip-gigante.jpg) |
+| ![toma con el fondo en tinta plana y el objeto dentro de un círculo](docs/img/clip-tinta.jpg) | ![toma de escena completa con la letra en una etiqueta de papel](docs/img/clip-escena.jpg) |
+
+- **31 escenas que siguen la letra.** además de las siete de siempre hay 24 más: desierto, playa al atardecer, montaña, tormenta, club de noche, café bajo la lluvia, estación, carretera de noche, vuelo, iglesia, cementerio, concierto, estadio, salón de clases, sala de casa, azotea de noche, feria, fondo del mar, jardín, ring, altar, laboratorio digital, campamento y calle mojada. cada una trae las palabras (en español e inglés) que la piden: si el verso habla de una carretera, un tren, la lluvia o una boda, el videoclip corta a la escena que encaja, y no repite la misma dos veces seguidas.
+- **retrato «ella» (desactivado).** existe un experimento de retrato a partir de fotos locales en `extras/riso-ella.js`; no se carga. para probarlo, agrega `<script src="extras/riso-ella.js"></script>` en `index.html` después de `riso-scenes3.js` y pon las fotos en `personal/` (carpeta ignorada por git).
+- **tomas por verso.** el motor lee lo que dice cada verso y lo que decidió el director (objetos, ánimo, energía, escenario) y arma la toma: un **objeto** que se dibuja solo (sol, flor, corazón, luna, lluvia, fuego, ciudad, teléfono, reloj, calavera, ojo… 30 objetos con trazo tembloroso y doble pasada, que «hierve» ocho veces por segundo como una animación a mano), una **escena completa** (oficina, cuarto, ciudad, espacio, bosque, retrato, museo) con paneos y zoom, una **palabra gigante** en los ganchos y una **portada** al inicio y al cierre con el título y el artista.
+- **la letra se escribe a mano**, palabra por palabra al compás del verso, con la palabra clave en la segunda tinta y subrayada con un garabato; la traducción va debajo.
+- **cortes con movimiento**, nunca fundidos: paneo, zoom o giro con borrón, más bruscos cuanto más energía tiene la estrofa.
+- **una combinación de tintas por estrofa** según su ánimo (índigo y naranja, carmín y petróleo, verde y rosa…), sobre papel crema con grano, halftone y desalineo de registro.
+- **capa de anotaciones con datos reales de la canción:** tiempo, tempo, energía y ánimo de la estrofa, número de estrofa, sello «en vivo» con reloj, post-its con de qué trata, códigos, circuitos que se dibujan solos y medidores que siguen el audio.
+- se elige en ajustes › imagen › *estilo del video* (risografía o clásico); el clásico queda intacto.
+
 ## el menú de inicio y los fondos animados
 
 ![menú de inicio: cuatro tarjetas sobre una escena ilustrada en risografía; la seleccionada se agranda](docs/img/menu-inicio.jpg)
@@ -51,6 +69,53 @@ la risografía no es solo el fondo: la bienvenida, los ajustes, la consola de re
 | | |
 |---|---|
 | ![bienvenida sobre una escena viva, con etiquetas de papel](docs/img/bienvenida-riso.jpg) | ![ajustes en papel crema: fichas, teclas cuadradas y faders con regla](docs/img/ajustes-riso.jpg) |
+
+## experimental: 360° y escritorio vivo
+
+- **panorama 360°** y **visor** (`?xr=1&escena=bosque`): exporta una escena como imagen equirectangular o míralas por dentro; con WebXR aparece «entrar en VR» (sin probar con visor todavía). ajustes > imagen.
+- **escritorio vivo**: solo hay un estudio de viabilidad, sin código: [docs/VIABILIDAD-ESCRITORIO-VIVO.md](docs/VIABILIDAD-ESCRITORIO-VIVO.md).
+
+el resumen de todo el trabajo y lo que falta comprobar está en [docs/INFORME-FINAL.md](docs/INFORME-FINAL.md) y [docs/PENDIENTE-MAC.md](docs/PENDIENTE-MAC.md).
+
+## ajustes
+
+el panel de ajustes (tecla `,`) tiene nueve secciones: imagen, efectos, letra, contenido, color, luces, **looks**, **accesibilidad** y **memoria**.
+
+- un **buscador** arriba filtra los ajustes por nombre o descripción. ![buscador](docs/img/aj-busqueda.jpg)
+- una **vista previa** viva muestra cómo queda la letra, la traducción y los efectos con lo que tengas puesto. ![vista previa](docs/img/aj-panel.jpg)
+- cada sección tiene su **restablecer**.
+- los **looks** son conjuntos de ajustes listos (risografía clásica, cine nocturno, calma, fiesta, lectura, mínimo) y «mi look» para guardar el tuyo. ![looks](docs/img/aj-looks.jpg)
+- **accesibilidad**: reducir movimiento, alto contraste, letra sobre papel y tamaño de la letra. ![alto contraste](docs/img/aj-contraste.jpg)
+- **memoria**: qué guarda lumora en tu navegador y cómo borrarlo.
+
+## explorar
+
+la tarjeta **explorar** del menú (o ajustes > contenido) abre tres vistas hechas con lo que ya escuchaste:
+
+- **mapa**: un planisferio ilustrado con 71 ciudades; se encienden las que nombran las letras de tus canciones. ![mapa](docs/img/exp-mapa.jpg)
+- **atlas de tu música**: un archipiélago con una isla por ánimo y un pueblito por canción. ![atlas](docs/img/exp-atlas.jpg)
+- **criatura**: nace y crece con lo que escuchas; su tamaño, colores, orejas y manchas salen de tus escuchas, y se pone triste si pasas días sin música. ![criatura](docs/img/exp-criatura.jpg)
+
+## compartir y memoria
+
+- **colección de pósters**: los pósters de las canciones que terminan se guardan solos en este navegador (hasta 60). ajustes > imagen > colección de pósters, o el botón «colección» del póster. ![colección](docs/img/share-coleccion.jpg)
+- **dedicatoria**: escribe una línea en la ventana del póster y se imprime a mano sobre la lámina.
+- **enlace pequeño**: «copiar enlace» genera una dirección corta (unos 260 caracteres) que abre `docs/ver.html` con la lámina de la canción y tu dedicatoria. los datos viajan en el fragmento `#` y no llegan a ningún servidor. para que abra desde fuera, activa GitHub Pages sobre `docs/` o cambia la página en ajustes. ![ver.html](docs/img/share-ver.jpg)
+
+## efectos de cine
+
+el videoclip tiene cuatro efectos que se apagan por separado en ajustes > efectos:
+
+- **tinta líquida**: entre estrofas una mancha de tinta se derrama sobre la imagen y luego escurre. ![tinta líquida](docs/img/fx-tinta-liquida-1.jpg)
+- **papel rasgado**: una hoja con el borde roto tapa la toma y se retira. ![papel rasgado](docs/img/fx-papel-rasgado.jpg)
+- **palabras con peso**: la palabra clave del verso cae con golpe, más gruesa y con sombra mal registrada, y sacude un poco la cámara.
+- **taller de impresión**: la portada se imprime tinta por tinta con marcas de registro, marcas de corte y barra de color. ![taller de impresión](docs/img/fx-taller-impresion.jpg)
+
+## catálogo de dibujos
+
+739 dibujos procedurales en risografía que el videoclip elige cuando la letra los nombra: banderas, objetos, símbolos, emociones, comida, países (monumentos, animales, objetos típicos), animales, naturaleza, transporte, tecnología, música, famosos (por emblema, nunca por retrato), oficios, deportes, fiestas, ropa y cuerpo. la lista completa con sus palabras disparadoras está en [docs/CATALOGO.md](docs/CATALOGO.md) (se regenera con `node tools/catalogo_md.mjs`) y las hojas de contacto en `docs/img/catalogo-*.jpg`. cada categoría se apaga o se hace más rara desde ajustes > contenido.
+
+para agregar uno: escribe `add(id, categoría, etiqueta, /palabras/i, [figuras], {moods})` en un `riso-props-*.js` (mira `riso-props-lib.js` para las figuras y movimientos), inclúyelo en `index.html` y corre `./tools/check.sh`: comprueba que quepa en la caja, que no pase de 900 puntos y que no dispare con frases neutras. en los patrones de palabras usa `(es)?` para el plural (`tren(es)?`), no `es?`.
 
 ## capturas reales
 

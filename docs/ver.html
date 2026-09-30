@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>lámina de lumora</title>
+<style>
+  :root { --paper:#f6ecd8; --i1:#212b80; --i2:#f97a2a; --i3:#6b8fb3; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; min-height:100%; background:var(--paper); color:var(--i1); }
+  body { font-family:'Anybody','Arial Narrow',Arial,sans-serif; display:flex; justify-content:center; padding:24px 16px 48px;
+    background-image:radial-gradient(color-mix(in srgb,var(--i3) 35%,transparent) 1.2px,transparent 1.7px); background-size:9px 9px; }
+  main { width:min(560px,100%); background:var(--paper); border:4px solid var(--i1); box-shadow:10px 10px 0 -1px var(--i1); padding:22px 22px 18px; position:relative; }
+  .top { display:flex; justify-content:space-between; align-items:baseline; font:500 12px 'Martian Mono',ui-monospace,monospace; letter-spacing:.08em; text-transform:uppercase; }
+  .top b { font:900 30px/1 'Anybody','Arial Narrow',Arial,sans-serif; letter-spacing:0; }
+  .top b i { display:inline-block; width:10px; height:10px; border-radius:50%; background:var(--i2); margin-left:6px; }
+  h1 { margin:26px 0 4px; font-weight:800; font-size:clamp(40px,11vw,76px); line-height:.95; text-transform:uppercase; }
+  .art { font:600 clamp(26px,7vw,40px)/1.05 'Caveat','Comic Sans MS',cursive; color:var(--i2); margin:0 0 20px; }
+  .word { margin:22px 0 6px; text-align:center; font-weight:900; text-transform:uppercase; font-size:clamp(42px,14vw,96px); line-height:1; position:relative; letter-spacing:.01em; }
+  .word span { position:relative; z-index:1; -webkit-text-stroke:2px var(--i1); color:transparent; }
+  .word::before { content:attr(data-w); position:absolute; left:0; right:0; top:0; color:var(--i3); transform:translate(6px,6px); }
+  .word::after { content:attr(data-w); position:absolute; left:0; right:0; top:0; color:var(--i2); transform:translate(-3px,-2px); }
+  .cap { text-align:center; font:500 11px 'Martian Mono',ui-monospace,monospace; letter-spacing:.08em; text-transform:uppercase; opacity:.8; }
+  .ded { margin:26px auto 4px; max-width:88%; padding:12px 16px; background:#fffaf0; border:3px solid var(--i1); box-shadow:6px 6px 0 -1px color-mix(in srgb,var(--i1) 35%,transparent); transform:rotate(-1deg); text-align:center; font:600 clamp(22px,6vw,32px)/1.1 'Caveat','Comic Sans MS',cursive; color:var(--i2); position:relative; }
+  .ded::before { content:''; position:absolute; left:-14px; top:-10px; width:64px; height:20px; background:color-mix(in srgb,var(--i2) 65%,transparent); transform:rotate(-24deg); }
+  .phrase { margin:18px 0 0; text-align:center; font:italic 400 18px/1.3 'Cormorant Garamond',Georgia,serif; opacity:.9; }
+  dl { display:grid; grid-template-columns:1fr auto; gap:0 12px; margin:22px 0 0; font:500 12px 'Martian Mono',ui-monospace,monospace; letter-spacing:.06em; text-transform:uppercase; }
+  dt,dd { margin:0; padding:6px 0; border-bottom:1.5px dotted color-mix(in srgb,var(--i3) 80%,transparent); } dd { text-align:right; font-weight:600; }
+  footer { margin-top:20px; text-align:center; font:500 11px 'Martian Mono',ui-monospace,monospace; letter-spacing:.08em; text-transform:uppercase; opacity:.8; }
+  footer a { color:inherit; }
+  .err { text-align:center; padding:40px 0; font:600 26px 'Caveat',cursive; }
+  .reg { position:absolute; width:16px; height:16px; border:1.5px solid var(--i1); border-radius:50%; } .reg::before,.reg::after { content:''; position:absolute; background:var(--i1); }
+  .reg::before { left:-6px; right:-6px; top:50%; height:1.5px; } .reg::after { top:-6px; bottom:-6px; left:50%; width:1.5px; }
+  .r1 { left:8px; bottom:8px; } .r2 { right:8px; bottom:8px; }
+</style>
+</head>
+<body>
+<main id="m"><div class="err">abriendo la lámina…</div></main>
+<script>
+// Los datos viajan en el fragmento (#…) del enlace: no salen del navegador. Todo texto entra con textContent.
+const INKS = [['#212b80','#f97a2a','#6b8fb3'],['#1a4657','#e63940','#f2b347'],['#144d3d','#ff7394','#9f8ed1'],['#292930','#ffc71f','#40b3b8'],['#43268a','#ff6e5c','#6bc7a8'],['#142961','#eba31f','#db5c4d']];
+const MOODS = { euforico:'eufórico', feliz:'feliz', romantico:'romántico', sereno:'sereno', nostalgico:'nostálgico', melancolico:'melancólico', triste:'triste', oscuro:'oscuro', rabioso:'rabioso', desafiante:'desafiante' };
+const $ = (t, c, x) => { const e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; };
+function read() {
+  try { const h = location.hash.slice(1).replace(/-/g, '+').replace(/_/g, '/'); if (!h || h.length > 2000) return null;
+    const o = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(h + '='.repeat((4 - h.length % 4) % 4)), c => c.charCodeAt(0))));
+    if (!o || o.v !== 1 || typeof o.n !== 'string') return null; return o; } catch (e) { return null; }
+}
+const d = read(), m = document.getElementById('m'); m.textContent = '';
+if (!d) { m.append($('div', 'err', 'este enlace no tiene una lámina (o está cortado).')); }
+else {
+  const clip = (s, n) => String(s == null ? '' : s).slice(0, n), num = (x, a, b) => Math.max(a, Math.min(b, Math.round(+x) || 0));
+  const pal = INKS[num(d.i, 0, 5)]; ['--i1', '--i2', '--i3'].forEach((k, i) => document.documentElement.style.setProperty(k, pal[i]));
+  const t = num(d.t, 0, 99991231), fecha = t ? `${Math.floor(t / 10000)}.${String(Math.floor(t / 100) % 100).padStart(2, '0')}.${String(t % 100).padStart(2, '0')}` : '';
+  const s = num(d.s, 0, 36000), dur = s ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}` : '—';
+  document.title = clip(d.n, 60) + ' · lámina de lumora';
+  const top = $('div', 'top'); const b = $('b', '', 'LUMORA'); b.append($('i')); top.append(b, $('span', '', fecha)); m.append(top);
+  m.append($('h1', '', clip(d.n, 60)), $('p', 'art', clip(d.a, 40)));
+  if (d.w) { const w = $('div', 'word'); w.dataset.w = clip(d.w, 24).toUpperCase(); w.append($('span', '', clip(d.w, 24).toUpperCase())); m.append(w, $('div', 'cap', 'la palabra de la canción')); }
+  if (d.d) m.append($('div', 'ded', '«' + clip(d.d, 90) + '»'));
+  if (d.p) m.append($('p', 'phrase', '“' + clip(d.p, 60) + '”'));
+  const dl = $('dl'); const rows = [['duración', dur], ['versos', num(d.l, 0, 999) || '—'], ['estrofas', num(d.e, 0, 99) || '—'], ['ánimo', MOODS[d.m] || '—']];
+  for (const [a, v] of rows) dl.append($('dt', '', a), $('dd', '', String(v))); m.append(dl);
+  m.append($('footer', '', 'impreso en lumora · risografía procedural'), $('i', 'reg r1'), $('i', 'reg r2'));
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>galería de dibujos</title>
+<style>html,body{margin:0;background:#222;color:#eee;font:12px monospace}canvas{position:static !important;inset:auto !important;display:block;width:1600px;height:900px}</style>
+<div id="info"></div>
+<script>
+// carga los mismos scripts riso-* que index.html, en el mismo orden (solo motor, dibujos y catálogo)
+window.RISO_DEV = true;
+(async () => {
+  const html = await (await fetch('../index.html')).text();
+  const src = [...html.matchAll(/src="(riso[^"]*\.js)"/g)].map(m => m[1]).filter(s => /^riso(\.js|-props|-catalog)/.test(s));
+  for (const s of src) await new Promise((ok, ko) => { const e = document.createElement('script'); e.src = '../' + s; e.onload = ok; e.onerror = () => ko(s); document.head.appendChild(e); });
+  const R = RISO, st = R.stage, q = new URLSearchParams(location.search);
+  R.register({ id: 'galeria', name: 'galería', inks: +(q.get('inks') || 0), phrases: [], make: () => ({}),
+    cam(cam) { cam.x = 0; cam.y = 0; cam.z = 1; cam.r = 0; },
+    draw(K) {
+      const ids = window.GAL.ids, mode = window.GAL.mode, cols = mode === 'mini' ? 20 : 8, rows = mode === 'mini' ? 12 : 5, cw = 1600 / cols, ch = 900 / rows, sc = mode === 'mini' ? .13 : .4;
+      K.bg(3, .04);
+      ids.slice(0, cols * rows).forEach((id, i) => { const cx = (i % cols + .5) * cw, cy = ((i / cols | 0) + .5) * ch - (mode === 'mini' ? 0 : 8);
+        R.props.drawProp(K, id, cx, cy, sc, window.GAL.p, { seed: 3 });
+        if (mode !== 'mini') K.code(id, cx, (i / cols | 0) * ch + ch - 8, { size: 13, align: 'center', tone: .9 }); });
+    } });
+  R.order.splice(R.order.indexOf('galeria'), 1);
+  const all = Object.keys(R.props.DEFS), cat = q.get('cat'), page = +(q.get('page') || 0), mode = q.get('mode') || 'grande', per = mode === 'mini' ? 240 : 40;
+  let pool = cat && R.catalog && R.catalog.cats[cat] ? R.catalog.cats[cat] : cat === 'base' ? all.filter(i => !R.catalog?.info[i]) : all;
+  if (q.get('set') != null) { pool = pool.filter(i => String(R.catalog.info[i]?.inks) === q.get('set')); st.setInks(+q.get('set')); }
+  window.GAL = { ids: pool.slice(page * per, page * per + per), mode, p: 1, total: pool.length, pool, per };
+  st.auto = false; st.setDetail(3, true); st.resize(1600, 900); st.notes = false; st.margin = 34; st.setScene('galeria', { instant: true });
+  document.body.appendChild(st.canvas);
+  window.render = (n = 3) => { for (let i = 0; i < n; i++) st.frame(1 / 30); };
+  window.GAL_READY = true; document.getElementById('info').textContent = (cat || 'todos') + ' · página ' + page + ' · ' + window.GAL.total + ' dibujos';
+})();
+</script>

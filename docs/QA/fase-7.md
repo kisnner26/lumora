@@ -1,0 +1,10 @@
+# fase 7, exploración
+
+Entrada: tarjeta «explorar» del menú (tecla 4) y ajustes > contenido > «Explorar tu música». Tres pestañas en una ventana; todo sale del historial y las letras guardados en el navegador. Se dibuja con el segundo Stage del motor, a demanda.
+
+- **mapa ilustrado** (`riso-explorar.js`): planisferio dibujado a mano (continentes e islas, olas, graticula, rosa de los vientos, barquito) con 71 ciudades. Se encienden las que nombran las letras guardadas (alias sin acentos: «Nueva York», «nyc», «Brooklyn»…; sin falsos positivos con palabras como «nada de Santiago» solo cuenta la ciudad). Lista lateral con conteo de versos; al tocar una ciudad (en la lista o el pin) salen las canciones y el verso. Captura: docs/img/exp-mapa.jpg.
+- **atlas de tu música**: una isla por ánimo (tamaño según escuchas y canciones); cada canción es un pueblito (más grande con más escuchas) y los artistas más oídos de cada isla se rotulan. Elegir una isla lista sus canciones. Captura: docs/img/exp-atlas.jpg.
+- **criatura**: nace como huevo y crece con las escuchas (nivel = raíz de las escuchas, hasta 12): tamaño, antenas al nivel 3, corona al 10, orejas según el género dominante, colores según el ánimo dominante, una mancha por artista (hasta 10), ojos según la variedad de ánimos. Estados: contento (música en los últimos 3 días), hambriento (más de 3), dormido (más de 10). Nombre editable que se guarda; «acariciar» suelta corazones. Captura: docs/img/exp-criatura.jpg.
+- pruebas (tools/test_explorar.mjs): vistas vacías, ciudades encendidas con y sin acentos y sin falsos, conteo, selección desde lista y desde el pin (clic real sobre el canvas), atlas (pueblos e islas), criatura (nivel, estado, nombre guardado y nombre automático, hambre y sueño), Esc y ajuste.
+- errores encontrados al mirar las capturas: el canvas del mapa tapaba los botones (regla global de canvas → `position:static !important`); el nombre automático salía «Moundefinedundefined» (`>>` con enteros grandes → `>>>`).
+- no verificado aquí: fluidez de la criatura animada (≈7 fps con SwiftShader, a demanda) → docs/PENDIENTE-MAC.md. El mapa es ilustrativo, no cartográfico.

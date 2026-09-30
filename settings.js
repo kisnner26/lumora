@@ -8,7 +8,7 @@ const CFG_DEFAULT = {
   intensity: 1, camera: true, cameraAmt: 1, transitions: 'todas', flashes: true,
   lyricSize: 1, typo: 'variada', letterAnim: true, trMode: 'ambas', kinetic: true,
   instruments: true, cards: true, symbols: true, echo: true, np: true,
-  palette: 'auto', variation: 'nueva', ai: false, recFormat: 'horizontal',
+  palette: 'auto', variation: 'nueva', ai: false, recFormat: 'horizontal', clip: 'riso',
 };
 const CFG = window.CFG = (() => { try { return { ...CFG_DEFAULT, ...JSON.parse(localStorage.getItem('tc_cfg') || '{}') }; } catch (e) { return { ...CFG_DEFAULT }; } })();
 const saveCfg = () => { try { localStorage.setItem('tc_cfg', JSON.stringify(CFG)); } catch (e) {} };
@@ -167,6 +167,9 @@ setCss.textContent = `
   #settings .calib i.flash { background:#fff; box-shadow:0 0 14px #fff, 0 0 30px var(--gold2); transition:none; }
   #settings .reset { margin:26px 34px 44px; font:400 10.5px 'Martian Mono',monospace !important; letter-spacing:.14em; text-transform:uppercase; color:var(--faint) !important; border-bottom:1px solid var(--rule) !important; padding:4px 0 !important; }
   #settings .reset:hover { color:var(--gold) !important; border-color:var(--gold) !important; }
+  .opt input.txt { width:100%; padding:9px 11px; font:inherit; color:inherit; background:transparent; border:1px solid var(--rule); border-radius:8px; }
+  .seg.chips { justify-content:flex-start; }
+  .actbtn { padding:8px 14px !important; border:1px solid var(--rule) !important; border-radius:8px; font:400 10.5px 'Martian Mono',monospace !important; letter-spacing:.1em; text-transform:uppercase; }
   #fps { position:fixed; top:14px; left:14px; z-index:8; font:400 11px 'Martian Mono',monospace; color:#f4c983; background:rgba(0,0,0,.55); padding:4px 8px; border-radius:6px; display:none; }
   body.show-fps #fps { display:block; }
   @media (max-width:560px) { .set-head, #settings section { padding-left:20px; padding-right:20px; } .opt { grid-template-columns:1fr; } .seg { justify-content:flex-start; } .seg.swatches { grid-template-columns:repeat(4,1fr); } }
@@ -179,6 +182,7 @@ const OPTS = [
     ['rec', 'Modo grabación', 'sw', null, '30 fps estables y menos carga para grabar con OBS'],
     ['recFormat', 'Formato de los clips', 'seg', [['horizontal', '16:9'], ['vertical', '9:16']], 'horizontal para YouTube y pantallas; vertical para historias y TikTok'],
     ['fps', 'Mostrar FPS', 'sw'],
+    ['clip', 'Estilo del video', 'seg', [['riso', 'risografía'], ['clasico', 'clásico']], 'risografía: videoclip ilustrado a mano, con objetos que se dibujan solos. clásico: los escenarios de siempre'],
   ]],
   ['efectos', [
     ['intensity', 'Intensidad de capas', 'range', [.3, 1.5, .05]],
@@ -214,21 +218,39 @@ panelEl.innerHTML = `<div class="set-head"><div class="set-top"><div><h2>ajustes
 const rail = panelEl.querySelector('.set-rail');
 const SECTIONS = [...OPTS.map(o => o[0]), 'luces'];
 SECTIONS.forEach((t, i) => { const b = document.createElement('button'); b.dataset.go = 'set-' + t; b.innerHTML = `<b>${String(i + 1).padStart(2, '0')}</b>${t}`; rail.appendChild(b); });
+// ---------- construcción de filas: seg, sw, range y los tipos nuevos text, chips y btn ----------
+// text: campo de texto · chips: varios interruptores en chips (CFG[key] es un objeto {id: bool}) · btn: acción (arg = { texto, confirmar, fn })
+function mkRow(key, label, type, arg, hint) {
+  const row = document.createElement('div'); row.className = 'opt' + (key === 'palette' || type === 'chips' || type === 'text' ? ' wide' : ''); row.dataset.row = key;
+  row.innerHTML = `<label>${label}${hint ? `<small>${hint}</small>` : ''}</label>`;
+  if (type === 'sw') { const b = document.createElement('button'); b.className = 'sw'; b.dataset.key = key; b.setAttribute('aria-label', label); row.appendChild(b); }
+  if (type === 'seg') { const g = document.createElement('div'); g.className = 'seg' + (key === 'palette' ? ' swatches' : ''); g.dataset.key = key;
+    for (const [v, t] of arg) { const b = document.createElement('button'); b.dataset.v = v; b.title = t;
+      if (key === 'palette') b.innerHTML = `<i style="background:${swatch(v)}"></i>${t}`; else b.textContent = t; g.appendChild(b); }
+    row.appendChild(g); }
+  if (type === 'range') { const f = document.createElement('div'); f.className = 'fad'; const i = document.createElement('input'); i.type = 'range'; [i.min, i.max, i.step] = arg; i.dataset.key = key;
+    const o = document.createElement('output'); f.append(i, o); row.appendChild(f); }
+  if (type === 'text') { const i = document.createElement('input'); i.type = 'text'; i.className = 'txt'; i.dataset.key = key; i.maxLength = (arg && arg.max) || 80; i.placeholder = (arg && arg.ph) || ''; i.spellcheck = false; row.appendChild(i); }
+  if (type === 'chips') { const g = document.createElement('div'); g.className = 'seg chips'; g.dataset.chips = key;
+    for (const [v, t] of arg) { const b = document.createElement('button'); b.dataset.cv = v; b.textContent = t; g.appendChild(b); } row.appendChild(g); }
+  if (type === 'btn') { const b = document.createElement('button'); b.className = 'actbtn'; b.dataset.act = key; b.textContent = arg.texto; row.appendChild(b); SETUI.acts[key] = arg; }
+  return row;
+}
+const SETUI = window.SETUI = { acts: {}, secs: {},
+  // agrega una fila a una sección existente (o crea la sección); key = clave de CFG, def = valor por defecto
+  addRow(section, row, def) {
+    if (def !== undefined) { CFG_DEFAULT[row[0]] = def; if (CFG[row[0]] === undefined) CFG[row[0]] = def; }
+    const sec = $('set-' + section) || SETUI.addSection(section); sec.appendChild(mkRow(...row));
+    if (panelEl.classList.contains('open')) syncUI(); },
+  addSection(title) {
+    const sec = document.createElement('section'); sec.id = 'set-' + title; const n = SECTIONS.length + 1;
+    sec.innerHTML = `<div class="set-title"><b>${String(n).padStart(2, '0')}</b><h3>${title}</h3></div>`;
+    panelEl.insertBefore(sec, panelEl.querySelector('.reset'));
+    const b = document.createElement('button'); b.dataset.go = 'set-' + title; b.innerHTML = `<b>${String(n).padStart(2, '0')}</b>${title}`; rail.appendChild(b); SECTIONS.push(title); return sec; } };
 OPTS.forEach(([title, opts], si) => {
   const sec = document.createElement('section'); sec.id = 'set-' + title;
   sec.innerHTML = `<div class="set-title"><b>${String(si + 1).padStart(2, '0')}</b><h3>${title}</h3></div>`;
-  for (const [key, label, type, arg, hint] of opts) {
-    const row = document.createElement('div'); row.className = 'opt' + (key === 'palette' ? ' wide' : '');
-    row.innerHTML = `<label>${label}${hint ? `<small>${hint}</small>` : ''}</label>`;
-    if (type === 'sw') { const b = document.createElement('button'); b.className = 'sw'; b.dataset.key = key; b.setAttribute('aria-label', label); row.appendChild(b); }
-    if (type === 'seg') { const g = document.createElement('div'); g.className = 'seg' + (key === 'palette' ? ' swatches' : ''); g.dataset.key = key;
-      for (const [v, t] of arg) { const b = document.createElement('button'); b.dataset.v = v; b.title = t;
-        if (key === 'palette') b.innerHTML = `<i style="background:${swatch(v)}"></i>${t}`; else b.textContent = t; g.appendChild(b); }
-      row.appendChild(g); }
-    if (type === 'range') { const f = document.createElement('div'); f.className = 'fad'; const i = document.createElement('input'); i.type = 'range'; [i.min, i.max, i.step] = arg; i.dataset.key = key;
-      const o = document.createElement('output'); f.append(i, o); row.appendChild(f); }
-    sec.appendChild(row);
-  }
+  for (const [key, label, type, arg, hint] of opts) sec.appendChild(mkRow(key, label, type, arg, hint));
   panelEl.appendChild(sec);
 });
 { const sec = document.createElement('section'); sec.id = 'set-luces';
@@ -258,12 +280,14 @@ panelEl.addEventListener('scroll', () => {
   if (panelEl.scrollTop + panelEl.clientHeight >= panelEl.scrollHeight - 4) cur = SECTIONS[SECTIONS.length - 1];
   rail.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.go === 'set-' + cur));
 });
-const fmtVal = (k, v) => (+v).toFixed(2) + '×';
+const fmtVal = (k, v) => k === 'catFreq' ? Math.round(v * 100) + '%' : (+v).toFixed(2) + '×';
 function paintFader(i) { const p = (i.value - i.min) / (i.max - i.min) * 100; i.style.setProperty('--p', p + '%'); i.nextElementSibling.textContent = fmtVal(i.dataset.key, i.value); }
 function syncUI() {
   panelEl.querySelectorAll('.sw[data-key]').forEach(b => b.classList.toggle('on', !!CFG[b.dataset.key]));
   panelEl.querySelectorAll('.seg[data-key]').forEach(g => g.querySelectorAll('button').forEach(b => b.classList.toggle('on', CFG[g.dataset.key] === b.dataset.v)));
   panelEl.querySelectorAll('input[type=range][data-key]').forEach(i => { i.value = CFG[i.dataset.key]; paintFader(i); });
+  panelEl.querySelectorAll('input.txt[data-key]').forEach(i => { if (document.activeElement !== i) i.value = CFG[i.dataset.key] || ''; });
+  panelEl.querySelectorAll('.chips[data-chips]').forEach(g => g.querySelectorAll('button').forEach(b => b.classList.toggle('on', !!(CFG[g.dataset.chips] || {})[b.dataset.cv])));
   rail.querySelector('button:not(.on)') && !rail.querySelector('.on') && rail.firstChild.classList.add('on');
   $('lightsSw').classList.toggle('on', LT.on);
   $('setLights').textContent = LT.devices.length ? LT.devices.length + ' luz(es) Govee' : 'ninguna luz encontrada';
@@ -310,7 +334,12 @@ panelEl.addEventListener('click', e => {
     b.classList.add('on'); label.textContent = 'detener';
     return;
   }
-  if (b.dataset.key) CFG[b.dataset.key] = !CFG[b.dataset.key];
+  if (b.dataset.cv) { const k = b.parentElement.dataset.chips, o = { ...(CFG[k] || {}) }; o[b.dataset.cv] = !o[b.dataset.cv]; CFG[k] = o; }
+  else if (b.dataset.act) {                                          // botón de acción, con confirmación en dos toques
+    const a = SETUI.acts[b.dataset.act];
+    if (a.confirmar && b.dataset.armed !== '1') { b.dataset.armed = '1'; b.textContent = a.confirmar; setTimeout(() => { b.dataset.armed = ''; b.textContent = a.texto; }, 3000); return; }
+    b.dataset.armed = ''; b.textContent = a.texto; return a.fn && a.fn(b); }
+  else if (b.dataset.key) CFG[b.dataset.key] = !CFG[b.dataset.key];
   else if (b.dataset.v) CFG[b.parentElement.dataset.key] = b.dataset.v;
   applyAll();
 });
@@ -318,6 +347,7 @@ panelEl.addEventListener('input', e => {
   const i = e.target;
   if (i.id === 'lightsLead') { setLightsLead(+i.value); paintLead(); return; }
   if (i.id === 'ltHue' || i.id === 'ltDepth' || i.id === 'ltMax') { setLightsOpt({ ltHue: 'hue', ltDepth: 'depth', ltMax: 'max' }[i.id], +i.value); return paintLights(); }
+  if (i.classList.contains('txt')) { CFG[i.dataset.key] = i.value; saveCfg(); return window.onSetText && onSetText(i.dataset.key, i.value); }
   if (i.dataset.key) { CFG[i.dataset.key] = parseFloat(i.value); paintFader(i); applyAll(); }
 });
 function toggleSettings(on = !panelEl.classList.contains('open')) { panelEl.classList.toggle('open', on); if (on) syncUI(); else lightsCalibStop(); }
