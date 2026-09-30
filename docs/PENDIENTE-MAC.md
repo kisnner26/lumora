@@ -19,3 +19,7 @@ no sé si Música y Spotify informan de la canción nueva al empezar o al termin
 ## fase 5 (efectos de cine)
 - comprobar en el Mac que la tinta líquida y el papel rasgado corren a 60 fps con WebGL real (aquí solo se probó con SwiftShader y el tiempo congelado).
 - mirar a ojo si la sacudida de las palabras con peso es cómoda con el modo «destellos» apagado; si molesta, bajar `kick` en riso-fx.js.
+
+## fase 6 (compartir y memoria)
+- activar GitHub Pages sobre la carpeta `docs/` del repositorio (o poner tu propia página en ajustes > imagen > «Página del enlace»); hasta entonces el enlace de ver.html no abre desde fuera.
+- probar «compartir» y «copiar enlace» en Safari/Chrome del Mac (el portapapeles y share sheet no se pueden probar aquí).

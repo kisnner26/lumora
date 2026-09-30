@@ -70,6 +70,12 @@ la risografía no es solo el fondo: la bienvenida, los ajustes, la consola de re
 |---|---|
 | ![bienvenida sobre una escena viva, con etiquetas de papel](docs/img/bienvenida-riso.jpg) | ![ajustes en papel crema: fichas, teclas cuadradas y faders con regla](docs/img/ajustes-riso.jpg) |
 
+## compartir y memoria
+
+- **colección de pósters**: los pósters de las canciones que terminan se guardan solos en este navegador (hasta 60). ajustes > imagen > colección de pósters, o el botón «colección» del póster. ![colección](docs/img/share-coleccion.jpg)
+- **dedicatoria**: escribe una línea en la ventana del póster y se imprime a mano sobre la lámina.
+- **enlace pequeño**: «copiar enlace» genera una dirección corta (unos 260 caracteres) que abre `docs/ver.html` con la lámina de la canción y tu dedicatoria. los datos viajan en el fragmento `#` y no llegan a ningún servidor. para que abra desde fuera, activa GitHub Pages sobre `docs/` o cambia la página en ajustes. ![ver.html](docs/img/share-ver.jpg)
+
 ## efectos de cine
 
 el videoclip tiene cuatro efectos que se apagan por separado en ajustes > efectos:

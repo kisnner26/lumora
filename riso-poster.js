@@ -76,7 +76,7 @@
     if (window.CFG && CFG.poster === false) return;
     const item = { id: 'p' + Date.now().toString(36), ...c, why, fin: Date.now() };
     POS.ready.push(item); if (POS.ready.length > 6) POS.ready.shift();
-    showToast(item);
+    showToast(item); if (window.RISOSHARE) RISOSHARE.save(item);
     window.dispatchEvent(new CustomEvent('riso:poster-listo', { detail: item }));
   }
 
@@ -118,12 +118,18 @@
       af.lines.forEach((ln, i) => K.txt(ln.join(' '), tx, ty + af.size * .8 + i * af.size * 1.05, { font: 'hand', size: af.size, w: 600, i: 2 })); ty += af.lines.length * af.size * 1.05 + 30;
       facts.forEach(([a, b2], i) => { const yy = ty + i * 26; K.code(a, tx, yy, { size: 13, tone: .75 }); K.txt(b2, tx + tw, yy, { font: 'mono', size: 17, w: 500, align: 'right' }); K.line(tx, yy + 6, tx + tw, yy + 6, 3, 1.5, .8); });
     } };
-    const rowWord = { h: 150, draw: y => {
+    const rowWord = { h: c.dedic ? 128 : 150, draw: y => {
       const size = Math.min(140, (w - 10) / Math.max(3, K.measure(Wd, { size: 100, w: 900, font: 'display' })) * 100), cx = v.l + W / 2, cy = y + 128 - (140 - size) * .25;
       const wo = { size, w: 900, font: 'display', align: 'center', stretch: 'condensed' }; K.txt(Wd, cx + 6, cy + 6, { ...wo, i: 3 }); K.txt(Wd, cx - 4, cy - 3, { ...wo, i: 2 });
       K.c.save(); K.c.strokeStyle = K.ink(1); K.c.lineWidth = 4; K.c.lineJoin = 'round'; K.c.font = `900 ${size}px ${R.FONTS.display}`; try { K.c.fontStretch = 'condensed'; } catch (e) {} K.c.textAlign = 'center'; K.c.strokeText(Wd, cx, cy); K.c.restore();
       K.code(words.n > 1 ? `LA PALABRA MÁS REPETIDA · ${words.n} VECES` : 'LA PALABRA DE LA CANCIÓN', v.l + W / 2, y + 146, { align: 'center', size: 13 }); } };
-    const gap = 14, fixedH = 56 + rowCover.h + 150 + 30, availTh = 856 - fixedH - 6 * 8;
+    const dedic = (c.dedic || '').trim().slice(0, 90);
+    const rowDedic = { h: dedic ? 70 : 0, draw: y => {
+      if (!dedic) return; const df = fit('«' + dedic + '»', w - 70, 44, { size: 36, w: 600, font: 'hand' }, 2), bw = Math.max(...df.lines.map(l => K.measure(l.join(' '), { size: df.size, w: 600, font: 'hand' }))) + 44, bx = v.l + W / 2 - bw / 2, bh = df.lines.length * df.size * 1.05 + 20;
+      K.c.save(); K.c.translate(v.l + W / 2, y + 30); K.c.rotate(-.012); K.c.translate(-(v.l + W / 2), -(y + 30));
+      K.rect(bx + 6, y + 6, bw, bh, { f: 1, ft: .3, over: true }); K.rect(bx, y, bw, bh, { f: -1, s: 1, lw: 3 }); K.tape(bx - 12, y - 8, 70, 24, -.5);
+      df.lines.forEach((ln, i) => K.txt(ln.join(' '), v.l + W / 2, y + 8 + df.size * .85 + i * df.size * 1.05, { font: 'hand', size: df.size, w: 600, i: 2, align: 'center' })); K.c.restore(); } };
+    const gap = 14, fixedH = 56 + rowCover.h + rowWord.h + 30 + rowDedic.h, availTh = 856 - fixedH - 6 * 8;
     let th2 = Math.min((w - gap) / 2 * 9 / 16, (availTh - gap - 26 - 12) / 2), tw2 = th2 * 16 / 9; th2 = Math.max(60, th2); tw2 = th2 * 16 / 9;
     const thx = x0 + (w - (tw2 * 2 + gap)) / 2;                                    // centradas si hubo que achicarlas
     const rowThumbs = { h: th2 * 2 + gap + 26, draw: y => {
@@ -132,11 +138,11 @@
         if (!c.frames[i]) { K.hatch(cx, cy, tw2, th2, 1, 14, -.7, 2, .5); }
         K.code(String(i + 1).padStart(2, '0') + ' · ' + SLOTS[i].toUpperCase(), cx, cy + th2 + 14, { size: 12, tone: .8 }); } } };
     const rowFoot = { h: 30, draw: y => { const tx = 'IMPRESO EN LUMORA · RISOGRAFÍA PROCEDURAL', z = Math.min(12, w / K.measure(tx, { font: 'mono', size: 12, w: 500, ls: 1.5 }) * 12); K.code(tx, v.l + W / 2, y + 22, { align: 'center', size: z, tone: .8 }); } };
-    const rows = variant % 2 === 0 ? [rowHeader, rowCover, rowWord, rowThumbs, rowFoot] : [rowHeader, rowWord, rowThumbs, rowCover, rowFoot];
+    const rows = (variant % 2 === 0 ? [rowHeader, rowCover, rowWord, rowThumbs, rowDedic, rowFoot] : [rowHeader, rowWord, rowThumbs, rowCover, rowDedic, rowFoot]).filter(r => r.h);
     const total = rows.reduce((a, r) => a + r.h, 0), air = Math.max(6, (856 - total) / (rows.length + 1));
     let y = 22 + air; for (const r of rows) { r.draw(y); y += r.h + air; }
     // grano de tinta: una post-it con la frase de la canción
-    const line = c.frames.find(f => f && f.txt)?.txt; if (line) K.postit(v.r - m - 250, 800 - (variant % 2 ? 0 : 0) - 30, 230, 92, .05, H.wrap ? [line.slice(0, 22), line.slice(22, 44)].filter(Boolean) : [line], { size: 22, fill: 3, ft: .5, font: 'hand' });
+    const line = c.frames.find(f => f && f.txt)?.txt; if (line && !dedic) K.postit(v.r - m - 250, 800 - (variant % 2 ? 0 : 0) - 30, 230, 92, .05, H.wrap ? [line.slice(0, 22), line.slice(22, 44)].filter(Boolean) : [line], { size: 22, fill: 3, ft: .5, font: 'hand' });
   }
 
   // ---------- renderizado a tamaño exacto ----------
@@ -171,6 +177,8 @@
     #posterWin .pw-side b { color:var(--rkl,#faf3e4); font:800 30px/1 'Anybody',sans-serif; font-stretch:70%; text-transform:uppercase; }
     #posterWin .pw-side span { color:var(--rkl,#faf3e4); font:500 12px 'Martian Mono',monospace; letter-spacing:.08em; text-transform:uppercase; }
     #posterWin button { padding:11px 16px; border:3px solid var(--rk1,#212b80); background:var(--rkl,#faf3e4); color:var(--rk1,#212b80); box-shadow:4px 4px 0 -1px var(--rk1,#212b80); font:700 13px 'Anybody',sans-serif; font-stretch:80%; text-transform:uppercase; letter-spacing:.05em; cursor:pointer; text-align:left; }
+    #posterWin input { padding:10px 12px; border:3px solid var(--rk1,#212b80); background:var(--rkl,#faf3e4); color:var(--rk1,#212b80); font:600 15px 'Caveat',cursive; outline:none; }
+    #posterWin input:focus { background:#fff; }
     #posterWin button:hover { background:var(--rk2,#f97a2a); } #posterWin button.on { background:var(--rk1,#212b80); color:var(--rkl,#faf3e4); }`;
   document.head.appendChild(css);
   const toast = document.createElement('div'); toast.id = 'posterToast'; document.body.appendChild(toast);
@@ -183,7 +191,7 @@
     const cv = await render(item, fmt, variant); POS.open.canvas = cv;
     win.innerHTML = ''; win.append(cv);
     const side = document.createElement('div'); side.className = 'pw-side';
-    side.innerHTML = `<b>póster</b><span>${item.name} · ${item.artist}</span><button data-a="save">guardar png</button><button data-a="copy">copiar</button>${navigator.share ? '<button data-a="share">compartir</button>' : ''}<button data-a="var">otra variante</button><button data-a="fmt" class="${fmt === 'story' ? 'on' : ''}">${fmt === 'a4' ? 'pasar a 9:16' : 'pasar a a4'}</button><button data-a="x">cerrar</button><span id="pwMsg"></span>`;
+    side.innerHTML = `<b>póster</b><span>${item.name} · ${item.artist}</span><input id="pwDed" type="text" maxlength="90" placeholder="dedicatoria (opcional)" value="${(item.dedic || '').replace(/"/g, '&quot;')}" spellcheck="false"><button data-a="save">guardar png</button><button data-a="copy">copiar</button>${navigator.share ? '<button data-a="share">compartir</button>' : ''}<button data-a="var">otra variante</button><button data-a="link">copiar enlace</button><button data-a="col">colección</button><button data-a="fmt" class="${fmt === 'story' ? 'on' : ''}">${fmt === 'a4' ? 'pasar a 9:16' : 'pasar a a4'}</button><button data-a="x">cerrar</button><span id="pwMsg"></span>`;
     win.append(side);
   }
   const msg = t => { const m = document.getElementById('pwMsg'); if (m) m.textContent = t; };
@@ -192,6 +200,8 @@
     if (e.target === win) return close();
     const a = e.target.closest('button')?.dataset.a; if (!a || !POS.open) return; const o = POS.open;
     if (a === 'x') return close();
+    if (a === 'link') { const u = window.RISOSHARE && RISOSHARE.link(o.item); if (!u) return msg('sin enlace'); try { await navigator.clipboard.writeText(u); msg('enlace copiado (' + u.length + ' letras)'); } catch (err) { msg(u); } return; }
+    if (a === 'col') { close(); return window.RISOSHARE && RISOSHARE.openGallery(); }
     if (a === 'var') { POS.variant = o.variant + 1; return openWin(o.item, o.fmt, POS.variant); }
     if (a === 'fmt') return openWin(o.item, o.fmt === 'a4' ? 'story' : 'a4', o.variant);
     const blob = await blobOf(o.canvas), nm = `lumora-poster-${(o.item.name || 'cancion').toLowerCase().replace(/[^a-z0-9]+/g, '-')}.png`;
@@ -200,9 +210,11 @@
     if (a === 'share') { try { await navigator.share({ files: [new File([blob], nm, { type: 'image/png' })], title: o.item.name }); } catch (err) {} }
     window.dispatchEvent(new CustomEvent('riso:poster-exportado', { detail: { item: o.item, fmt: o.fmt, variant: o.variant, canvas: o.canvas, blob } }));
   });
+  win.addEventListener('change', e => { if (e.target.id === 'pwDed' && POS.open) { const o = POS.open; o.item.dedic = e.target.value.trim().slice(0, 90); if (window.RISOSHARE) RISOSHARE.save(o.item, true); openWin(o.item, o.fmt, o.variant); } });
+  win.addEventListener('keydown', e => { if (e.target.id === 'pwDed' && e.key === 'Enter') e.target.blur(); e.stopPropagation(); });
   const close = () => { win.classList.remove('on'); win.innerHTML = ''; POS.open = null; };
   addEventListener('keydown', e => { if (e.key === 'Escape' && win.classList.contains('on')) { e.stopImmediatePropagation(); close(); } }, true);
-  POS.openWin = openWin; POS.finalize = finalize;
+  POS.openWin = openWin; POS.finalize = finalize; POS.hydrate = null;
 
   // ajuste
   if (window.SETUI) SETUI.addRow('imagen', ['poster', 'Póster al terminar', 'sw', null, 'al acabar cada canción arma una lámina imprimible con la portada y cuatro tomas del clip'], true);
