@@ -1,0 +1,23 @@
+// panorama 360° y visor (fase 9). El modo VR no se puede probar sin visor; aquí: panorama, costura, PNG, visor plano y arrastre.
+import { servidor, abrir, mock, espera, BASE } from './lib.mjs';
+const srv = await servidor(); await mock('scn=normal');
+const { b, p, errores } = await abrir(1280, 720);
+let ok = true; const chk = (n, c, x) => { console.log((c ? 'ok    ' : 'FALLA ') + n + (x ? '  ' + x : '')); if (!c) ok = false; };
+await p.goto(BASE + '/index.html?menu=0&xr=1&escena=espacio'); await espera(9000);
+chk('(a) ?xr=1 abre el visor', await p.evaluate(() => !!document.getElementById('xrView') && RISOXR.state && RISOXR.state.id === 'espacio'));
+await p.screenshot({ path: '/tmp/xr-visor-1.jpg', type: 'jpeg', quality: 80 });
+const f = await p.evaluate(() => RISOXR.state.frames); await espera(500); const f2 = await p.evaluate(() => RISOXR.state.frames); chk('(b) el visor dibuja cuadros', f2 > f, f + '→' + f2);
+const pa = await p.evaluate(() => { const c = RISOXR.panorama('bosque', 2048), g = c.getContext('2d'), h = c.height; const a = g.getImageData(0, 0, 1, h).data, z = g.getImageData(c.width - 1, 0, 1, h).data; let d = 0; for (let i = 0; i < a.length; i++) d += Math.abs(a[i] - z[i]); const all = g.getImageData(0, 0, c.width, h).data; let nz = 0; for (let i = 0; i < all.length; i += 4 * 97) if (all[i] < 200) nz++; return { w: c.width, h, costura: d / a.length, nz }; });
+chk('(c) el panorama es 2:1 y no está vacío', pa.w === 2 * pa.h && pa.nz > 100, JSON.stringify(pa));
+chk('(c) la costura izquierda y derecha coincide (dif. media < 12 de 255)', pa.costura < 12, pa.costura.toFixed(2));
+const y0 = await p.evaluate(() => RISOXR.state.yaw); await p.mouse.move(640, 360); await p.mouse.down(); await p.mouse.move(400, 330, { steps: 6 }); await p.mouse.up(); await espera(400);
+const s = await p.evaluate(() => ({ yaw: RISOXR.state.yaw, pit: RISOXR.state.pit })); chk('(d) arrastrar gira la vista', Math.abs(s.yaw - y0) > .2, JSON.stringify(s));
+await p.screenshot({ path: '/tmp/xr-visor-2.jpg', type: 'jpeg', quality: 80 });
+chk('(e) sin WebXR el visor lo dice y sigue plano', await p.evaluate(() => /no tiene webxr|sin visor vr/i.test(document.getElementById('xrView').innerText)));
+const ex = await p.evaluate(async () => { let n = null; const _c = HTMLAnchorElement.prototype.click; HTMLAnchorElement.prototype.click = function () { n = this.download; }; const r = await RISOXR.exportar('ciudad', 2048); HTMLAnchorElement.prototype.click = _c; return { ...r, n }; });
+chk('(f) exportar baja un PNG con nombre y tamaño', ex.n === 'lumora-360-ciudad.png' && ex.w === 2048 && ex.h === 1024 && ex.bytes > 50000, JSON.stringify(ex));
+chk('(g) los ajustes «Exportar panorama» y «Visor» existen', await p.evaluate(() => !!SETUI.acts.xrExport && !!SETUI.acts.xrVisor));
+await p.evaluate(() => { document.querySelector('#xrView select').value = 'bosque'; document.querySelector('#xrView select').dispatchEvent(new Event('change')); }); await espera(3000);
+chk('(h) cambiar de escena recarga el visor', await p.evaluate(() => RISOXR.state.id === 'bosque')); await p.screenshot({ path: '/tmp/xr-visor-3.jpg', type: 'jpeg', quality: 80 });
+chk('sin errores de consola', errores.length === 0, errores.join(' | '));
+await b.close(); srv.stop(); process.exit(ok ? 0 : 1);

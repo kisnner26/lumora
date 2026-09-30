@@ -27,3 +27,8 @@ no sé si Música y Spotify informan de la canción nueva al empezar o al termin
 ## fase 7 (exploración)
 - ver en el Mac la criatura animada (se repinta cada 140 ms con el Stage auxiliar); si se nota pesada con el clip sonando, bajar la frecuencia en `riso-explorar.js` (`setTimeout(tick, 140)`).
 - el historial y las letras se llenan con el uso real: probar el mapa y el atlas después de oír varias canciones para ver que las ciudades de las letras se encienden.
+
+## fase 9 (experimentales)
+- escritorio vivo: probar la opción D (Plash o similar apuntando a `?fx=espacio`) y medir CPU/GPU; si vale, construir la app nativa del estudio (docs/VIABILIDAD-ESCRITORIO-VIVO.md). Sin hacer.
+- WebXR: probar `?xr=1` en un Quest o Vision Pro (el navegador del visor, por HTTPS o localhost con reenvío): comprobar «entrar en VR», la orientación (no se ve invertido ni girado) y el rendimiento. El código de sesión está escrito pero **no se ha ejecutado nunca** con un visor.
+- abrir el PNG 360° exportado en un visor 360° (Quest Gallery, Facebook, Google Earth VR…) y revisar que la costura no se vea.
