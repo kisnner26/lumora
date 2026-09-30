@@ -170,7 +170,7 @@
     { p: 'M-90 -150 H90 C90 -30 50 20 0 20 C-50 20 -90 -30 -90 -150 Z', f: 3, ft: .5, s: 9 }, { p: 'M-88 -90 C-40 -70 40 -110 88 -90 C82 -30 46 12 0 12 C-46 12 -82 -30 -88 -90 Z', f: 2, ft: .85, s: 0, m: 'drift', a: 3 },
     { p: 'M0 20 V140 M-60 150 H60', s: 12 }, { c: [40, -60, 8], s: 3, m: 'steam', a: 40 }, { c: [-30, -40, 6], s: 3, m: 'steam', a: 50, ph: .4 },
   ], { moods: ['euforico', 'romantico'] });
-  A('taza', 'TAZA', /\b(tazas?|mugs?|cups?|coffee cup|caf[eé]|coffee|t[eé])\b/i, [
+  A('taza', 'TAZA', /\b(tazas?|mugs?|cups?|coffee cup|caf[eé]|coffee|tea)\b/i, [
     { p: 'M-90 -60 H70 L60 90 C50 120 -80 120 -90 90 Z', f: 2, ft: .75, s: 9 }, { p: 'M70 -30 C130 -30 130 60 66 60', s: 9 }, { p: 'M-90 -60 C-90 -80 70 -80 70 -60', s: 6 },
     { p: 'M-40 -85 C-55 -110 -25 -125 -40 -150', s: 5, m: 'steam', a: 30 }, { p: 'M0 -85 C-15 -110 15 -125 0 -150', s: 5, m: 'steam', a: 34, ph: .3 }, { p: 'M40 -85 C25 -110 55 -125 40 -150', s: 5, m: 'steam', a: 30, ph: .6 },
     { p: 'M-40 20 L-10 50 L30 10', s: 4 },
@@ -303,7 +303,7 @@
     { c: [0, 0, 140], f: 1, ft: .9, s: 11, m: 'spin', a: 1.6, o: [0, 0] }, { c: [0, 0, 92], f: 3, ft: .5, s: 7, m: 'spin', a: 1.6, o: [0, 0] }, { c: [0, 0, 22], f: 2, ft: .9, s: 6 },
     { p: 'M0 -92 V92 M-92 0 H92 M-65 -65 L65 65 M65 -65 L-65 65', s: 5, m: 'spin', a: 1.6, o: [0, 0] },
   ]);
-  A('cuna', 'CUNA', /\b(cunas?|cradle|crib|baby|beb[eé]s?|newborn|reci[eé]n nacido|lullaby|canci[oó]n de cuna)\b/i, [
+  A('cuna', 'CUNA', /\b(cunas?|cradle|crib|beb[eé]s?|newborn|reci[eé]n nacido|lullaby|canci[oó]n de cuna)\b/i, [
     { p: 'M-150 -20 C-150 100 150 100 150 -20 Z', f: 3, ft: .7, s: 10, m: 'sway', a: .05, o: [0, -100], v: .8 }, { p: 'M-150 -20 V-110 M150 -20 V-110', s: 10, m: 'sway', a: .05, o: [0, -100], v: .8 },
     { p: 'M-100 -20 C-100 -90 100 -90 100 -20', f: 2, ft: .6, s: 7, m: 'sway', a: .05, o: [0, -100], v: .8 }, { p: L.heart(0, 30, 3.5), f: 2, ft: .9, s: 0 }, { p: 'M-170 100 C-100 130 100 130 170 100', s: 8 },
   ], { moods: ['sereno', 'romantico'] });

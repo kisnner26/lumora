@@ -41,3 +41,5 @@ registro de las decisiones tomadas sin preguntar (fecha, fase, duda, decisión, 
 - **al terminar, sin salto:** la toma de título de la canción nueva se prepara al empezar, se funde por encima desde p = .5 (mezcla de densidades de tinta) y es la misma que sigue después. la toma de título dura al menos 1,8 s antes de pasar a la siguiente.
 - **el modo portada no existe en la rama publicada:** la mezcla se construyó sobre el clip; no se pudo probar el modo portada.
 - **fases 2 y 3 en un solo commit:** los cambios de ambas comparten `riso-clip.js` e `index.html`.
+
+- oleada 1: alias "té" y "baby" quitados de taza/cuna por falsos positivos (tú, cariño); se mantienen "tea" y "bebé".
