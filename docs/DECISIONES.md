@@ -17,3 +17,10 @@ registro de las decisiones tomadas sin preguntar (fecha, fase, duda, decisión, 
 
 ## 2026-09-30 · fase 0 · nuevos tipos de control en ajustes
 - `SETUI.addRow(sección, [clave, etiqueta, tipo, arg, pista], porDefecto)` permite que cada archivo (que carga después de settings.js) agregue filas. tipos nuevos: `text`, `chips` (objeto {id: bool}), `btn` (acción con confirmación en dos toques).
+
+## 2026-09-30 · fase 1 · banderas
+- **hojas de contacto en jpg, no png:** con el grano de papel un png de 1600x900 pesa 1 a 2 mb; se guardan como jpg (calidad ~85) para no inflar el repositorio.
+- **banderas no verificadas contra fuente:** no hay acceso a internet desde este entorno, así que las 69 banderas están dibujadas de memoria (proporciones, franjas, colores y figuras). todas están "no verificadas contra fuente autorizada". las más simplificadas o débiles: corea del sur (trigramas apenas insinuados), reino unido (las cruces se leen pero el patrón es aproximado), sudáfrica (la Y verde es una franja), arabia saudí (sin la inscripción ni la espada), bandera de brasil (banda sin lema), los escudos de méxico, nicaragua, el salvador, guatemala, ecuador, bolivia y paraguay (círculos y triángulos simbólicos, no los escudos reales).
+- **mapeo de colores a tres tintas:** cada bandera tiene un juego de tintas propio (el clip lo aplica al elegir la toma). tabla en el encabezado de `riso-props-banderas.js`. limitación: el rojo cae en tinta 2 (naranja, rosa o rojo según el juego) y en las banderas verdes el rojo se ve rosa (juego verde y rosa); el verde de las banderas con azul y rojo se aproxima con trama de la tinta 1. no se reconoce el rojo puro en el juego índigo y naranja: es naranja rojizo.
+- **detección:** cada bandera reutiliza la expresión de `NATIONS` (symbols.js/reality.js) cuando el país existe ahí y añade gentilicios y ciudades propios (nica, boricua, paisa...). respeta "Banderas y marcas" (`CFG.symbols`) y el chip «banderas de países».
+- **bandera sola:** cuando el verso nombra un país, la toma muestra solo la bandera (sin acompañar con otros objetos) y con sus tintas.

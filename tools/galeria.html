@@ -22,7 +22,8 @@ window.RISO_DEV = true;
     } });
   R.order.splice(R.order.indexOf('galeria'), 1);
   const all = Object.keys(R.props.DEFS), cat = q.get('cat'), page = +(q.get('page') || 0), mode = q.get('mode') || 'grande', per = mode === 'mini' ? 240 : 40;
-  const pool = cat && R.catalog && R.catalog.cats[cat] ? R.catalog.cats[cat] : cat === 'base' ? all.filter(i => !R.catalog?.info[i]) : all;
+  let pool = cat && R.catalog && R.catalog.cats[cat] ? R.catalog.cats[cat] : cat === 'base' ? all.filter(i => !R.catalog?.info[i]) : all;
+  if (q.get('set') != null) { pool = pool.filter(i => String(R.catalog.info[i]?.inks) === q.get('set')); st.setInks(+q.get('set')); }
   window.GAL = { ids: pool.slice(page * per, page * per + per), mode, p: 1, total: pool.length, pool, per };
   st.auto = false; st.setDetail(3, true); st.resize(1600, 900); st.notes = false; st.margin = 34; st.setScene('galeria', { instant: true });
   document.body.appendChild(st.canvas);

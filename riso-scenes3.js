@@ -116,7 +116,7 @@
       K.glow(2, 800, 560, 300 + a.beat * 60, .7); K.circ(800, 560, 10, { f: 2 }); K.rr(520, 800, 560, 160, 30, O(1, 1, 8)); K.circ(600, 840, 44, O(2, 1, 7)); K.circ(1000, 840, 44, O(2, 1, 7)); K.rect(560, 700, 480, 120, O(1, 1, 8, .9)); K.line(800, 720, 800, 820, 2, 5); });
 
   // ---------- 9 · aeropuerto / vuelo ----------
-  S('vuelo', 'vuelo', 3, /\b(planes?|aviones?|airports?|aeropuertos?|flights?|vuelos?|fly\w*|vol\w*|wings?|alas?|jets?|land\w*|aterriz\w*|pilots?|piloto|takeoff|despegu\w*|clouds?|nubes?|altitude|airplane|passport|pasaporte|abroad|lejos|away|far away)\b/i,
+  S('vuelo', 'vuelo', 3, /\b(planes?|aviones?|airports?|aeropuertos?|flights?|vuelos?|fly\w*|vol(ar|ando|[eé]|ó|ar[eé]|aremos|aba|amos)|vuel\w*|wings?|alas?|jets?|land\w*|aterriz\w*|pilots?|piloto|takeoff|despegu\w*|clouds?|nubes?|altitude|airplane|passport|pasaporte|abroad|lejos|away|far away)\b/i,
     ['más arriba que las nubes y más lejos de ti', 'el avión despega y con él lo que fui', 'sobre las nubes todo se ve pequeño'],
     r => ({ }),
     (K, s, t, dt, a) => { sky(K, 3, .1, .8); sun(K, 300, 200, 90, 16, t); clouds(K, t * 2, 260, 5, -1, 1.3); clouds(K, t * 3 + 500, 620, 4, -1, 1.6);

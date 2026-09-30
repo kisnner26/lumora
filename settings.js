@@ -280,7 +280,7 @@ panelEl.addEventListener('scroll', () => {
   if (panelEl.scrollTop + panelEl.clientHeight >= panelEl.scrollHeight - 4) cur = SECTIONS[SECTIONS.length - 1];
   rail.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.go === 'set-' + cur));
 });
-const fmtVal = (k, v) => (+v).toFixed(2) + '×';
+const fmtVal = (k, v) => k === 'catFreq' ? Math.round(v * 100) + '%' : (+v).toFixed(2) + '×';
 function paintFader(i) { const p = (i.value - i.min) / (i.max - i.min) * 100; i.style.setProperty('--p', p + '%'); i.nextElementSibling.textContent = fmtVal(i.dataset.key, i.value); }
 function syncUI() {
   panelEl.querySelectorAll('.sw[data-key]').forEach(b => b.classList.toggle('on', !!CFG[b.dataset.key]));

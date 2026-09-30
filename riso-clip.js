@@ -63,6 +63,7 @@
     if (why === 'title') kind = 'title'; else if (why === 'outro') kind = 'outro';
     else if (li < 0) kind = objs.length && r() < .5 ? 'prop' : 'scene';
     else if (L?.big && keyWord(text, L)) kind = 'giant';
+    else if (named.length && r() < .92) kind = 'prop';                 // lo que el verso nombra (país, persona, objeto del catálogo) manda sobre las escenas
     else if (byWords && !recent.slice(-2).includes(byWords) && prev[1] !== 'scene' && r() < .8) kind = 'scene';
     else {
       const w = { prop: 1.7, scene: energy >= 7 ? .7 : .5 };
@@ -77,6 +78,8 @@
       if (!objs.length) shot.props = [{ id: ids[(sec + (li < 0 ? 0 : li)) % ids.length], i: 0, ph: r() * 6, rot: (r() - .5) * .14 }];
       shot.bg = ['paper', 'panel', 'burst', 'grid', 'flood'][(r() * (energy >= 7 ? 5 : 4)) | 0]; if (energy < 7 && shot.bg === 'flood' ) shot.bg = 'grid';
       shot.layout = (r() * 3) | 0; shot.flip = r() < .5;
+      const fl = shot.props.find(p => /^flag_/.test(p.id));                       // una bandera va sola y con sus tintas
+      if (fl) { shot.props = [fl]; shot.inks = R.catalog.info[fl.id]?.inks ?? shot.inks; if (shot.bg === 'flood' || shot.bg === 'burst') shot.bg = 'paper'; }
     }
     if (kind === 'scene') {
       let id = byWords || plan && SCENE_MAP[plan.scene] || (R.scenes[plan?.scene] ? plan.scene : null) || MOOD_SCENE[mood] || 'ciudad';
@@ -166,7 +169,7 @@
           R.K.txt(tit, x, y + 100, { size: 34, w: 800, stretch: 'condensed' }); R.K.txt(big, x, y + 174, { size: 84, w: 900, i: 1, tone: .92 });
         } else if (n === 'stamp' && zone !== 'noStamp') K.stamp(v.r - m - 300, v.t + m + 4, 1);
         else if (n === 'post' && plan?.summary) { const w = 250, h = 118; K.postit(zone === 'postL' ? v.l + m + 30 : v.r - m - w - 20, v.b - m - h - 96, w, h, zone === 'postL' ? -.05 : .05, wrapSm(plan.summary, 20), { size: 27, fill: 3, ft: .5, font: 'hand' }); }
-        else if (n === 'code') { K.code(`FIG. ${pad2((s.li < 0 ? sec : s.li) + 1)} / ${(s.props?.[0]?.id || s.scene || s.kind).toUpperCase()}`, v.r - m - 8, v.b - m - 34, { align: 'right', size: 16, bg: true }); K.code(`${fmt(time)} · ${Math.round(a.bpm)} BPM`, v.r - m - 8, v.b - m - 8, { align: 'right', size: 14, bg: true, i: 2 }); }
+        else if (n === 'code') { K.code(`FIG. ${pad2((s.li < 0 ? sec : s.li) + 1)} / ${(R.people?.names[s.props?.[0]?.id] || s.props?.[0]?.id || s.scene || s.kind).toUpperCase()}`, v.r - m - 8, v.b - m - 34, { align: 'right', size: 16, bg: true }); K.code(`${fmt(time)} · ${Math.round(a.bpm)} BPM`, v.r - m - 8, v.b - m - 8, { align: 'right', size: 14, bg: true, i: 2 }); }
         else if (n === 'circuit') K.circuit([[v.r - m - 420, v.t + m + 120], [v.r - m - 330, v.t + m + 120], [v.r - m - 330, v.t + m + 150], [v.r - m - 180, v.t + m + 150], [v.r - m - 180, v.t + m + 128], [v.r - m - 20, v.t + m + 128]], ((K.t - s.k0) * .35) % 1.5, { i: 1, node: 2 });
         else if (n === 'meter') K.meter(v.r - m - 300, v.b - m - 90, 280, .25 + a.e * .7, 'NIVEL', { n: 18 });
       }

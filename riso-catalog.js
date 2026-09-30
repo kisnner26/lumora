@@ -27,7 +27,7 @@
     for (const m of e.moods || []) (moodProps[m] = moodProps[m] || []).push(e.id);
     if (e.variantes?.length) R.props.variants[e.id] = [e.id, ...e.variantes];
   };
-  const off = cat => { try { return !!(window.CFG && CFG.catOff && CFG.catOff[cat]); } catch (e) { return false; } };
+  const off = cat => { try { if (!window.CFG) return false; if (cat === 'banderas' && CFG.symbols === false) return true; return !!(CFG.catOn && CFG.catOn[cat] === false); } catch (e) { return false; } };
   const detect = (text, limit = 3) => {
     if (!text) return []; const out = [];
     for (const [id, rx] of RX) { if (out.length >= limit) break; if (off(info[id]?.cat)) continue; if (rx.test(text)) out.push(id); }
@@ -35,7 +35,16 @@
     return f >= 1 || !out.length ? out : (Math.random() < f ? out : []);
   };
   const pickVariant = (id, r) => { const v = R.props.variants[id]; return v && v.length > 1 ? v[Math.floor(r() * v.length)] : id; };
-  R.catalog = { add, info, cats, moodProps, pickVariant, get count() { return Object.keys(info).length; } };
+  // ---------- ajustes: un chip por categoría y un deslizador de frecuencia ----------
+  const catLabel = {};
+  function label(cat, text) {
+    catLabel[cat] = text; if (!window.SETUI || !window.CFG) return;
+    if (!label.row) { SETUI.addRow('contenido', ['catOn', 'Qué dibujar cuando se nombra', 'chips', [], 'apaga las categorías que no quieras ver en el clip'], {}); SETUI.addRow('contenido', ['catFreq', 'Frecuencia de lo nombrado', 'range', [.1, 1, .05], 'con qué frecuencia aparece un dibujo cuando el verso lo nombra'], 1); label.row = 1; }
+    if (!CFG.catOn) CFG.catOn = {}; if (CFG.catOn[cat] === undefined) CFG.catOn[cat] = true;
+    const g = document.querySelector('[data-chips=catOn]'); if (g && !g.querySelector(`[data-cv="${cat}"]`)) { const b = document.createElement('button'); b.dataset.cv = cat; b.textContent = text; g.appendChild(b); }
+    if (typeof syncUI === 'function') syncUI();
+  }
+  R.catalog = { add, label, info, cats, moodProps, pickVariant, get count() { return Object.keys(info).length; } };
   R.people = R.people || { RX, names, detect };
   Object.assign(R.people, { RX, names, detect });
 })();
