@@ -77,14 +77,15 @@
   }
 
   // ---------- dibujo ----------
-  function build(shapes) {
+  function build(shapes, g) {
+    const gt = g ? (() => { const c = cos(g.r || 0), s = sin(g.r || 0), k = g.s || 1; return q => { const x = q[0] * k, y = q[1] * k; return [x * c - y * s + (g.dx || 0), x * s + y * c + (g.dy || 0)]; }; })() : null;
     return (d, P) => {
       for (const sh of shapes) {
         let lists;
         if (sh.p) lists = parse(sh.p); else if (sh.c) lists = [ell(sh.c[0], sh.c[1], sh.c[2], sh.c[2], 0, sh.c[2] < 20 ? 12 : 26)]; else if (sh.e) lists = [ell(sh.e[0], sh.e[1], sh.e[2], sh.e[3], sh.e[4] || 0, 26)];
         else if (sh.l) lists = [[[sh.l[0], sh.l[1]], [(sh.l[0] + sh.l[2]) / 2, (sh.l[1] + sh.l[3]) / 2], [sh.l[2], sh.l[3]]]]; else if (sh.pts) lists = [sh.pts]; else continue;
         for (const pts0 of lists) {
-          const pts = motion(sh, P, pts0);
+          let pts = motion(sh, P, pts0); if (gt) pts = pts.map(gt);
           if (sh.f && pts.length > 2) d.f(pts, sh.f, sh.ft ?? .8);
           const lw = sh.s ?? (sh.f ? 6 : 6);
           if (lw) d.s(pts, { lw, i: sh.i || 1, single: !!sh.single, amp: sh.amp });
@@ -94,11 +95,13 @@
   }
   // add(id, categoria, etiqueta, alias, formas, opciones)
   function add(id, cat, label, alias, shapes, opt = {}) {
-    R.props.def(id, build(shapes));
+    R.props.def(id, build(shapes, opt.g));
     if (opt.hidden) return;
     R.catalog.add({ id, cat, label, alias, moods: opt.moods || [], variantes: opt.variantes, prio: opt.prio });
   }
   // una variante solo se dibuja (no se detecta por separado; el clip la elige con la semilla)
-  function variant(id, shapes) { R.props.def(id, build(shapes)); }
-  R.lib = { add, variant, parse, L, ell, build, motion };
+  function variant(id, shapes, g) { R.props.def(id, build(shapes, g)); }
+  // dibujos alternativos de un id que ya existe (base o del catálogo): el clip elige uno con la semilla de la toma
+  function variantsOf(id, list) { const v = R.props.variants[id] || [id]; for (const x of list) if (!v.includes(x)) v.push(x); R.props.variants[id] = v; }
+  R.lib = { add, variant, variantsOf, parse, L, ell, build, motion };
 })();

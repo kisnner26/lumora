@@ -1,11 +1,13 @@
 # catálogo de dibujos
 
-generado con `node tools/catalogo_md.mjs` desde el motor real. total: **110** dibujos (69 en el catálogo + 41 originales).
+generado con `node tools/catalogo_md.mjs` desde el motor real. total: **298** dibujos (191 en el catálogo + 107 originales).
 
 | categoría | dibujos |
 |---|---|
 | banderas | 69 |
-| originales (riso-props.js) | 41 |
+| objetos | 85 |
+| simbolos | 37 |
+| originales (riso-props.js) | 107 |
 
 ## banderas (69)
 
@@ -81,8 +83,140 @@ generado con `node tools/catalogo_md.mjs` desde el motor real. total: **110** di
 | `flag_cz` | CHEQUIA | (chequi\w* · czech\w* · praga · prague) |
 | `flag_sa` | ARABIA SAUDÍ | (arabia saud\w* · saudi\w* · riad · riyadh · mecca · la meca) |
 
+## objetos (85)
+
+| id | etiqueta | palabras que lo disparan |
+|---|---|---|
+| `llave` | LLAVE | (llaves? · keys?) |
+| `candado` | CANDADO | (candados? · padlocks? · locked · bajo llave) |
+| `puerta` | PUERTA | (puertas? · doors? · doorway · umbral) |
+| `ventana` | VENTANA | (ventanas? · windows? · cristal · panes?) |
+| `espejo` | ESPEJO | (espejos? · mirrors? · reflejo · reflection) |
+| `cama` | CAMA | (camas? · beds? · s[aá]banas? · sheets · pillows? · almohadas?) |
+| `silla` | SILLA | (sillas? · chairs? · asiento) |
+| `mesa` | MESA | (mesas? · tables? · desk · escritorio) |
+| `lampara` | LÁMPARA | (l[aá]mparas? · lamps? · lamparita · desk lamp) |
+| `vela` | VELA | (velas? · candles? · candlelight · candle) |
+| `telefono_fijo` | TELÉFONO | (tel[eé]fono fijo · landline · telephone · hello\? · rotary phone · llamada perdida · dial) |
+| `radio` | RADIO | (radios? · fm · am dial · estaci[oó]n de radio · on the radio · en la radio) |
+| `televisor` | TELEVISOR | (tv · televisi[oó]n · televisor · television · screen · pantalla · channel · canal) |
+| `camara_foto` | CÁMARA | (c[aá]maras? de fotos? · camera · polaroid · photo · foto(?:graf[ií]a)?s? · selfie) |
+| `libro` | LIBRO | (libros? · books? · p[aá]ginas? · pages? · leer · reading · novela · novel) |
+| `carta` | CARTA | (cartas? · letters? · handwritten · manuscrit\w* · te escribo · dear) |
+| `sobre` | SOBRE | (sobres? · envelopes? · mailed · by mail · correo · mail) |
+| `reloj_arena` | RELOJ DE ARENA | (reloj de arena · hourglass · sand time · se acaba el tiempo · running out of time) |
+| `brujula` | BRÚJULA | (br[uú]jula · compass · north · norte · rumbo · direction · sin rumbo · lost) |
+| `mapa` | MAPA | (mapas? · maps? · treasure map · carta de navegaci[oó]n · x marks) |
+| `globo_aire` | GLOBO | (globos? · balloons? · helium) |
+| `paraguas` | PARAGUAS | (paraguas · umbrellas? · umbrella · rain(y)? day · d[ií]a de lluvia) |
+| `bicicleta` | BICICLETA | (bicicletas? · bikes? · bicycle · cycling · pedal\w* · ciclista) |
+| `anillo` | ANILLO | (anillos? · rings? · engagement · compromiso · wedding ring · sortija · alianza) |
+| `collar` | COLLAR | (collares? · necklace · pendants? · colgante · jewelry · joyas? · chain around · cadena de oro) |
+| `maleta` | MALETA | (maletas? · suitcase · luggage · baggage · equipaje · packing · empacar · travel bag · bag(s)?) |
+| `billetera` | BILLETERA | (billeteras? · wallets? · purse · cartera · bolsillo · pocket · cash in hand) |
+| `tijeras` | TIJERAS | (tijeras · scissors · cortar · cut it · corte · snip) |
+| `martillo` | MARTILLO | (martillos? · hammers? · gavel · mazo · golpear · hammering · construct\w*) |
+| `cuerda` | CUERDA | (cuerdas? · ropes? · knots? · nudo · tied · atad[oa] · string) |
+| `ancla` | ANCLA | (anclas? · anchors? · anclad[oa] · sailor · marinero · naval) |
+| `escalera` | ESCALERA | (escaleras? · ladders? · stairs? · steps · peldaños? · subir · climb) |
+| `cadena` | CADENA | (cadenas? · chains? · encadenad[oa] · shackles · atado a) |
+| `bombilla` | BOMBILLA | (bombillas? · light ?bulbs? · bulb · idea · bright idea · foco) |
+| `botella` | BOTELLA | (botellas? · bottles? · message in a bottle · embotellad\w* · bottle service) |
+| `copa` | COPA | (copas? · wine glass · glass of wine · champagne · champa[nñ]a · brindis · toast · cheers · salud) |
+| `taza` | TAZA | (tazas? · mugs? · cups? · coffee cup · caf[eé] · coffee · t[eé]) |
+| `plato` | PLATO | (platos? · plates? · dish(es)? · dinner · cena · supper) |
+| `cubiertos` | CUBIERTOS | (cubiertos? · forks? · knife · knives · spoons? · tenedor · cuchillo · cuchara · cutlery) |
+| `regalo` | REGALO | (regalos? · gifts? · presents? · obsequio · sorpresa · surprise) |
+| `caja` | CAJA | (cajas? · boxes? · cardboard · carton · caja de cart[oó]n · package · paquete) |
+| `pelota` | PELOTA | (pelotas? · balls? · bal[oó]n · soccer ball · f[uú]tbol · basketball · baloncesto) |
+| `dados` | DADOS | (dados? · dice · gambl\w* · apostar · apuesta · bet · roll the dice · suerte · luck) |
+| `cartas_poker` | CARTAS | (cartas de p[oó]ker · playing cards? · poker · ace of spades · as de · baraja · deck of cards · blackjack) |
+| `ficha` | FICHA | (fichas? · chips? · casino · poker chip · jackpot · slot machine · tragamonedas) |
+| `espada` | ESPADA | (espadas? · swords? · blades? · filo · sable · dagger · daga · fight with) |
+| `escudo` | ESCUDO | (escudos? · shields? · protect\w* · protecci[oó]n · armor · armadura · defens\w*) |
+| `corona` | CORONA | (coronas? · crowns? · kings? · reyes · reyna · queens? · reinas? · royal\w* · reyes magos · throne · trono) |
+| `trofeo` | TROFEO | (trofeos? · trophy · champions? · campe[oó]n\w* · winner · ganador · copa del mundo · world cup · victory · victoria · win\w*) |
+| `medalla` | MEDALLA | (medallas? · medals? · podium · podio · gold medal · oro ol[ií]mpico) |
+| `campana` | CAMPANA | (campanas? · bells? · church bell · ring the bell · campanario · tolling · doblar) |
+| `linterna` | LINTERNA | (linternas? · flashlight · torch · lantern · farol · in the dark with) |
+| `pincel` | PINCEL | (pinceles? · paintbrush · brush · pintar · painting · paint(er)? · pintura · arte · art) |
+| `lapiz` | LÁPIZ | (l[aá]pi(z · ces) · pencils? · escribir · writing · pens? · bol[ií]grafo · pluma fuente · draw) |
+| `maquina_escribir` | MÁQUINA DE ESCRIBIR | (m[aá]quina de escribir · typewriter · typing · escritor · writer · poeta · poem · poema · poet) |
+| `gafas` | GAFAS | (gafas · lentes · glasses · eyeglasses · spectacles · see clearly · ver claro) |
+| `gafas_sol` | GAFAS DE SOL | (gafas de sol · sunglasses · shades · cool guy · wayfarer) |
+| `reloj_pulsera` | RELOJ | (reloj de pulsera · wristwatch · watch · rolex · smartwatch) |
+| `despertador` | DESPERTADOR | (despertadores? · alarm clock · wake up · despierta · snooze · 3 ?a\.?m · alarma) |
+| `calendario` | CALENDARIO | (calendarios? · calendar · date · fecha · monday · lunes · birthday date · d[ií]as?) |
+| `balanza` | BALANZA | (balanzas? · scales? · justice · justicia · balance · equilibrio · weigh · peso) |
+| `cofre_tesoro` | COFRE DEL TESORO | (cofres? · treasure chest · tesoros? · treasures? · piratas? · pirates? · booty · botín) |
+| `lupa` | LUPA | (lupas? · magnifying glass · search · buscar · detective · investigat\w* · looking for · busco · find) |
+| `pluma` | PLUMA | (plumas? · feathers? · quill · ligero · light as · pluma de ave · plumaje) |
+| `pala` | PALA | (palas? · shovels? · dig · cavar · dug · excav\w* · grave digger · bury) |
+| `hacha` | HACHA | (hachas? · axe · lumberjack · le[nñ]ador · chop · talar · woodcutter) |
+| `rueda` | RUEDA | (ruedas? · wheels? · tire · llanta · neum[aá]tico · rolling · spinning wheel) |
+| `cuna` | CUNA | (cunas? · cradle · crib · baby · beb[eé]s? · newborn · reci[eé]n nacido · lullaby · canci[oó]n de cuna) |
+| `columpio` | COLUMPIO | (columpios? · swings? · swing set · playground · parque infantil · niñez · childhood) |
+| `buzon` | BUZÓN | (buz[oó]n · mailbox · post ?box · send a letter · correo) |
+| `semaforo` | SEMÁFORO | (sem[aá]foros? · traffic lights? · red light · luz roja · green light · luz verde · stoplight · stop) |
+| `farola` | FAROLA | (farolas? · street ?lights? · streetlamp · lamp post · poste de luz · alumbrado) |
+| `banco_parque` | BANCO DE PARQUE | (banco del parque · park bench · bench · banca · sitting alone · sentad[oa] solo) |
+| `fuente` | FUENTE | (fuentes? · fountains? · make a wish · pide un deseo · wishing well · pozo) |
+| `cortina` | CORTINA | (cortinas? · curtains? · drapes? · blinds? · persianas? · telón · curtain call) |
+| `chimenea` | CHIMENEA | (chimeneas? · fireplace · hearth · hogar de le[nñ]a · christmas eve · fuego del hogar) |
+| `cometa_papalote` | PAPALOTE | (papalotes? · cometas? de papel · kite · volar un papalote · fly a kite · barrilete · chiringa) |
+| `osito` | OSITO DE PELUCHE | (osito · peluches? · teddy( bear)? · stuffed animal · juguetes? de peluche · plush) |
+| `globo_terraqueo` | GLOBO TERRÁQUEO | (globo terr[aá]queo · globe · world map · around the world · alrededor del mundo · el mundo entero · whole world) |
+| `jaula` | JAULA | (jaulas? · cages? · caged · enjaulad[oa] · trapped · atrapad[oa] · prison · pris[oi][oó]n · c[aá]rcel · jail) |
+| `telescopio` | TELESCOPIO | (telescopios? · telescope · binoculars? · prism[aá]ticos? · stargaz\w* · looking at the stars · mirando las estrellas) |
+| `arco_flecha` | ARCO Y FLECHA | (arcos? y flechas? · bow and arrow · arrows? · flechas? · archer\w* · arquero · cupid · cupido) |
+| `diana` | DIANA | (dianas? · targets? · bullseye · objetivo · goal · meta · aim · apuntar · hit the mark) |
+| `ladrillos` | LADRILLOS | (ladrillos? · bricks? · wall · pared · muro · walls? · brick wall · tear down) |
+| `bandera_asta` | BANDERA | (bandera · flag · banner · estandarte · colors of the flag) |
+
+## simbolos (37)
+
+| id | etiqueta | palabras que lo disparan |
+|---|---|---|
+| `manos_tocan` | MANOS | (manos? · hands? · holding hands · agarrad[oa]s de la mano · tu mano · your hand · de la mano) |
+| `puno` | PUÑO | (pu[nñ]os? · fists? · resist\w* · fight back · levanta el pu[nñ]o · raise your fist · power to) |
+| `mano_abierta` | MANO ABIERTA | (mano abierta · open hand · palm · palma · high five · choca esos · hello hand · saludo · saludar · wave) |
+| `pie_descalzo` | PIES | (descalz[oa]s? · barefoot · pies? · feet · foot · footprints? · huellas de pies · toes?) |
+| `labios` | LABIOS | (labios? · lips? · kiss\w* · besos? · besar · bes[oó] · boca · mouth · lipstick · labial) |
+| `boca_canta` | VOZ | (sing\w* · cantar · cant[oó] · canta · voz · voice · scream\w* · gritar · grit[oó] · shout · yell · singing) |
+| `cerebro` | MENTE | (cerebro · brain · mente · mind · pensamientos? · thoughts? · overthink\w* · pensar · think\w* · cabeza · head) |
+| `corazon_anat` | LATIDO | (latido · latidos · heartbeat · beating heart · pulse · pulso · latiendo · beats? · coraz[oó]n latiendo) |
+| `esqueleto` | ESQUELETO | (esqueletos? · skeletons? · bones? · huesos? · ribs · costillas · skull and bones · calaveras y huesos) |
+| `huella` | HUELLA DIGITAL | (huellas? digitales? · fingerprints? · identidad · identity · who am i · qui[eé]n soy · thumbprint) |
+| `sombra` | SOMBRA | (sombras? · shadows? · silhouettes? · siluetas? · dark side · lado oscuro · follows me · me sigue) |
+| `espejo_roto` | ESPEJO ROTO | (espejo roto · broken mirror · shattered · hecho pedazos · pedazos · shards? · pieces · fragments · rota por dentro) |
+| `cadena_rota` | CADENA ROTA | (cadenas? rotas? · broken chains? · free at last · libre · libertad · liberty · freedom · break free · romper las cadenas · free) |
+| `puerta_abierta` | PUERTA ABIERTA | (puertas? abiertas? · open door · abre la puerta · open the door · welcome · bienvenid[oa] · come in · entra · adelante) |
+| `camino` | CAMINO | (caminos? · paths? · sendero · trail · journey · footpath · el camino · walk this way · camino largo · long road) |
+| `cruce_caminos` | CRUCE DE CAMINOS | (cruce de caminos · crossroads · dilema · dilemma · decisi[oó]n · decide · choose · elegir · choice · which way · qu[eé] camino) |
+| `vela_consume` | SE CONSUME | (se consume · burning out · burn out · fading away · fade away · apag[aá]ndose · dwindl\w* · se apaga · running out · se acaba) |
+| `nudo` | NUDO | (nudo en la garganta · knot in my throat · knots? · tangled · enredad[oa] · entangle\w* · nudos? · tied up · lazos? · mo[nñ]os? · bows? · ribbons? · cintas?) |
+| `hilo` | AGUJA E HILO | (hilos? · threads? · needles? · agujas? · sewing · coser · coses · stitch\w* · zurcir · costura · seamstress) |
+| `telarana` | TELARAÑA | (telara[nñ]as? · spider ?webs? · cobwebs? · web of · atrapad[oa] en una red · red de · tangled web) |
+| `escalera_cielo` | ESCALERA AL CIELO | (escalera al cielo · stairway to heaven · stairs to heaven · highway to heaven · camino al cielo · way up) |
+| `infinito` | INFINITO | (infinit\w* · infinity · forever and ever · para siempre · eternidad · eternity · eterno · endless · sin fin · por siempre) |
+| `cruz` | CRUZ | (cruz · crosses? · cross · crucifi\w* · rosario · rosary · calvario) |
+| `yin_yang` | YIN YANG | (yin yang · balance · equilibrio · dualidad · duality · light and dark · luz y oscuridad · opposites · opuestos) |
+| `paz` | PAZ | (paz · peace · peace sign · hippie · love and peace · no war · no m[aá]s guerra · make love not war · pacifis\w*) |
+| `fantasma` | FANTASMA | (fantasmas? · ghosts? · spirits? · esp[ií]ritus? · haunt\w* · apariciones? · apparition · boo) |
+| `rosa` | ROSA | (rosas? · roses? · red rose · rosa roja · ramo de rosas · bouquet of roses) |
+| `rosa_espinas` | ESPINAS | (espinas? · thorns? · prickly · spiky · thorny · pinchos? · barbed · de espinos) |
+| `trebol` | TRÉBOL | (tr[eé]boles? · clovers? · four leaf · lucky charm · cuatro hojas · good luck · buena suerte · lucky) |
+| `estrella_fugaz` | ESTRELLA FUGAZ | (estrellas? fugaces? · shooting stars? · wish upon · falling star · meteor\w* · make a wish · pide un deseo · comet) |
+| `diente_leon` | DIENTE DE LEÓN | (diente de le[oó]n · dandelions? · soplar · blow away · blowing · soplo · deseos? · wishes) |
+| `corazon_alas` | CORAZÓN CON ALAS | (coraz[oó]n con alas · winged heart · angel wings · alas de [aá]ngel · wings · alas · freedom to fly · volar alto) |
+| `corazon_candado` | CORAZÓN CERRADO | (coraz[oó]n cerrado · locked heart · guarded · no puedo amar · walls up · closed heart · muros · walls around) |
+| `corazon_llama` | CORAZÓN EN LLAMAS | (coraz[oó]n en llamas · heart on fire · burning love · pasi[oó]n · passion · deseo ardiente · fuego en el coraz[oó]n · on fire · ardiendo) |
+| `ojo_llora` | OJO LLORANDO | (ojos? llorosos? · crying eyes? · teary eyes? · llorando · crying · sollozo · sobbing · weeping · llanto · tears in my eyes) |
+| `pelo` | CABELLO | (cabello · hair · melena · pelo · hairstyle · long hair · pelo largo · peinar · comb · curls? · rizos?) |
+| `pulgar_arriba` | ME GUSTA | (likes? · me gusta · thumbs? up · pulgar · good job · bien hecho · approved · aprobad[oa] · great) |
+
 ## originales
 
-`sun`, `flowers`, `beach`, `love`, `moon`, `dark`, `stars`, `rain`, `snow`, `fire`, `sea`, `beachx`, `city`, `road`, `car`, `fly`, `plane`, `time`, `heaven`, `death`, `tears`, `dream`, `gold`, `fashion`, `home`, `thunder`, `dance`, `woman`, `man`, `couple`, `crowd`, `eyes`, `light`, `phone`, `music`, `drink`, `money`, `mountain`, `forest`, `smoke`, `fireworks`
+`sun`, `flowers`, `beach`, `love`, `moon`, `dark`, `stars`, `rain`, `snow`, `fire`, `sea`, `beachx`, `city`, `road`, `car`, `fly`, `plane`, `time`, `heaven`, `death`, `tears`, `dream`, `gold`, `fashion`, `home`, `thunder`, `dance`, `woman`, `man`, `couple`, `crowd`, `eyes`, `light`, `phone`, `music`, `drink`, `money`, `mountain`, `forest`, `smoke`, `fireworks`, `love_b`, `love_c`, `moon_b`, `moon_c`, `dark_b`, `dark_c`, `stars_b`, `stars_c`, `sun_b`, `sun_c`, `fire_b`, `fire_c`, `rain_b`, `rain_c`, `city_b`, `city_c`, `road_b`, `road_c`, `car_b`, `car_c`, `dance_b`, `dance_c`, `phone_b`, `phone_c`, `time_b`, `time_c`, `eyes_b`, `eyes_c`, `tears_b`, `tears_c`, `flowers_b`, `flowers_c`, `sea_b`, `sea_c`, `heaven_b`, `heaven_c`, `gold_b`, `gold_c`, `money_b`, `money_c`, `home_b`, `home_c`, `dream_b`, `dream_c`, `death_b`, `death_c`, `thunder_b`, `thunder_c`, `light_b`, `light_c`, `music_b`, `music_c`, `drink_b`, `drink_c`, `mountain_b`, `mountain_c`, `forest_b`, `forest_c`, `snow_b`, `snow_c`, `smoke_b`, `smoke_c`, `fly_b`, `fly_c`, `fireworks_b`, `fireworks_c`
 
 se disparan con el léxico de `interpret.js` (LEX).
