@@ -246,7 +246,7 @@
 
   // ---------- el motor: una escena virtual dentro del escenario compartido ----------
   R.register({ id: 'clip', name: 'videoclip', inks: 0, make: () => ({}), cam: (cam, t, a) => shotCam(cam, RC.shot ? K.t - RC.shot.k0 : t, a),
-    draw(K2, s, t, dt) { if (RC.shot) drawShot(RC.shot, RC.time || 0, dt); } });
+    draw(K2, s, t, dt) { if (RC.mix?.on) RC.mix.draw(dt); else if (RC.shot) drawShot(RC.shot, RC.time || 0, dt); } });
   R.order.splice(R.order.indexOf('clip'), 1);                          // no aparece entre las escenas del menú
 
   function keepShotText(s, time) {
@@ -261,8 +261,17 @@
   function frame(dt) {
     const time = timeNow(), sec = secOf(time), li = lineIdx(time), key = ext.key() + '|' + (proc.dur || 0);
     RC.time = time;
+    // la mezcla: si cambió la canción, se prepara antes de que el clip se reinicie
+    const skey = ext.key();
+    if (RC.songKey && skey && RC.songKey !== skey && RC.mix) RC.mix.onSongChange();
+    if (RC.songKey === skey || !RC.songKey) { const s = ext.st; RC.prevMeta = { name: (s.name || '').replace(/\s*[\(\[](feat|ft|with)\.?[^)\]]*[\)\]]/i, '').trim(), artist: (s.artist || '').split(/,|&/)[0].trim(), dur: s.dur || 0, time }; }
+    RC.songKey = skey;
     if (RC.lastKey !== key) { RC.lastKey = key; RC.recentScenes = []; RC.shot = null; RC.pending = null; RC.kindHist.length = 0; RC.sceneState = {}; RC.lastScene = ''; RC.count = 0; }
     if (st.sceneId !== 'clip') st.setScene('clip', { instant: true });
+    if (RC.mix && RC.mix.tick(dt)) {                                               // mezcla entre canciones: las tomas normales esperan
+      st.margin = 34; st.notes = false; st.lyric = true; st.speed = 1; st.auto = true; st.setDetail(window.LOWFX ? 1 : 2, true);
+      st.frame(Math.max(.001, dt)); x.drawImage(st.canvas, 0, 0, W, H); return;
+    }
     const cur = RC.shot, dur = proc.dur || 0, lyricT0 = IN.lines.find(l => l.text)?.t ?? 99;
     let why = '';
     if (!cur) why = 'title';
@@ -271,7 +280,7 @@
     else if (!st.cut && !RC.pending) {
       const age = time - cur.t0;
       if (dur && time > dur - 6 && cur.kind !== 'outro') why = 'outro';
-      else if (cur.kind === 'title' && (IN.preparing ? false : (time > 4.5 || li >= 0))) why = 'next';
+      else if (cur.kind === 'title' && (IN.preparing ? false : ((time > 4.5 || li >= 0) && st.t - cur.k0 > 1.8))) why = 'next';
       else if (cur.kind !== 'title' && cur.kind !== 'outro') {
         if (sec !== cur.sec) why = 'sec';
         else if (li !== cur.li && (li >= 0 || age > 2.5) && (age > 3.6 || cur.kind === 'giant' || (li >= 0 && cur.li < 0))) why = 'line';
@@ -289,8 +298,9 @@
     st.margin = 34; st.notes = false; st.lyric = true; st.speed = 1; st.auto = true; st.setInks(RC.shot?.inks ?? 0);
     st.frame(Math.max(.001, dt));
     x.drawImage(st.canvas, 0, 0, W, H);
+    if (RC.afterFrame) RC.afterFrame(time);
   }
-  RC.frame = frame; RC.makeShot = makeShot;
+  RC.frame = frame; RC.makeShot = makeShot; RC.drawShot = drawShot;
   RC.h = { writeLine, drawBg, fitText, trBox, scribble, keyWord, storyOf, meta, fmt, hash, secOf, lineIdx, timeNow, pad2, wrap, artCanvas, notes };
 
   // ---------- conexión con el video de siempre ----------

@@ -391,13 +391,16 @@ void main(){
     }
     _present(whip, zb) {
       const gl = this.gl; if (!this.ok) return;
-      const inks = INKS[this.inks >= 0 ? this.inks : (scenes[this.sceneId]?.inks ?? 0)] || INKS[0];
+      let inks = INKS[this.inks >= 0 ? this.inks : (scenes[this.sceneId]?.inks ?? 0)] || INKS[0];
+      // mezcla de tintas: los colores de un juego migran canal por canal al otro (la mezcla entre canciones)
+      if (this.inkMix) { const a = INKS[this.inkMix.from] || INKS[0], b = INKS[this.inkMix.to] || INKS[0], p = clamp(this.inkMix.p), mx = (u, v) => u.map((q, i) => lerp(q, v[i], p));
+        inks = { paper: mx(a.paper, b.paper), i: [0, 1, 2].map(k => mx(a.i[k], b.i[k])) }; }
       const w = this.canvas.width, h = this.canvas.height; gl.viewport(0, 0, w, h);
       gl.bindTexture(gl.TEXTURE_2D, this._tex || (this._tex = gl.getParameter(gl.TEXTURE_BINDING_2D)));
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.plate);
       const U = this.U, t = this.t;
       // desalineo de registro: cada tinta con su desvío (en píxeles de salida), respira y salta un poco con el beat
-      const rg = (ax, ay, k) => [(ax + Math.sin(t * .7 + k) * .7 + A.beat * (k - 1) * 1.2) / w, (ay + Math.cos(t * .6 + k * 2) * .6) / h];
+      const boost = 1 + (this.regBoost || 0), rg = (ax, ay, k) => [((ax + Math.sin(t * .7 + k) * .7 + A.beat * (k - 1) * 1.2) * boost + (k - 1) * (this.regBoost || 0) * 5) / w, ((ay + Math.cos(t * .6 + k * 2) * .6) * boost - (k - 1) * (this.regBoost || 0) * 4) / h];
       const s = h / 900;
       gl.uniform1i(U.uP, 0); gl.uniform2f(U.uRes, w, h); gl.uniform3fv(U.uPaper, inks.paper);
       gl.uniform3fv(U.uI1, inks.i[0]); gl.uniform3fv(U.uI2, inks.i[1]); gl.uniform3fv(U.uI3, inks.i[2]);

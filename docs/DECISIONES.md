@@ -24,3 +24,20 @@ registro de las decisiones tomadas sin preguntar (fecha, fase, duda, decisión, 
 - **mapeo de colores a tres tintas:** cada bandera tiene un juego de tintas propio (el clip lo aplica al elegir la toma). tabla en el encabezado de `riso-props-banderas.js`. limitación: el rojo cae en tinta 2 (naranja, rosa o rojo según el juego) y en las banderas verdes el rojo se ve rosa (juego verde y rosa); el verde de las banderas con azul y rojo se aproxima con trama de la tinta 1. no se reconoce el rojo puro en el juego índigo y naranja: es naranja rojizo.
 - **detección:** cada bandera reutiliza la expresión de `NATIONS` (symbols.js/reality.js) cuando el país existe ahí y añade gentilicios y ciudades propios (nica, boricua, paisa...). respeta "Banderas y marcas" (`CFG.symbols`) y el chip «banderas de países».
 - **bandera sola:** cuando el verso nombra un país, la toma muestra solo la bandera (sin acompañar con otros objetos) y con sus tintas.
+
+## 2026-09-30 · fase 2 · póster de la canción
+- **no existe `riso-share.js` en el repo publicado:** se hizo el póster con un segundo `RISO.Stage` propio (escena registrada `poster`, fuera del menú) y exportación a tamaño exacto (`resize(W / dpr, H / dpr)`), siguiendo el patrón descrito. cuando exista `riso-share.js` en el mac, conviene que ambos compartan el helper de exportación.
+- **miniaturas pegadas después del shader:** las cuatro tomas guardadas ya están impresas (rgb con grano y trama); si se dibujaran en la plancha, el shader las volvería a tramar. se pegan encima del resultado, con un borde en la tinta 1 del juego elegido.
+- **tempo:** solo aparece si hubo audio real (`AUD.live`) durante la canción; en el puente simulado casi nunca, así que casi siempre se omite.
+- **variantes:** 6 juegos de tintas x 2 composiciones (la portada arriba o abajo). «otra variante» las recorre.
+- **capturas:** cada casilla toma una toma distinta (se compara la semilla) y espera a que el dibujo termine de trazarse (1,25 s). si no llegan los eventos (canción corta o sin letra), las fracciones 10, 38, 62 y 88 % de la duración las disparan.
+- **prueba lenta:** `tools/lento_poster.mjs` tarda unos 4 minutos con webgl por software; solo corre con `tools/check.sh todo`.
+- **póster de canciones sin letra:** la palabra grande es la primera del título y los versos/estrofas salen como «—».
+
+## 2026-09-30 · fase 3 · la mezcla
+- **duración con solape ya empezado (desvío de la fórmula):** la especificación dice `D = max(3, pos)` limitado a [3, 12] y `p0 = min(.9, pos / D)`. con esa fórmula, `D = pos` da `p0 = 1 → .9` y quedaba solo el 10 % de la mezcla (menos de un segundo). se usó `D = clamp(pos + 3, 3, 12)` (se estiman 3 s por delante) y `p0 = min(.9, pos / D)`. para pos = 7 s: D = 10 s, p0 = .7. sin solape (pos ≤ 1,5 s): 3 s fijos.
+- **avance por reloj de pared:** el avance de `p` usa `performance.now()`, no el `dt` del cuadro, porque el audio se solapa en tiempo real aunque el dibujo vaya lento (en la nube, a 5 fps, con `dt` la mezcla de 3 s duraba 8 s).
+- **moiré e interferencia:** en vez de calcular el moiré a mano, se imprimen las dos imágenes en tintas distintas (tinta 1 y tinta 2, cuyas rejillas de trama tienen ángulos de 15 y 75 grados en el shader) y una copia girada de la portada en la tinta 3; las tintas se multiplican en el shader.
+- **al terminar, sin salto:** la toma de título de la canción nueva se prepara al empezar, se funde por encima desde p = .5 (mezcla de densidades de tinta) y es la misma que sigue después. la toma de título dura al menos 1,8 s antes de pasar a la siguiente.
+- **el modo portada no existe en la rama publicada:** la mezcla se construyó sobre el clip; no se pudo probar el modo portada.
+- **fases 2 y 3 en un solo commit:** los cambios de ambas comparten `riso-clip.js` e `index.html`.
