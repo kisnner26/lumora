@@ -42,6 +42,13 @@ SCENES = {
     'mandala': 'geometría sagrada radial: amor, espiritualidad, trance, baile',
     'red': 'red de nodos conectados: conexiones, ciudad, redes sociales, distancia',
     'corriente': 'flujo de energía como fuego o río: pasión, rabia, caos, tormenta',
+    'oficina': 'oficina ilustrada en risografía: escritorio, monitor con código, silla giratoria, ventana; rutina, trabajo, lunes',
+    'cuarto': 'cuarto de noche ilustrado en risografía: cama, gato, lámpara, guirnalda de focos; insomnio, intimidad, madrugada',
+    'ciudad': 'ciudad ilustrada en risografía al atardecer: edificios con ventanas, autos, tren elevado, cartel luminoso',
+    'espacio': 'espacio ilustrado en risografía: planeta con anillos, luna, cohete, astronauta atado; distancia, asombro, soledad cósmica',
+    'bosque': 'bosque ilustrado en risografía: pinos que se mecen, niebla, río, luciérnagas y un zorro; calma, naturaleza, huida',
+    'retrato': 'retrato de plano cerrado en risografía: rostro con audífonos que parpadea y respira; música como refugio, intimidad',
+    'museo': 'museo ilustrado en risografía: una máquina tapada con una sábana, cuerda de terciopelo y placa; nostalgia, lo que ya no suena',
 }
 OBJECTS = {
     'rain': 'lluvia', 'snow': 'nieve', 'fire': 'fuego', 'stars': 'estrellas', 'moon': 'luna', 'sun': 'sol', 'sea': 'mar y olas',

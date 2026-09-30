@@ -113,18 +113,30 @@ const DIR = (() => {
     horizonte: /\b(horizon|horizonte|sunrise|amanecer|sunset|atardecer|sun|sol|hope|esperanza|light|luz|heaven|faith)\b/,
     tunel: /\b(tunnel|tunel|highway|autopista|road|carretera|drive|drivin\w*|manej\w*|speed|velocidad|fast|rapido|run|runnin\w*|corr\w*|clock|reloj)\b/,
     mandala: /\b(soul|alma|spirit\w*|trance|hypno\w*|sacred|sagrad\w*|meditat\w*|universe)\b/,
+    oficina: /\b(office|oficina|desk|escritorio|monday|lunes|meeting|reunion|deadline|paycheck|nine to five|9 to 5|cubiculo|cubicle|commut\w*)\b/,
+    cuarto: /\b(bedroom|midnight|medianoche|insomnia|insomnio|sleep\w*|dormir|duerm\w*|pillow|almohada|3 ?am|madrugada|lamp|lampara|alarm clock|despertador)\b/,
+    ciudad: /\b(city|ciudad|skyline|buildings?|edificios?|traffic|trafico|subway|metro|train|tren|taxi|cab|downtown|rush hour)\b/,
+    espacio: /\b(space|espacio|astronaut\w*|rocket|cohete|planets?|planetas?|saturn|saturno|mars|marte|satellite|satelite|cosmos|milky way|via lactea)\b/,
+    bosque: /\b(forest|bosque|woods|pines?|pinos?|fox|zorro|leaves|hojas|mountains?|montanas?|fireflies|luciernagas|trail|sendero|camping)\b/,
+    retrato: /\b(face|cara|rostro|eyes|ojos|headphones|audifonos|earphones|mirror|espejo|portrait|retrato|looking at me|me miras|mirada)\b/,
+    museo: /\b(museum|museo|antique|antiguo|antigua|relic|reliquia|vintage|history|historia|ancient|old school|retired|retirad[oa]|archive|archivo)\b/,
     red: /\b(phone|telefono|celular|texts?|textin\w*|mensajes?|calls?|callin\w*|llam\w*|connect\w*|conect\w*|network|social|followers|seguidores)\b/,
     corriente: /\b(fire|fuego|burn\w*|quem\w*|flames?|llamas?|rage|rabia|storm|tormenta|chaos|caos|thunder|trueno|electric\w*|energy|energia|passion|pasion)\b/,
   };
   const MOOD_SCENES = { euforico: ['club', 'corriente', 'mandala'], feliz: ['playa', 'horizonte', 'campo'], romantico: ['mandala', 'azotea', 'habitacion'],
     sereno: ['aurora', 'cielo', 'campo'], nostalgico: ['horizonte', 'cielo', 'habitacion'], melancolico: ['aurora', 'calle', 'habitacion'],
     triste: ['aurora', 'habitacion', 'nebulosa'], oscuro: ['nebulosa', 'calle', 'corriente'], rabioso: ['corriente', 'tunel', 'calle'], desafiante: ['azotea', 'escenario', 'tunel'] };
-  const LOUD = new Set(['club', 'escenario', 'estadio', 'corriente', 'tunel']), QUIET = new Set(['habitacion', 'aurora', 'cielo', 'campo']);
+  // las escenas ilustradas (riso.js) se suman a cada ánimo, un poco detrás de las de siempre
+  const RISO_MOOD = { euforico: ['ciudad'], feliz: ['bosque'], romantico: ['cuarto'], sereno: ['bosque'], nostalgico: ['museo'], melancolico: ['cuarto'], triste: ['cuarto'], oscuro: ['retrato'], rabioso: ['ciudad'], desafiante: ['oficina'] };
+  const RISO_MOOD2 = { euforico: ['retrato'], feliz: ['ciudad'], romantico: ['retrato'], sereno: ['espacio'], nostalgico: ['museo'], melancolico: ['retrato'], triste: ['museo'], oscuro: ['espacio'], rabioso: ['oficina'], desafiante: ['museo'] };
+  for (const m in RISO_MOOD) { MOOD_SCENES[m].push(...RISO_MOOD[m]); }
+  const LOUD = new Set(['club', 'escenario', 'estadio', 'corriente', 'tunel']), QUIET = new Set(['habitacion', 'aurora', 'cielo', 'campo', 'cuarto', 'bosque', 'museo']);
   const MOOD_SCENES2 = { euforico: ['orbitas', 'deriva', 'red', 'tunel'], feliz: ['cielo', 'mandala', 'orbitas', 'deriva'],
     romantico: ['aurora', 'cielo', 'orbitas', 'nebulosa'], sereno: ['horizonte', 'nebulosa', 'deriva', 'orbitas'],
     nostalgico: ['aurora', 'campo', 'nebulosa', 'cielo'], melancolico: ['nebulosa', 'cielo', 'deriva', 'red'],
     triste: ['cielo', 'horizonte', 'deriva', 'orbitas'], oscuro: ['tunel', 'red', 'deriva', 'orbitas'],
     rabioso: ['red', 'nebulosa', 'estadio', 'azotea'], desafiante: ['red', 'corriente', 'orbitas', 'calle'] };
+  for (const m in RISO_MOOD2) MOOD_SCENES2[m].push(...RISO_MOOD2[m]);
   const MOOD_OBJS = { euforico: ['disco', 'sparkle', 'speakers', 'neonrings'], feliz: ['sun', 'sparkle', 'flowers'],
     romantico: ['love', 'candles', 'silk'], sereno: ['stars', 'moon', 'sea'], nostalgico: ['filmgrain', 'lightleak', 'polaroids'],
     melancolico: ['rain', 'blinds', 'smoke'], triste: ['rain', 'tears', 'candles'], oscuro: ['smoke', 'dark', 'flicker'],
