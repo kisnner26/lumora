@@ -125,22 +125,37 @@
   const H = { on: false, sel: +(load('lumora_home', { sel: 0 }).sel) || 0, idle: 0, raf: 0, last: 0, cycleAt: 0, wordAt: 0, wi: 0, words: [] };
   const F = { on: false, scene: 'oficina', speed: 1, inks: -1, detail: 0, notes: true, cycle: false, ui: 0, rec: null, cycleAt: 0, ...load('lumora_fx', {}) };
   if (!R.scenes[F.scene]) F.scene = R.order[0];
-  const active = () => H.on || F.on;
+  const P = { on: false, t: 0 };                                   // la bienvenida de siempre también lleva una escena viva detrás
+  const active = () => H.on || F.on || P.on;
   function fit() { stage.resize(innerWidth, innerHeight); }
   addEventListener('resize', () => { if (active()) fit(); });
   function loop(t0) {
     H.raf = 0; if (!active()) return;
     const dt = Math.min(.25, (t0 - (H.last || t0)) / 1000); H.last = t0;
     stage.frame(dt);
-    const root = H.on ? home : fx;
+    const root = H.on ? home : F.on ? fx : $('panel');
     root.style.setProperty('--b', R.A.beat.toFixed(3));
     padTick(dt);
-    if (H.on) homeTick(dt); else fxTick(dt);
+    if (H.on) homeTick(dt); else if (F.on) fxTick(dt); else panelTick(dt);
     H.raf = requestAnimationFrame(loop);
   }
   function run() { if (!H.raf) { H.last = 0; H.raf = requestAnimationFrame(loop); } }
   // cuando el menú está encima, la bienvenida de abajo no gasta cuadros
   if (typeof welcomeBg === 'function') { const _wb = welcomeBg; welcomeBg = function (t, dt) { if (active()) return; _wb(t, dt); }; }
+
+  // ---------- la bienvenida: escena viva detrás, siempre en índigo y naranja como el resto de la interfaz ----------
+  function panelTick(dt) {
+    P.t += dt; if (P.t > 24) { P.t = 0; const cur = R.order.indexOf(stage.cut ? stage.cut.to : stage.sceneId); stage.setScene(R.order[(cur + 1) % R.order.length]); }
+  }
+  function syncPanel() {
+    const want = !H.on && !F.on && typeof mode !== 'undefined' && mode === 'panel' && !$('panel').classList.contains('hide') && !document.body.classList.contains('autor');
+    if (want && !P.on) {
+      P.on = true; P.t = 0; const pn = $('panel'); pn.prepend(stage.canvas); stage.canvas.className = 'rs-bg'; stage.canvas.removeAttribute('style');
+      stage.margin = 34; stage.notes = false; stage.lyric = true; stage.speed = 1; stage.setInks(0); stage.auto = true; stage.setDetail(2, true); fit();
+      stage.setScene(R.order[(Math.random() * R.order.length) | 0], { instant: true }); run();
+    } else if (!want && P.on) { P.on = false; }
+  }
+  setInterval(syncPanel, 300);
 
   // ---------- tintas de la escena => colores del menú ----------
   function paintInks(root) {
@@ -177,7 +192,7 @@
 
   function showHome(o = {}) {
     if (F.on) hideFx(true);
-    H.on = true; home.classList.remove('leave'); home.classList.add('on'); home.prepend(stage.canvas); stage.canvas.removeAttribute('style');
+    H.on = true; home.classList.remove('leave'); home.classList.add('on'); home.prepend(stage.canvas); stage.canvas.className = ''; stage.canvas.removeAttribute('style');
     stage.margin = 34; stage.notes = true; stage.lyric = true; stage.speed = 1; stage.setInks(-1); stage.auto = true; stage.setDetail(3, true); fit();
     select(H.sel, { force: true, instant: !stage.sceneId || o.instant });
     run();
@@ -223,7 +238,7 @@
   }
   function fxScene(dir) { const n = R.order.length; F.scene = R.order[(R.order.indexOf(F.scene) + dir + n) % n]; F.cycleAt = 0; fxApply({ scene: true }); setTimeout(fxSync, 240); }
   function showFx() {
-    F.on = true; fx.classList.add('on'); fx.prepend(stage.canvas); stage.canvas.removeAttribute('style'); fit();
+    F.on = true; fx.classList.add('on'); fx.prepend(stage.canvas); stage.canvas.className = ''; stage.canvas.removeAttribute('style'); fit();
     F.ui = 3.5; fx.classList.add('ui'); stage.setScene(F.scene, { instant: true }); fxApply(); run();
   }
   function hideFx(silent) {

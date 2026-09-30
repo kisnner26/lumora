@@ -44,6 +44,14 @@ RISO.register({
 });
 ```
 
+### un solo estilo en todo el sistema
+
+la risografía no es solo el fondo: la bienvenida, los ajustes, la consola de reproducción, el modo carátula y el modo autor comparten las mismas tintas (índigo y naranja sobre papel crema con trama de puntos), bordes gruesos, sombras planas desplazadas y ningún degradado suave. la bienvenida de siempre también tiene una escena viva detrás. todo el estilo vive en `riso-theme.js`, que solo sobrescribe colores y formas, sin tocar la lógica de cada pieza.
+
+| | |
+|---|---|
+| ![bienvenida sobre una escena viva, con etiquetas de papel](docs/img/bienvenida-riso.jpg) | ![ajustes en papel crema: fichas, teclas cuadradas y faders con regla](docs/img/ajustes-riso.jpg) |
+
 ## capturas reales
 
 | | |
