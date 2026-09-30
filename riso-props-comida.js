@@ -35,7 +35,7 @@
     { p: 'M-80 -10 C-100 -90 -40 -100 -30 -70 C-30 -140 50 -140 50 -80 C90 -90 100 -10 80 -10 Z', f: 3, ft: .85, s: 9, m: 'sway', a: .02, o: [0, -10] }, { c: [10, -160, 14], f: 1, ft: .95, s: 6 },
     { p: 'M-80 -10 C-60 10 -40 0 -20 12 C0 0 30 12 50 0 C70 8 80 0 80 -10', s: 6 },
   ], { moods: ['feliz', 'sereno'] });
-  A('pastel', 'PASTEL', /\b(pasteles?|tartas?|cakes?|birthday cake|torta|bizcocho|pastel de cumplea[nñ]os)\b/i, [
+  A('pastel', 'PASTEL', /\b(pastel(es)?|tartas?|cakes?|birthday cake|torta|bizcocho|pastel de cumplea[nñ]os)\b/i, [
     { p: L.rect(-140, 20, 280, 120), f: 2, ft: .7, s: 9 }, { p: 'M-140 20 C-120 60 -100 20 -70 55 C-40 20 -10 60 20 20 C50 60 80 20 110 55 C130 30 140 40 140 20', f: -1, s: 8 },
     { p: 'M-60 -60 H60 V20 H-60 Z', f: 3, ft: .8, s: 9 }, { p: 'M-40 -60 V-110 M0 -60 V-120 M40 -60 V-110', s: 6 },
     { p: 'M-40 -125 C-50 -140 -30 -145 -40 -160 M0 -135 C-10 -150 10 -155 0 -170 M40 -125 C30 -140 50 -145 40 -160', f: 2, ft: .95, s: 5, m: 'sway', a: .1, o: [0, -120], v: 2 },
@@ -81,7 +81,7 @@
     { c: [0, 20, 130], f: 2, ft: .9, s: 10 }, { p: 'M0 -110 V-140', s: 8 }, leaf(0, -110, 0, .9), { p: 'M-60 -30 C-90 10 -80 60 -50 90', s: 4 },
     { p: 'M-30 30 L-10 50 M20 10 L40 30 M30 70 L50 60', s: 4 },
   ], { moods: ['feliz'] });
-  A('limon', 'LIMÓN', /\b(limones?|lim[oó]n|lemons?|limonada|lemonade|limes?)\b/i, [
+  A('limon', 'LIMÓN', /\b(lim[oó]n(es)?|lim[oó]n|lemons?|limonada|lemonade|limes?)\b/i, [
     { p: 'M-170 10 C-140 -90 140 -90 170 10 C140 110 -140 110 -170 10 Z', f: 2, ft: .85, s: 10 }, { p: 'M-170 10 L-190 5 M170 10 L190 5', s: 9 },
     { p: 'M-90 0 C-50 -30 30 -30 70 -10', s: 4 }, leaf(60, -40, 0, .8),
   ], { moods: ['feliz'] });
@@ -142,7 +142,7 @@
     { p: 'M-120 -90 C-130 -130 -100 -150 -70 -160 M-120 -90 L-160 -120', f: 1, ft: .9, s: 8 }, { p: 'M-60 -60 C-30 -50 0 -30 20 10', s: 4 },
     { p: 'M140 -60 C130 -90 150 -100 140 -130', s: 5, i: 2, m: 'steam', a: 30 },
   ], { moods: ['rabioso', 'euforico'] });
-  A('brocoli', 'BRÓCOLI', /\b(br[oó]coli|broccoli|vegetales?|verduras?|veggies?|vegetables?)\b/i, [
+  A('brocoli', 'BRÓCOLI', /\b(br[oó]coli|broccoli|vegetal(es)?|verduras?|veggies?|vegetables?)\b/i, [
     { c: [-70, -60, 60], f: 1, ft: .85, s: 9 }, { c: [0, -95, 62], f: 1, ft: .85, s: 9 }, { c: [70, -55, 60], f: 1, ft: .85, s: 9 }, { c: [0, -30, 55], f: 1, ft: .7, s: 0 },
     { p: 'M-30 -20 C-25 40 -30 100 -35 160 H35 C30 100 25 40 30 -20 Z', f: 3, ft: .65, s: 9 },
   ], { moods: ['sereno'] });
@@ -168,11 +168,11 @@
     { p: 'M-150 -20 C-160 -100 -60 -120 0 -90 C80 -140 160 -70 140 0 C160 70 90 130 20 100 C-50 140 -150 90 -150 -20 Z', f: 1, ft: .8, s: 10 }, { c: [40, -10, 26], f: -1, s: 7 }, { p: 'M-110 -30 C-80 -50 -50 -30 -30 -50 M-100 30 C-70 10 -40 30 -20 10', s: 4 },
     { p: 'M-30 -120 C-40 -145 -20 -150 -30 -180', s: 4, m: 'steam', a: 30 },
   ], { moods: ['feliz'] });
-  A('pescado', 'PESCADO', /\b(pescados?|fish|filete|salm[oó]n|salmon|atunes?|tuna|trucha|trout|ceviche)\b/i, [
+  A('pescado', 'PESCADO', /\b(pescados?|fish|filete|salm[oó]n|salmon|at[uú]n(es)?|tuna|trucha|trout|ceviche)\b/i, [
     { p: 'M-170 0 C-100 -90 40 -90 100 0 C40 90 -100 90 -170 0 Z', f: 3, ft: .75, s: 10 }, { p: 'M100 0 L170 -60 L170 60 Z', f: 3, ft: .85, s: 9, m: 'wag', a: .1, o: [100, 0] },
     { c: [-110, -10, 10], f: -1, s: 6 }, { p: 'M-40 -60 C-20 -30 -20 30 -40 60 M10 -60 C30 -30 30 30 10 60', s: 4 }, { p: 'M-30 -75 L0 -120 L30 -70', f: 1, ft: .8, s: 7 },
   ], { moods: ['sereno'] });
-  A('camaron', 'CAMARÓN', /\b(camarones?|camar[oó]n|langostinos?|shrimps?|prawns?|langosta|lobsters?|cangrejos?|crabs?|mariscos?|seafood)\b/i, [
+  A('camaron', 'CAMARÓN', /\b(camar[oó]n(es)?|camar[oó]n|langostinos?|shrimps?|prawns?|langosta|lobsters?|cangrejos?|crabs?|mariscos?|seafood)\b/i, [
     { p: 'M-130 -20 C-130 -110 40 -140 100 -70 C140 -20 110 60 60 100 C30 130 -20 140 -50 110 C-10 110 40 80 50 40 C60 0 30 -50 -20 -40 C-70 -30 -100 30 -130 -20 Z', f: 2, ft: .85, s: 10 },
     { p: 'M-40 -60 C-60 -10 -40 40 0 50 M10 -70 C0 -20 30 20 50 20', s: 4 }, { p: 'M-130 -20 L-170 -50 M-120 -50 L-150 -90', s: 6 }, { c: [-100, -30, 8], f: 1, s: 0 },
   ], { moods: ['feliz'] });
@@ -201,7 +201,7 @@
     { p: 'M-90 0 L-70 170 H70 L90 0 Z', f: 1, ft: .8, s: 9 }, { p: 'M-30 0 L-25 170 M30 0 L25 170', f: -1, s: 6 },
     ...[[-70, -20], [-30, -50], [20, -40], [60, -20], [0, -85], [-50, -85], [45, -85]].map(([x, y], i) => ({ c: [x, y, 28], f: -1, s: 7, m: 'bob', a: 3, ph: i })),
   ], { moods: ['feliz', 'euforico'] });
-  A('empanada', 'EMPANADA', /\b(empanadas?|pasteles? de carne|pastel(es)? salados?|pastelitos?|calzone|dumplings?|pierogi|samosas?|arepas?)\b/i, [
+  A('empanada', 'EMPANADA', /\b(empanadas?|pastel(es)? de carne|pastel(es)? salados?|pastelitos?|calzone|dumplings?|pierogi|samosas?|arepas?)\b/i, [
     { p: 'M-170 50 C-150 -90 150 -90 170 50 C120 60 -120 60 -170 50 Z', f: 2, ft: .75, s: 10 }, { p: 'M-150 40 C-110 60 -70 20 -30 55 C10 20 50 60 90 30 C120 55 140 50 150 40', s: 7 },
     { p: 'M-100 -10 C-60 -50 60 -50 100 -10', s: 4 }, { p: 'M-40 -30 L-20 -10 M20 -40 L40 -20', s: 4 },
   ], { moods: ['feliz', 'nostalgico'] });
@@ -230,7 +230,7 @@
     { c: [0, -60, 100], f: 2, ft: .85, s: 10 }, { p: 'M0 -60 C30 -60 30 -90 0 -90 C-50 -90 -50 -30 0 -30 C70 -30 70 -120 -10 -120 C-90 -120 -90 -10 0 0', s: 7, m: 'spin', a: .3, o: [0, -60] },
     { p: 'M0 40 V190', s: 11 }, { p: 'M-120 -160 L-90 -140 M120 -160 L90 -140', s: 4 },
   ], { moods: ['feliz', 'euforico'] });
-  A('miel', 'MIEL', /\b(miel|honey|abejas?|bees?|panal|honeycomb|colmena|beehive|dulzura)\b/i, [
+  A('miel', 'MIEL', /\b(miel|honey|panal|honeycomb|colmena|beehive|dulzura)\b/i, [
     { p: 'M-100 -60 C-110 -100 110 -100 100 -60 V120 C100 160 -100 160 -100 120 Z', f: 2, ft: .85, s: 10 }, { p: L.rect(-110, -100, 220, 34), f: 3, ft: .7, s: 9 }, { p: 'M-70 -40 H70 M-70 20 H70', s: 3 },
     { p: 'M0 -66 C0 -30 -20 -10 -20 20 C-20 40 20 40 20 20 C20 -10 0 -30 0 -66', f: 2, ft: .95, s: 4 }, { p: 'M-80 90 L-50 70 L-20 90 L-50 110 Z', f: -1, s: 5 },
   ], { moods: ['nostalgico', 'sereno', 'romantico'] });

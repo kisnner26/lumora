@@ -19,7 +19,7 @@
     { c: [55, 10, 12], f: 2, ft: .95, s: 5, m: 'beat', a: .15, o: [55, 10] }, { p: 'M-95 170 H95', s: 9 },
     { p: 'M95 -170 L150 -140 V190 L95 170 Z', f: 1, ft: .5, s: 7, m: 'sway', a: .02, o: [95, 0] },
   ]);
-  A('ventana', 'VENTANA', /\b(ventanas?|windows?|cristal|panes?)\b/i, [
+  A('ventana', 'VENTANA', /\b(ventanas?|windows?|cristal|pan(es)?)\b/i, [
     { p: L.rr(-110, -140, 220, 280, 12), f: 3, ft: .35, s: 9 }, { p: 'M0 -140 V140 M-110 0 H110', s: 8 },
     { p: 'M-80 -100 L-30 -100 L-80 -50 Z M10 30 L80 30 L10 100 Z', f: -1, s: 3, m: 'bob', a: 3 },
     { p: L.rect(-135, 140, 270, 22), f: 2, ft: .8, s: 7 },
@@ -117,7 +117,7 @@
     { p: 'M-50 -55 L-30 -105 H30 L50 -55 L0 -20 Z', f: 3, ft: .8, s: 8, m: 'beat', a: .06, o: [0, -50] }, { p: 'M-30 -105 L0 -20 L30 -105 M-50 -55 H50', s: 4 },
     { p: L.star(75, -110, 22, 4, .28), f: 2, ft: .9, s: 4, m: 'pulse', a: .3, o: [75, -110], v: 2 }, { p: L.star(-90, -85, 14, 4, .28), f: 2, ft: .9, s: 3, m: 'pulse', a: .3, o: [-90, -85], v: 2.6 },
   ], { moods: ['romantico'] });
-  A('collar', 'COLLAR', /\b(collares?|necklace|pendants?|colgante|jewelry|joyas?|chain around|cadena de oro)\b/i, [
+  A('collar', 'COLLAR', /\b(collar(es)?|necklace|pendants?|colgante|jewelry|joyas?|chain around|cadena de oro)\b/i, [
     { p: 'M-140 -110 C-140 60 -70 130 0 130 C70 130 140 60 140 -110', s: 6, m: 'sway', a: .02, o: [0, -110] }, { p: L.heart(0, 132, 4), f: 2, ft: .9, s: 7, m: 'pulse', a: .1, o: [0, 132] },
     { c: [-100, 40, 10], f: 3, ft: .8, s: 4 }, { c: [-60, 88, 10], f: 3, ft: .8, s: 4 }, { c: [60, 88, 10], f: 3, ft: .8, s: 4 }, { c: [100, 40, 10], f: 3, ft: .8, s: 4 },
   ]);
@@ -239,7 +239,7 @@
     { p: 'M-40 -30 H40 L60 -80 H-60 Z', f: 2, ft: .85, s: 9 }, { p: L.rr(-40, -30, 80, 190, 14), f: 1, ft: .85, s: 9 }, { p: 'M-60 -80 L-150 -160 M60 -80 L150 -160', s: 5, m: 'pulse', a: .1, o: [0, -80] },
     { p: 'M-30 -120 L30 -120', s: 4, m: 'drift', a: 20 }, { c: [0, 40, 12], f: 2, ft: .9, s: 5 },
   ]);
-  A('pincel', 'PINCEL', /\b(pinceles?|paintbrush|brush|pintar|painting|paint(er)?|pintura|arte|art)\b/i, [
+  A('pincel', 'PINCEL', /\b(pincel(es)?|paintbrush|brush|pintar|painting|paint(er)?|pintura|arte|art)\b/i, [
     { p: 'M-150 150 L100 -100', s: 16 }, { p: 'M90 -110 C110 -170 160 -170 170 -150 C170 -100 120 -60 80 -80 Z', f: 2, ft: .9, s: 9, m: 'wag', a: .03, o: [90, -100] }, { p: 'M60 -80 L90 -50 L110 -70 L80 -100 Z', f: 1, ft: .8, s: 6 },
     { p: 'M-160 160 C-130 110 -90 150 -60 120 C-30 160 30 130 60 150', s: 6, i: 2, m: 'drift', a: 4 }, { c: [-100, 130, 8], f: 2, ft: .9, s: 0 },
   ]);
@@ -265,7 +265,7 @@
     { p: 'M-50 -150 H50 L60 -60 H-60 Z', f: 1, ft: .7, s: 8 }, { p: 'M-50 150 H50 L60 60 H-60 Z', f: 1, ft: .7, s: 8 }, { c: [0, 0, 82], f: 2, ft: .55, s: 10 }, { c: [0, 0, 62], f: -1, s: 6 },
     { p: 'M0 0 V-40', s: 7, m: 'spin', a: .1, o: [0, 0] }, { p: 'M0 0 H36', s: 5, m: 'spin', a: 1, o: [0, 0] }, { p: 'M0 -62 V-52 M0 52 V62 M-62 0 H-52 M52 0 H62', s: 4 },
   ]);
-  A('despertador', 'DESPERTADOR', /\b(despertadores?|alarm clock|wake up|despierta|snooze|3 ?a\.?m|alarma)\b/i, [
+  A('despertador', 'DESPERTADOR', /\b(despertador(es)?|alarm clock|wake up|despierta|snooze|3 ?a\.?m|alarma)\b/i, [
     { c: [0, 20, 118], f: 2, ft: .7, s: 10 }, { c: [0, 20, 90], f: -1, s: 6 }, { p: 'M0 20 V-40', s: 8, m: 'spin', a: .2, o: [0, 20] }, { p: 'M0 20 L40 40', s: 6, m: 'spin', a: 1.4, o: [0, 20] },
     { e: [-90, -100, 44, 30, -.5], f: 1, ft: .9, s: 8, m: 'wag', a: .1, o: [-90, -100] }, { e: [90, -100, 44, 30, .5], f: 1, ft: .9, s: 8, m: 'wag', a: -.1, o: [90, -100] }, { p: 'M-70 130 L-95 170 M70 130 L95 170', s: 9 },
     { p: 'M-150 -60 L-175 -75 M150 -60 L175 -75', s: 5, m: 'pulse', a: .2, o: [0, 0], v: 3 },

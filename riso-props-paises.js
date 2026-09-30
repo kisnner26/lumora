@@ -127,7 +127,7 @@
     { p: 'M0 -20 C-60 -60 -130 -70 -190 -20 C-150 -30 -120 -10 -100 20 C-70 -10 -30 -10 0 30', f: 1, ft: .9, s: 8, m: 'flap', o: [0, 0], v: .5 }, { p: 'M0 -20 C60 -60 130 -70 190 -20 C150 -30 120 -10 100 20 C70 -10 30 -10 0 30', f: 1, ft: .9, s: 8, m: 'flap', o: [0, 0], v: .5 },
     { e: [0, 20, 22, 50], f: 1, ft: .95, s: 8 }, { c: [0, -32, 16], f: -1, s: 7 }, { p: 'M-8 -30 L-4 -20 L4 -30', f: 2, ft: .95, s: 4 }, { p: 'M-15 70 L-25 110 M15 70 L25 110', s: 5 },
   ], { moods: ['desafiante', 'euforico'] });
-  A('jaguar', 'JAGUAR', /\b(jaguares?|jaguars?|leopardos?|leopards?|pumas?|panteras?|panthers?|tigres?|tigers?|guepardos?|cheetahs?)\b/i, [
+  A('jaguar', 'JAGUAR', /\b(jaguar(es)?|jaguars?|leopardos?|leopards?|pumas?|panteras?|panthers?|tigres?|tigers?|guepardos?|cheetahs?)\b/i, [
     { p: 'M-170 40 C-170 -30 -110 -60 -60 -50 C-20 -90 40 -90 70 -50 C130 -60 170 -20 170 40 C170 90 130 100 100 100 V160 M-100 100 C-140 100 -170 90 -170 40 M-100 100 V160', f: 2, ft: .8, s: 9 },
     { c: [-30, -70, 0], s: 0 }, { p: 'M-60 -50 L-70 -90 L-40 -70 M70 -50 L80 -90 L50 -70', f: 2, ft: .9, s: 6 }, ...[[-90, 0], [-40, 20], [10, -10], [60, 20], [110, 0], [-10, 60], [50, 70]].map(([x, y]) => ({ c: [x, y, 12], f: 1, ft: .95, s: 3 })),
     { p: 'M150 20 C190 0 190 -60 150 -70', s: 8, m: 'sway', a: .05, o: [150, 20] },
@@ -137,7 +137,7 @@
     { p: 'M-70 20 C-100 80 -60 130 -100 190 M-60 30 C-70 90 -30 130 -60 190', s: 6, m: 'sway', a: .05, o: [-70, 20] }, { p: 'M-20 -10 C-50 -60 -90 -70 -120 -60 C-100 -30 -60 0 -20 10', f: 2, ft: .85, s: 7, m: 'flap', o: [-20, 0], v: .6 },
     { p: 'M-30 40 L-40 80 M-10 40 L-14 80', s: 5 },
   ], { moods: ['feliz', 'euforico'] });
-  A('elefante', 'ELEFANTE', /\b(elefantes?|elephants?|safari|savana|savanna|jirafas?|giraffes?|leones?|lions?|africa|[aá]frica|africano|african)\b/i, [
+  A('elefante', 'ELEFANTE', /\b(elefantes?|elephants?|safari|savana|savanna|africa|[aá]frica|africano|african)\b/i, [
     { e: [10, 20, 110, 80], f: 3, ft: .75, s: 9 }, { c: [-100, -20, 55], f: 3, ft: .75, s: 9 }, { p: 'M-140 -10 C-190 40 -170 110 -150 130', s: 12 }, { p: 'M-70 -70 C-40 -130 20 -80 0 -20', f: 3, ft: .5, s: 8, m: 'sway', a: .04, o: [-70, -50] },
     { c: [-105, -30, 5], f: 1, s: 0 }, { p: 'M-60 90 V150 M-10 100 V160 M50 100 V160 M100 90 V150', s: 12 }, { p: 'M-105 5 L-130 30', s: 5, i: 2 }, { p: 'M110 -10 C140 -20 150 20 130 50', s: 8, m: 'wag', a: .1, o: [110, -10] },
   ], { moods: ['sereno'] });
@@ -145,7 +145,7 @@
     { p: 'M-110 60 C-110 -20 -70 -50 -50 -20 C-30 -80 30 -80 50 -20 C70 -50 100 -10 100 60 Z', f: 2, ft: .7, s: 9 }, { p: 'M-110 20 C-130 -40 -140 -80 -120 -110 C-100 -130 -70 -110 -80 -90', s: 9 }, { c: [-100, -105, 4], f: 1, s: 0 },
     { p: 'M-80 60 V150 M-30 60 V150 M40 60 V150 M90 60 V150', s: 9 }, { p: 'M-190 165 C-100 130 -60 170 0 160 C60 150 120 170 190 155', f: 2, ft: .4, s: 7 }, sun(120, -120, 28),
   ], { moods: ['sereno', 'nostalgico'] });
-  A('flamenco_ave', 'FLAMENCO', /\b(flamencos?|flamingos?|garzas?|herons?|cigüe[nñ]as?|storks?|cisnes?|swans?)\b/i, [
+  A('flamenco_ave', 'FLAMENCO', /\b(flamencos?|flamingos?|garzas?|herons?|cigüe[nñ]as?|storks?)\b/i, [
     { p: 'M-20 170 V50 M20 170 V60', s: 6 }, { e: [0, 20, 70, 42], f: 2, ft: .9, s: 9 }, { p: 'M50 10 C100 -60 60 -140 20 -110 C0 -95 30 -60 60 -90', s: 10 }, { c: [40, -120, 16], f: 2, ft: .9, s: 7 }, { p: 'M52 -122 L90 -105 L58 -105', f: 1, ft: .9, s: 5 },
     { p: 'M-70 10 C-100 -10 -100 40 -60 50 Z', f: 2, ft: .7, s: 6, m: 'flap', o: [-40, 20], v: .4 }, { p: 'M-190 170 H190', s: 8 },
   ], { moods: ['romantico', 'sereno'] });
@@ -154,10 +154,10 @@
     { p: 'M-30 -60 L-10 -50 M20 -80 L40 -70', s: 4 }, { p: 'M-170 62 C-190 50 -190 80 -170 78', s: 5 },
   ], { moods: ['euforico', 'feliz'] });
   A('guitarra_flamenca', 'GUITARRA ESPAÑOLA', /\b(guitarra espa[nñ]ola|flamenco|flamenca|sevillanas?|castañuelas?|castanets|toro de lidia|torero|bullfight\w*|corrida)\b/i, [
-    { p: 'M-30 40 C-110 40 -110 -30 -60 -30 C-100 -80 -20 -100 0 -60 C20 -100 100 -80 60 -30 C110 -30 110 40 30 40 C50 90 40 150 0 150 C-40 150 -50 90 -30 40 Z', f: 2, ft: .8, s: 9, g: 0 },
-    { c: [0, 50, 26], f: 1, ft: .95, s: 8 }, { p: 'M0 -60 L60 -190', s: 12 }, { p: 'M55 -195 L85 -175 L75 -155 L45 -175 Z', f: 1, ft: .9, s: 6 }, { p: 'M-24 120 H24', s: 7 },
-  ], { g: { r: -.5, dx: 20, dy: 20 }, moods: ['romantico', 'nostalgico', 'rabioso'] });
-  A('tambor_samba', 'PANDEIRO', /\b(pandeiros?|tamborines?|tambourine|tambores?|drums? line|percusi[oó]n|bater[ií]a de samba|bongos?|congas?|timbales?|bater[ií]a)\b/i, [
+    { p: 'M-40 -10 C-60 -50 -20 -78 0 -72 C25 -78 60 -50 40 -10 C20 5 20 22 45 38 C82 68 70 138 0 138 C-70 138 -82 68 -45 38 C-20 22 -20 5 -40 -10 Z', f: 2, ft: .8, s: 9 },
+    { c: [0, 60, 26], f: 1, ft: .95, s: 8 }, { p: 'M0 -72 V-190', s: 12 }, { p: 'M-14 -190 H14 V-160 H-14 Z', f: 1, ft: .9, s: 6 }, { p: 'M-24 115 H24', s: 7 },
+  ], { g: { r: .5, dx: 10, dy: 20 }, moods: ['romantico', 'nostalgico', 'rabioso'] });
+  A('tambor_samba', 'PANDEIRO', /\b(pandeiros?|tamborines?|tambourine|tambor(es)?|drums? line|percusi[oó]n|bater[ií]a de samba|bongos?|congas?|timbales?|bater[ií]a)\b/i, [
     { p: 'M-100 -60 C-100 -100 100 -100 100 -60 V60 C100 100 -100 100 -100 60 Z', f: 2, ft: .8, s: 10, m: 'beat', a: .06, o: [0, 0] }, { e: [0, -60, 100, 24], f: -1, s: 8 }, { p: 'M-70 -30 L-30 90 M-30 -30 L10 90 M20 -30 L50 90 M60 -30 L80 80', s: 5 },
     { p: 'M-130 -150 L-30 -80 M130 -150 L30 -80', f: 1, s: 12, m: 'wag', a: .1, o: [0, -80], b: 3 },
   ], { moods: ['euforico', 'feliz'] });
@@ -169,7 +169,7 @@
     { e: [0, 20, 90, 70, .3], f: 1, ft: .85, s: 9 }, { p: 'M-40 -30 L-90 -150 M-10 -50 L-30 -170 M40 -30 L90 -130', s: 10 }, { p: 'M70 60 L170 100', s: 9 }, { p: 'M-60 20 L60 20 M-40 -20 L40 60 M40 -20 L-40 60', s: 4, i: 2 },
     { c: [-90, -155, 8], f: 2, s: 4 }, { c: [-30, -175, 8], f: 2, s: 4 }, { c: [90, -135, 8], f: 2, s: 4 },
   ], { moods: ['nostalgico', 'desafiante'] });
-  A('oso_polar', 'OSO POLAR', /\b(osos? polar(es)?|polar bears?|ártico|arctic|antártida|antarctica|pingüinos?|penguins?|iglú|igloo|tundra|groenlandia|greenland)\b/i, [
+  A('oso_polar', 'OSO POLAR', /\b(osos? polar(es)?|polar bears?|ártico|arctic|antártida|antarctica|iglú|igloo|tundra|groenlandia|greenland)\b/i, [
     { e: [0, 60, 140, 70], f: -1, s: 10 }, { c: [-120, 10, 45], f: -1, s: 10 }, { p: 'M-150 -20 L-140 -50 L-120 -35', f: -1, s: 7 }, { c: [-135, 5, 5], f: 1, s: 0 }, { c: [-160, 20, 8], f: 1, s: 0 },
     { p: 'M-60 110 V160 M50 110 V160 M110 90 V150', s: 12 }, { p: 'M-190 165 C-100 145 100 175 190 155', f: 3, ft: .5, s: 7 }, { p: 'M40 -120 L60 -140 M80 -100 L110 -110 M100 -150 L110 -170', s: 3, m: 'fall', a: 40 },
   ], { moods: ['sereno', 'triste'] });

@@ -44,3 +44,4 @@ registro de las decisiones tomadas sin preguntar (fecha, fase, duda, decisión, 
 
 - oleada 1: alias "té" y "baby" quitados de taza/cuna por falsos positivos (tú, cariño); se mantienen "tea" y "bebé".
 - oleada 2: los dibujos de países no nombran al país (monumento, animal, objeto); alias genéricos (rey, puente, isla, solo) excluidos.
+- oleada 3: los patrones de alias se escriben con (es)? para que el singular dispare; nombres propios ambiguos (aurora, alba, mercedes, turkey) fuera de los alias.
