@@ -24,7 +24,7 @@
     { p: 'M0 -120 V-170 M0 120 V170 M-120 0 H-170 M120 0 H170 M85 -85 L120 -120 M-85 -85 L-120 -120 M85 85 L120 120 M-85 85 L-120 120', s: 8, m: 'spin', a: .5, o: [0, 0] },
     { p: L.star(-150, -140, 14, 4, .4), f: 3, ft: .9, s: 4, m: 'bob', a: 8 }, { p: L.star(150, 140, 14, 4, .4), f: 1, ft: .9, s: 4, m: 'bob', a: 8, ph: 2 },
   ], { moods: ['feliz', 'euforico', 'sereno'] });
-  A('nostalgia', 'NOSTALGIA', /\b(nostalgia|nost[aá]lgic[oa]s?|a[nñ]oranza|a[nñ]orar|a[nñ]oro|recuerdos?|memories|remember when|nostalgic|homesick)\b/i, [
+  A('nostalgia', 'NOSTALGIA', /\b(nostalgia|nost[aá]lgic[oa]s?|a[nñ]oranza|a[nñ]orar|a[nñ]oro|recuerdos|memories|remember when|nostalgic|homesick)\b/i, [
     { p: L.rect(-120, -140, 240, 290), f: -1, s: 9, m: 'sway', a: .03, o: [0, 150] }, { p: L.rect(-95, -115, 190, 190), f: 3, ft: .55, s: 6, m: 'sway', a: .03, o: [0, 150] },
     { c: [40, -50, 30], f: 2, ft: .9, s: 5, m: 'sway', a: .03, o: [0, 150] }, { p: 'M-95 75 L-40 0 L0 50 L40 15 L95 75 Z', f: 1, ft: .7, s: 5, m: 'sway', a: .03, o: [0, 150] }, { p: 'M-70 110 H50', s: 4, m: 'sway', a: .03, o: [0, 150] },
   ], { moods: ['nostalgico', 'melancolico'] });

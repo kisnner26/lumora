@@ -50,7 +50,7 @@
     { p: 'M0 170 V20', s: 10 }, { p: 'M0 120 C-60 110 -80 70 -70 50 C-30 60 -10 90 0 120 Z M0 90 C50 80 70 40 60 20 C30 30 10 60 0 90 Z', f: 1, ft: .8, s: 6 },
     ...Array.from({ length: 9 }, (_, i) => { const a = i / 9 * Math.PI * 2, x = Math.cos(a) * 70, y = -70 + Math.sin(a) * 70; return { e: [x, y, 34, 14, a], f: 2, ft: .9, s: 6 }; }), { c: [0, -70, 44], f: 3, ft: .9, s: 9 }, { c: [0, -70, 24], f: 1, ft: .9, s: 0 },
   ], { moods: ['feliz', 'sereno'] });
-  A('roca', 'ROCA', /\b(rocas?|piedras?|pe[nñ]as?|peñasco|boulder|pedregal|cantera|pebbles?)\b/i, [
+  A('roca', 'ROCA', /\b(rocas?|piedras?|peñas?|peñasco|boulder|pedregal|cantera|pebbles?)\b/i, [
     { p: 'M-170 150 L-140 30 L-80 -30 L-20 -60 L50 -40 L110 10 L150 90 L170 150 Z', f: 3, ft: .65, s: 10 }, { p: 'M-80 -30 L-60 40 L-20 -60 M-60 40 L10 80 L50 -40 M10 80 L30 150 M-140 30 L-100 100', s: 5 }, { p: 'M-190 150 H190', s: 8 }, { p: 'M110 100 L150 110 L140 150 H100 Z', f: 1, ft: .6, s: 6 },
   ], { moods: ['sereno', 'oscuro'] });
   A('eclipse', 'ECLIPSE', /\b(eclipses?|eclipse solar|solar eclipse|lunar eclipse|eclipse lunar|corona solar)\b/i, [

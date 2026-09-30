@@ -4,11 +4,7 @@ lyric videos en vivo para lo que suena en tu mac. le das play en apple music o s
 
 página del producto: **https://kisnner26.github.io/lumora**
 
-[![promo de lumora: el coro con la letra cinética y los subtítulos traducidos](docs/img/promo.gif)](https://kisnner26.github.io/lumora/#demo)
-
 **[ver el promo completo (67 s)](https://kisnner26.github.io/lumora/#demo)** · hecho con una grabación real de lumora, con sonido.
-
-![una canción de amor: la pareja, los corazones y la palabra que remata el verso, elegidos por claude](docs/img/estreno.jpg)
 
 ## videoclip en risografía (el lyric video nuevo)
 
@@ -20,6 +16,9 @@ el lyric video ahora es, por defecto, un **videoclip ilustrado en risografía**:
 | ![toma con el fondo en tinta plana y el objeto dentro de un círculo](docs/img/clip-tinta.jpg) | ![toma de escena completa con la letra en una etiqueta de papel](docs/img/clip-escena.jpg) |
 
 - **31 escenas que siguen la letra.** además de las siete de siempre hay 24 más: desierto, playa al atardecer, montaña, tormenta, club de noche, café bajo la lluvia, estación, carretera de noche, vuelo, iglesia, cementerio, concierto, estadio, salón de clases, sala de casa, azotea de noche, feria, fondo del mar, jardín, ring, altar, laboratorio digital, campamento y calle mojada. cada una trae las palabras (en español e inglés) que la piden: si el verso habla de una carretera, un tren, la lluvia o una boda, el videoclip corta a la escena que encaja, y no repite la misma dos veces seguidas.
+- **famosos, oficios y deportes.** cuando un verso nombra a alguien famoso, una profesión o un deporte, la toma muestra algo de eso con la misma animación a mano: 57 objetos en `riso-people.js`. deportes (fútbol, básquet, béisbol, boxeo, carreras, tenis, golf, skate, gimnasio, fútbol americano, surf, trofeo), oficios (médico, maestro, cocinero, policía, bombero, abogado, pintor, astronauta, científico, campo, mecánico, barbero, fotógrafo, micrófono, cine, escritor, soldado) y famosos por su emblema, sin retratarlos: la camiseta con el número de Messi, Cristiano, Jordan o Kobe, el sombrero y el guante de Michael Jackson, el tupé de Elvis, el pelo de Einstein, la peluca del compositor, Frida, Marilyn, Bob Marley, Napoleón, la corona y los flashes de la fama. también marcas y lujo, dibujadas como producto y nunca como logotipo: deportivo (ferrari, lambo, porsche, tesla), reloj (rolex, patek), diamantes, bolso (gucci, prada, louis vuitton, chanel), zapatillas (nike, adidas, jordans), perfume, champán, yate, jet privado, gafas, hamburguesa, soda, café y videojuegos. un verso que los nombra casi siempre gana la toma de objeto; el detector es `RISO.people.detect(texto)`.
+- **modo portada.** en ajustes › imagen › *estilo del video* › **portada**, el video se queda en una sola pantalla fija: la portada del álbum en trama de tinta pegada con cinta, el título y el artista, una ficha con la duración, los versos, las estrofas, la palabra que más se repite y el ánimo, el verso que suena escrito a mano con su traducción y una barra de avance con las estrofas marcadas. al final de cada canción, en lugar de «gracias por escuchar», el cierre muestra esa misma ficha.
+- **capturar un verso para compartir.** durante el lyric video, la tecla `v` (o el botón de comillas junto al de grabar) abre una ventana con la letra de la canción: eliges **uno o varios versos seguidos** (hasta 6, como en spotify y apple music: tocas el de al lado para sumarlo, o el primero o el último para quitarlo; con mayús eliges un tramo), el formato (**9:16 historia**, 4:5 feed, 1:1 o 16:9) y el diseño (objeto, palabra gigante o escena; «otra» rehace la variante) y ves la vista previa en vivo. sale como **foto PNG** o como **video MP4** de unos segundos (el objeto se dibuja solo y el verso se escribe a mano, con la palabra clave subrayada), con la etiqueta de la canción y la marca de lumora, que se pueden apagar. también se puede copiar la imagen o compartirla desde el menú del sistema. no es un recorte del video en vivo: se dibuja aparte, al tamaño exacto (1080×1920 en historias). el video sale sin audio, la canción se agrega al publicar. teclas dentro de la ventana: `↑` `↓` cambian de verso y `mayús` + `↑` `↓` suman o quitan versos, `1`–`4` el formato, `r` otra variante, `enter` guarda la foto, `esc` cierra. en el modo carátula, el botón «póster del verso» abre esta misma ventana con el diseño **carátula** ya elegido: la portada del álbum pegada como foto con cinta, en trama de una tinta, y el verso debajo. está en `riso-share.js`.
 - **retrato «ella» (desactivado).** existe un experimento de retrato a partir de fotos locales en `extras/riso-ella.js`; no se carga. para probarlo, agrega `<script src="extras/riso-ella.js"></script>` en `index.html` después de `riso-scenes3.js` y pon las fotos en `personal/` (carpeta ignorada por git).
 - **tomas por verso.** el motor lee lo que dice cada verso y lo que decidió el director (objetos, ánimo, energía, escenario) y arma la toma: un **objeto** que se dibuja solo (sol, flor, corazón, luna, lluvia, fuego, ciudad, teléfono, reloj, calavera, ojo… 30 objetos con trazo tembloroso y doble pasada, que «hierve» ocho veces por segundo como una animación a mano), una **escena completa** (oficina, cuarto, ciudad, espacio, bosque, retrato, museo) con paneos y zoom, una **palabra gigante** en los ganchos y una **portada** al inicio y al cierre con el título y el artista.
 - **la letra se escribe a mano**, palabra por palabra al compás del verso, con la palabra clave en la segunda tinta y subrayada con un garabato; la traducción va debajo.
@@ -119,33 +118,13 @@ para agregar uno: escribe `add(id, categoría, etiqueta, /palabras/i, [figuras],
 
 ## capturas reales
 
-| | |
-|---|---|
-| ![palabra gigante en el gancho del verso](docs/img/palabra-gigante.jpg) | ![composición tipográfica con la palabra que se repite](docs/img/composicion.jpg) |
-| ![la pareja en el estadio, en el verso donde le pide que no se vaya](docs/img/estadio.jpg) | ![subtítulos traducidos con la palabra clave resaltada](docs/img/subtitulos.jpg) |
-
 todas salen de la app corriendo con canciones reales, sin retoques.
 
 ## la interfaz
 
-![bienvenida con una canción sonando: el título se vuelve el titular y la carátula va en la barra](docs/img/sonando.jpg)
-
 la bienvenida se escribe con luz: mientras espera muestra frases que se encienden letra por letra; cuando suena algo, el título de la canción pasa a ser el titular. el estado del sistema (música, claude, luces) cabe en una línea, y lo secundario vive en paneles laterales.
 
-![panel de cómo funciona abierto sobre la bienvenida](docs/img/como-funciona.jpg)
-
-<img src="docs/img/ajustes.jpg" alt="ajustes: canales numerados, teclas con led, faders y selectores" width="49%"> <img src="docs/img/color.jpg" alt="ajustes de color con muestras reales de cada paleta" width="49%">
-
-![consola de reproducción: carátula, escena actual, origen del guion, controles, herramientas y barra con las estrofas marcadas](docs/img/reproductor.jpg)
-
 la consola de reproducción aparece centrada abajo al mover el mouse: la escena que suena y de dónde sale el guion, los controles, herramientas (traducción, letra, modo autor, luces, grabar en 16:9 o 9:16, carátula, pantalla completa, ajustes, inicio) y una barra con cada estrofa marcada.
-
-![modo carátula: la portada de protagonista con la barra flotante, el corazón de me gusta y las opciones](docs/img/caratula.jpg)
-
-| | |
-|---|---|
-| ![modo carátula con el menú de opciones](docs/img/caratula-menu.jpg) | ![en el drop la portada se parte en pedazos](docs/img/caratula-drop.jpg) |
-| ![cd tornasol detrás de la portada](docs/img/caratula-cd.jpg) | ![cassette detrás de la portada](docs/img/caratula-cassette.jpg) |
 
 el modo carátula pone la portada de protagonista: siete fondos (difuminado, ambiente con los colores de la portada, escena con el video corriendo detrás, mínimo, y la portada con un vinilo, un cassette o un cd que asoman y giran), la letra en una línea o completa al lado (avanza sola y un clic salta a ese verso), tamaño de portada, latido y reloj. la portada sigue la canción: brilla en el coro, se apaga en lo triste y se parte en el drop. con apple music muestra qué canción sigue en los últimos segundos, y un corazón marca la canción como favorita (en spotify usa su atajo de teclado). los controles van en una barra flotante que se oculta sola; las opciones, en un menú que sale de ella. se abre con la tecla `c`.
 
@@ -157,11 +136,7 @@ las figuras de cada artista se ven igual en todas sus canciones: mismo color de 
 
 ## modo autor
 
-![modo autor: vista previa en vivo, línea de tiempo con estrofas y versos, e inspector](docs/img/modo-autor.jpg)
-
 un editor para armar el video de cualquier canción a mano y al detalle. el video corre en vivo mientras editas: abajo una línea de tiempo con cada estrofa y cada verso; a la derecha un inspector para elegir, por estrofa, escenario, escenario secundario, objetos, ambiente, energía, ánimo, color, hora y transición, y por verso, la palabra clave (se elige tocándola), si va en gigante, sus objetos y una persona famosa. se parte del guion de claude o de cero, con deshacer ilimitado; se guarda solo y la próxima vez que suene esa canción manda tu versión. taxi cab de twenty one pilots queda como ejemplo de lo que se puede lograr a mano. se abre con la tecla `e`.
-
-![modo autor: inspector del verso con la palabra clave elegida](docs/img/modo-autor-verso.jpg)
 
 ## qué hace
 
@@ -188,7 +163,6 @@ un editor para armar el video de cualquier canción a mano y al detalle. el vide
 - grabar clips en mp4 de la duración que quieras, en horizontal 16:9 o vertical 9:16
 - modo grabación para obs (30 fps estables)
 - ajustes para todo lo de arriba, calidad automática según tu mac
-
 
 ## cómo funciona
 

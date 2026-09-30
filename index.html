@@ -319,6 +319,8 @@
     body #hud .hudctl button:not(.big):not([data-c=prev]):not([data-c=next]) { display:none; }
   }
 </style>
+<style>html:not(.riso-ui) #panel { visibility:hidden; }</style>
+<script>setTimeout(function () { document.documentElement.classList.add('riso-ui'); }, 3000);</script>
 </head>
 <body>
 <canvas id="c"></canvas>
@@ -2029,10 +2031,13 @@ requestAnimationFrame(frame);
 <script src="riso-props-famosos.js"></script>
 <script src="riso-props-oficios.js"></script>
 <script src="riso-props-vida.js"></script>
+<script src="riso-people.js"></script>
 <script src="riso-fx.js"></script>
+<script src="riso-cantantes.js"></script>
 <script src="riso-clip.js"></script>
 <script src="riso-poster.js"></script>
 <script src="riso-mix.js"></script>
+<script src="riso-compartir.js"></script>
 <script src="riso-share.js"></script>
 <script src="riso-explorar.js"></script>
 <script src="riso-ajustes.js"></script>

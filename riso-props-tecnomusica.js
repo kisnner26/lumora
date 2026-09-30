@@ -84,7 +84,7 @@
     { p: L.rr(-150, -60, 200, 130, 14), f: 3, ft: .7, s: 10 }, { p: 'M50 -20 L150 -70 V80 L50 30 Z', f: 1, ft: .85, s: 9 }, { c: [-100, -100, 40], f: -1, s: 8 }, { c: [-40, -100, 40], f: -1, s: 8 }, { c: [-100, -100, 12], f: 3, s: 4, m: 'spin', a: 2, o: [-100, -100] }, { c: [-40, -100, 12], f: 3, s: 4, m: 'spin', a: 2, o: [-40, -100] },
     { c: [-110, -20, 10], f: 2, ft: .95, s: 4, m: 'blink', v: 1 }, { p: 'M-110 120 H100 M-40 70 V120', s: 6 },
   ], { moods: ['nostalgico', 'euforico'] });
-  T('redes_like', 'REDES SOCIALES', /\b(redes sociales|social media|instagram|tiktok|twitter|facebook|snapchat|followers|seguidores|likes?|viral|influencer|hashtag|trending|selfies?)\b/i, [
+  T('redes_like', 'REDES SOCIALES', /\b(redes sociales|social media|instagram|tiktok|twitter|facebook|snapchat|followers|seguidores|viral|influencer|hashtag|trending|selfies?)\b/i, [
     { p: L.rr(-90, -150, 180, 300, 26), f: 3, ft: .45, s: 10 }, { p: L.rect(-72, -110, 144, 180), f: -1, s: 5 }, { c: [-50, -130, 8], f: 1, s: 0 }, { p: L.heart(0, -20, 4), f: 2, ft: .95, s: 7, m: 'pulse', a: .2, o: [0, -20], v: 2 }, { p: 'M-72 90 H72 M-72 115 H30', s: 4 },
     { p: L.heart(120, -70, 1.6), f: 2, ft: .9, s: 3, m: 'fall', a: -60 }, { p: L.heart(-125, -30, 1.3), f: 2, ft: .9, s: 3, m: 'fall', a: -70, ph: .5 },
   ], { moods: ['euforico'] });

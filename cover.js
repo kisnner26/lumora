@@ -476,7 +476,7 @@ const cvSeg = k => `<div class="cv-seg">${CV_OPTS[k].map(([v, t]) => `<button da
     if (b.id === 'cvDepth') { CV.depth = !CV.depth; cvSave(); if (!CV.depth) resetTilt(); return cvPaint(); }
     if (b.id === 'cvTrataBtn') { CV.trata = !CV.trata; cvSave(); return cvPaint(); }
     if (b.id === 'cvLike') return cvLike();
-    if (b.id === 'cvPoster') return cvMakePoster();
+    if (b.id === 'cvPoster') { if (window.RISOCLIP?.share && hasLyrNow()) { $('cover').classList.remove('menu'); $('cvMenuBtn').classList.remove('on'); return RISOCLIP.share.open({ design: 'cover' }); } return cvMakePoster(); }
     if (b.id === 'cvPosterAgain') { CVP.seed++; return cvPosterRender(); }
     if (b.id === 'cvPosterSave') return cvPosterSave();
     if (b.id === 'cvPosterClose') return cvPosterClose();
@@ -596,6 +596,7 @@ function cvBuildGallery() {
   }).join('');
   for (const i of document.querySelectorAll('.cv-shelf img, .cv-drift img')) i.onerror = () => cvHistDrop(i.getAttribute('src'));
 }
+const hasLyrNow = () => mode === 'proc' && IN.lines.some(l => l.text);
 // póster del verso: una imagen descargable con la línea actual
 function cvLines(ctx, text, maxW) {
   const lines = []; let cur = '';
@@ -784,7 +785,8 @@ function cvBuildList() {
       }
     }
     if (mode === 'proc') {
-      const i = IN.shown, main = i >= 0 ? IN.lines[i]?.text || '' : '', tr = i >= 0 ? IN.tr?.[i] || '' : '';
+      // con el videoclip de risografía el lyric video clásico no corre y IN.shown no se actualiza: el verso se saca del tiempo de la canción
+      const i = window.RISOCLIP?.on && RISOCLIP.h ? RISOCLIP.h.lineIdx(RISOCLIP.h.timeNow()) : IN.shown, main = i >= 0 ? IN.lines[i]?.text || '' : '', tr = i >= 0 ? IN.tr?.[i] || '' : '';
       const a = IN.trMode === 'es' && tr ? tr : main, b = IN.trMode === 'ambas' ? tr : '';
       if ($('cvLine').textContent !== a) { $('cvLine').textContent = a; $('cvTr').textContent = b; }
       if (CV.lyr === 'completa') {

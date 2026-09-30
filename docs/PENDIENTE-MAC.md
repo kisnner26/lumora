@@ -3,7 +3,7 @@
 cosas que aquí no se pueden verificar. cada una se construyó según la especificación y se probó con simulación.
 
 ## integración de la rama con lo que solo existe en el mac
-1. la rama publicada no traía `riso-people.js`, `riso-share.js` ni el modo portada. si en tu mac existen, al traer `feature/catalogo-pro`: `git fetch origin && git checkout feature/catalogo-pro`, luego copia tus archivos locales encima y revisa que `index.html` cargue `riso-catalog.js` antes de `riso-people.js`.
+1. ~~la rama publicada no traía `riso-people.js`, `riso-share.js` ni el modo portada~~ **resuelto en `feature/integracion`**: se fusionó `feature/menu-escenas`. el `riso-share.js` del agente (colección, dedicatoria, enlace) pasó a llamarse `riso-compartir.js`; `riso-share.js` es la captura de versos. ver docs/DECISIONES.md.
 2. abre la app, deja sonar una canción y comprueba en la consola: `RISO.people.RX.length`, `Object.keys(RISO.props.DEFS).length`.
 
 ## fase 3 · la mezcla con una canción real
@@ -40,3 +40,7 @@ no sé si Música y Spotify informan de la canción nueva al empezar o al termin
 ## fase 8 (ajustes)
 - probar «alto contraste» y «reducir movimiento» con el clip sonando en el Mac y revisar que ningún texto quede ilegible; y la vista previa a 60 fps mientras suena música (usa un segundo Stage).
 - en el Mac también: confirmar que los ajustes de «looks» se ven bien con tu paleta y tus luces Govee.
+
+## artistas cantando con micrófono
+- verificado con el puente simulado (tools/test_cantantes.mjs: créditos, solo, trío, turnos, apagado; capturas revisadas). Falta verlo con tus canciones reales: que los nombres de artista de Música/Spotify (p. ej. «Bad Bunny, Jhay Cortez») se separen bien y que la figura y las medallas se vean bien mezcladas con la letra. Se apaga en ajustes > contenido > «Artistas cantando».
+- el turno del micrófono va por orden de versos, no por detección de voz.
