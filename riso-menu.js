@@ -156,6 +156,8 @@
     } else if (!want && P.on) { P.on = false; }
   }
   setInterval(syncPanel, 300);
+  // al volver al panel (esc, o cuando para la música) la escena viva entra de inmediato, sin esperar al intervalo
+  if (typeof openPanel === 'function') { const _op = openPanel; openPanel = function () { _op.apply(this, arguments); syncPanel(); document.documentElement.classList.add('riso-ui'); }; }
 
   // ---------- tintas de la escena => colores del menú ----------
   function paintInks(root) {
@@ -201,7 +203,7 @@
   function open(id) {
     home.classList.add('leave');
     setTimeout(() => {
-      if (id === 'lyric') { hideHome(); if (window.ext && ext.has && ext.has() && $('proc')) $('proc').click(); }
+      if (id === 'lyric') { if (window.ext && ext.has && ext.has() && $('proc')) $('proc').click(); hideHome(); }      // primero arranca el video: así el panel de atrás ya está oculto cuando cae el menú
       else if (id === 'cover') {
         if (typeof toggleCover === 'function' && window.ext && ext.artUrl) { hideHome(); toggleCover(true); }
         else { home.classList.remove('leave'); toast('el modo carátula necesita una canción sonando en Música o Spotify'); }
@@ -340,6 +342,8 @@
   window.HOME = { show: showHome, hide: hideHome, open, get on() { return H.on; } };
   window.FX = { open: id => { if (id && R.scenes[id]) F.scene = id; hideHome(); showFx(); }, close: () => hideFx(), get on() { return F.on; } };
 
+  // desde aquí el panel antiguo ya puede mostrarse: siempre con la escena viva detrás
+  if (q.get('menu') === '0') { document.documentElement.classList.add('riso-ui'); syncPanel(); } else setTimeout(() => document.documentElement.classList.add('riso-ui'), 400);
   // arranque: el menú es la puerta de entrada (?menu=0 lo salta)
   if (q.get('menu') === '0') { /* directo a la bienvenida de siempre */ }
   else if (q.get('fx')) { F.scene = R.scenes[q.get('fx')] ? q.get('fx') : F.scene; showFx(); }

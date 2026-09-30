@@ -50,17 +50,19 @@
     for (const [id, rx] of Object.entries(R.SCENE_RX || {})) { if (!R.scenes[id]) continue; if (id === 'ella' && !['romantico', 'feliz', 'euforico', 'sereno', 'nostalgico'].includes(mood)) continue; const g = new RegExp(rx.source, 'gi'); const n = (text.match(g) || []).length * 2 + (block ? Math.min(2, (block.match(g) || []).length) * .5 : 0); if (n > bs) { bs = n; best = id; } }
     return bs >= 1.5 || (bs >= 1 && !text) ? best : null;
   }
-  function makeShot(li, sec, time, why) {
-    const plan = SEM.plans[sec] || null, text = li >= 0 ? IN.lines[li].text : '', L = text ? storyOf(text) : null, seed = hash(ext.key() + '|' + li + '|' + sec + '|' + Math.floor(time / 4));
+  function makeShot(li, sec, time, why, force) {
+    const plan = SEM.plans[sec] || null, text = li >= 0 ? IN.lines[li].text : '', L = text ? storyOf(text) : null, seed = hash(ext.key() + '|' + li + '|' + sec + '|' + Math.floor(time / 4) + (RC.salt || ''));
     const r = rngS(seed), mood = plan?.mood || 'sereno', energy = plan?.energy ?? 5, inkList = MOOD_INKS[mood] || [0, 1, 2];
     const shot = { kind: 'prop', li, sec, t0: timeNow(), k0: st.t, seed, plan, mood, energy, inks: inkList[(sec + (plan?.color === 'oscuro' ? 1 : 0)) % inkList.length], bg: 'paper', layout: 0, why };
     const own = typeof LEX !== 'undefined' && text ? LEX.filter(([, re]) => re.test(text)).map(q => q[0]) : [];
-    const objs = [...new Set([...own, ...(L?.objects || []), ...(plan?.objects || [])])].map(id => PROP_OF[id] || id).filter(hasProp);
+    const famous = R.people && text ? R.people.detect(text) : [];      // personas famosas, oficios y deportes que nombra el verso
+    const objs = [...new Set([...famous, ...own, ...(L?.objects || []), ...(plan?.objects || [])])].map(id => PROP_OF[id] || id).filter(hasProp);
     const prev = RC.kindHist.slice(-2), blockTxt = IN.lines.filter(l => l.text && l.t >= (IN.cuts[sec] ?? 0) && l.t < (IN.cuts[sec + 1] ?? 1e9)).map(l => l.text).join(' ');
     const byWords = sceneByWords(text, blockTxt, mood), recent = RC.recentScenes || (RC.recentScenes = []);
     let kind;
     if (why === 'title') kind = 'title'; else if (why === 'outro') kind = 'outro';
     else if (li < 0) kind = objs.length && r() < .5 ? 'prop' : 'scene';
+    else if (famous.length && r() < .92) kind = 'prop';
     else if (L?.big && keyWord(text, L)) kind = 'giant';
     else if (byWords && !recent.slice(-2).includes(byWords) && prev[1] !== 'scene' && r() < .8) kind = 'scene';
     else {
@@ -68,6 +70,7 @@
       if (prev[1] === 'prop') w.prop = .9; if (prev[1] === 'scene') w.scene = .15; if (prev[0] === 'giant') w.prop += .3;
       kind = r() * (w.prop + w.scene) < w.prop ? 'prop' : 'scene';
     }
+    if (force) kind = force;
     shot.kind = kind; RC.kindHist.push(kind); if (RC.kindHist.length > 6) RC.kindHist.shift();
     shot.cut = energy >= 7 ? ['h', 'spin', 'v'][(r() * 3) | 0] : energy <= 3 ? ['zin', 'zout'][(r() * 2) | 0] : ['h', 'v', 'zin', 'zout'][(r() * 4) | 0];
     if (kind === 'prop') {
@@ -84,11 +87,14 @@
       shot.scene = id; RC.lastScene = id; recent.push(id); if (recent.length > 6) recent.shift(); shot.inks = R.scenes[id].inks;
       if (r() < .45) shot.inks = inkList[(sec + 1) % inkList.length];
     }
-    if (kind === 'giant') { shot.word = keyWord(text, L).toUpperCase(); shot.bg = r() < .5 ? 'burst' : 'flood'; shot.cut = 'zin'; }
+    if (kind === 'giant') { shot.word = (keyWord(text, L) || (text.split(/\s+/).map(w => w.replace(/[^\p{L}\p{N}'’-]/gu, '')).sort((a, b) => b.length - a.length)[0] || '')).toUpperCase(); shot.bg = r() < .5 ? 'burst' : 'flood'; shot.cut = 'zin'; }
     if (kind === 'title' || kind === 'outro') { shot.cut = 'zout'; shot.inks = 0; }
     shot.notes = pickNotes(r, kind);
     return shot;
   }
+  RC.makeShot = makeShot;
+  // toma para una tarjeta de verso: no altera el historial del video en vivo
+  RC.cardShot = (li, sec, time, force) => { const kh = [...RC.kindHist], rs = [...(RC.recentScenes || [])], ls = RC.lastScene; try { return makeShot(li, sec, time, '', force); } finally { RC.kindHist.length = 0; RC.kindHist.push(...kh); RC.recentScenes = rs; RC.lastScene = ls; } };
   function pickNotes(r, kind) {
     const all = ['stat', 'stamp', 'post', 'code', 'circuit', 'meter'], out = new Set(kind === 'giant' ? ['stamp'] : ['stat']);
     while (out.size < (kind === 'scene' ? 2 : 3)) out.add(all[(r() * all.length) | 0]);
@@ -144,13 +150,13 @@
 
   // ---------- fondos de las tomas de objeto ----------
   function drawBg(s, kt) {
-    const c = K.c, cx = 800, cy = 450 + (s.layout === 2 ? -30 : 0), v = K.v;
+    const c = K.c, cx = 800, cy = s.cy ?? 450 + (s.layout === 2 ? -30 : 0), v = K.v;
     if (s.bg === 'flood') { K.bg(3, .85); K.circ(cx + (s.flip ? -300 : 300), cy, 360, { f: -1 }); K.circ(cx + (s.flip ? -300 : 300), cy, 360, { s: 1, lw: 7 }); }
     else if (s.bg === 'panel') { c.save(); c.translate(pcx(s), cy); c.rotate(-.03); K.rect(-290, -300, 580, 600, { f: 3, ft: .3 }); K.rect(-290, -300, 580, 600, { s: 1, lw: 7 }); c.restore(); K.tape(pcx(s) - 200, cy - 300, 130, 40, -.4); K.tape(pcx(s) + 220, cy + 296, 130, 40, -.3); }
     else if (s.bg === 'burst') { const n = 26; for (let i = 0; i < n; i += 2) { const a0 = i / n * TAU + kt * .05, a1 = (i + 1) / n * TAU + kt * .05; K.poly([[pcx(s), cy], [pcx(s) + cos(a0) * 1800, cy + sin(a0) * 1800], [pcx(s) + cos(a1) * 1800, cy + sin(a1) * 1800]], { f: 2, ft: .32 }); } }
     else if (s.bg === 'grid') { for (let y = -600; y < 1500; y += 46) K.line(-1400, y, 3000, y, 3, 2.5, .55); K.line(v.l + 170, -600, v.l + 170, 1500, 2, 3.5, .7); }
   }
-  const pcx = s => s.flip ? 470 : 1130;
+  const pcx = s => s.cx ?? (s.flip ? 470 : 1130);
 
   // ---------- anotaciones (con datos reales) ----------
   function notes(s, time, zone) {
@@ -165,7 +171,7 @@
           R.K.txt(tit, x, y + 100, { size: 34, w: 800, stretch: 'condensed' }); R.K.txt(big, x, y + 174, { size: 84, w: 900, i: 1, tone: .92 });
         } else if (n === 'stamp' && zone !== 'noStamp') K.stamp(v.r - m - 300, v.t + m + 4, 1);
         else if (n === 'post' && plan?.summary) { const w = 250, h = 118; K.postit(zone === 'postL' ? v.l + m + 30 : v.r - m - w - 20, v.b - m - h - 96, w, h, zone === 'postL' ? -.05 : .05, wrapSm(plan.summary, 20), { size: 27, fill: 3, ft: .5, font: 'hand' }); }
-        else if (n === 'code') { K.code(`FIG. ${pad2((s.li < 0 ? sec : s.li) + 1)} / ${(s.props?.[0]?.id || s.scene || s.kind).toUpperCase()}`, v.r - m - 8, v.b - m - 34, { align: 'right', size: 16, bg: true }); K.code(`${fmt(time)} · ${Math.round(a.bpm)} BPM`, v.r - m - 8, v.b - m - 8, { align: 'right', size: 14, bg: true, i: 2 }); }
+        else if (n === 'code') { K.code(`FIG. ${pad2((s.li < 0 ? sec : s.li) + 1)} / ${(R.people?.names[s.props?.[0]?.id] || s.props?.[0]?.id || s.scene || s.kind).toUpperCase()}`, v.r - m - 8, v.b - m - 34, { align: 'right', size: 16, bg: true }); K.code(`${fmt(time)} · ${Math.round(a.bpm)} BPM`, v.r - m - 8, v.b - m - 8, { align: 'right', size: 14, bg: true, i: 2 }); }
         else if (n === 'circuit') K.circuit([[v.r - m - 420, v.t + m + 120], [v.r - m - 330, v.t + m + 120], [v.r - m - 330, v.t + m + 150], [v.r - m - 180, v.t + m + 150], [v.r - m - 180, v.t + m + 128], [v.r - m - 20, v.t + m + 128]], ((K.t - s.k0) * .35) % 1.5, { i: 1, node: 2 });
         else if (n === 'meter') K.meter(v.r - m - 300, v.b - m - 90, 280, .25 + a.e * .7, 'NIVEL', { n: 18 });
       }
@@ -173,6 +179,17 @@
   }
   const wrapSm = (txt, n) => { const w = txt.split(' '), o = []; let c = ''; for (const x of w) { if ((c + ' ' + x).trim().length > n && c) { o.push(c); c = x; } else c = (c + ' ' + x).trim(); } if (c) o.push(c); return o.slice(0, 3); };
 
+  // ---------- datos reales de la canción, para la ficha ----------
+  const MOOD_NAME = { euforico: 'eufórico', feliz: 'feliz', romantico: 'romántico', sereno: 'sereno', nostalgico: 'nostálgico', melancolico: 'melancólico', triste: 'triste', oscuro: 'oscuro', rabioso: 'rabioso', desafiante: 'desafiante' };
+  const STOP = new Set(('de la que el en y a los se del las por un para con no una su al lo como más pero sus le ya o este sí porque esta entre cuando muy sin sobre también me hasta hay donde quien desde todo nos todos uno les ni contra otros ese eso ante ellos esto antes algunos qué unos yo otro otras otra él tanto esa estos mucho nada poco ella estar estas algo nosotros mi mis tú te ti tu tus ellas ' +
+    'the and you your for are was were that this with have has had not but they them their what when who how all any can just like from out its our his her she him get got cause oh yeah ooh uh ah hey woah whoa gonna wanna ain').split(' '));
+  function songFacts() {
+    const key = ext.key() + '|' + IN.lines.length + '|' + (proc.dur || 0); if (RC.facts && RC.facts.key === key) return RC.facts;
+    const count = {}; for (const l of IN.lines) for (const w of (l.text || '').toLowerCase().split(/[^\p{L}']+/u)) if (w.length > 2 && !STOP.has(w)) count[w] = (count[w] || 0) + 1;
+    const top = Object.entries(count).sort((a, b) => b[1] - a[1])[0], moods = {};
+    for (const p of Object.values(SEM.plans || {})) if (p?.mood) moods[p.mood] = (moods[p.mood] || 0) + 1;
+    return RC.facts = { key, word: top && top[1] >= 3 ? top : null, mood: Object.entries(moods).sort((a, b) => b[1] - a[1])[0]?.[0] || '', verses: IN.lines.filter(l => l.text).length, sections: Math.max(1, IN.cuts.length) };
+  }
   // ---------- dibujo de cada toma ----------
   function drawShot(s, time, dt) {
     const v = K.v, m = st.margin, kt = K.t - s.k0, li = s.li, text = s.text?.text || '', age = s.text ? (time + .2 + (IN.off || 0)) - s.text.t : 0, dur = s.text?.dur || 3;
@@ -210,8 +227,8 @@
         if (showText && s.text?.tr) trBox(s.text.tr, cx, v.b - m - 120, v.w * .6, 'center', 34);
       });
       notes(s, time, 'x');
-    } else {                                                        // título y cierre
-      const md = meta(), art = artCanvas(), last = s.kind === 'outro';
+    } else {                                                        // título, cierre y modo portada
+      const md = meta(), art = artCanvas(), last = s.kind === 'outro', poster = RC.poster, F = songFacts(), durS = proc.dur || 0;
       K.rect(-1400, -800, 6000, 3000, { f: 3, ft: .12 });
       const ax = 1010, ay = 200;
       K.c.save(); K.c.translate(ax, ay); K.c.rotate(.05 + sin(kt * .7) * .01); K.rect(14, 14, 500, 500, { f: 1, ft: .3, over: true }); K.rect(-6, -6, 512, 512, { f: -1, s: 1, lw: 8 });
@@ -219,15 +236,30 @@
       else { R.props.drawProp(K, 'stars', 250, 250, .9, easeOut(clamp(kt / 1.4)), { seed: 3 }); }
       K.tape(0, 0, 120, 38, -.7); K.tape(500, 500, 120, 38, -.7); K.c.restore();
       K.screen(() => {
-        const x = v.l + m + 20, w = (v.w - m * 2) * .5, k = easeOut(clamp(kt / .6));
-        K.code(last ? 'FIN · GRACIAS POR ESCUCHAR' : 'AHORA SUENA', x, v.t + m + 120, { size: 20, bg: true });
-        const { size, lines } = fitText(md.title, w, 380, { size: 150, w: 800, font: 'display', stretch: 'condensed' }, 3);
+        const x = v.l + m + 20, w = (v.w - m * 2) * .5, k = easeOut(clamp(kt / .6)), paused = ext.st?.state === 'paused';
+        K.code(last ? 'FICHA DE LA CANCIÓN' : poster && paused ? 'EN PAUSA' : 'AHORA SUENA', x, v.t + m + 120, { size: 20, bg: true });
+        const { size, lines } = fitText(md.title, w, poster ? 210 : 380, { size: poster ? 96 : 150, w: 800, font: 'display', stretch: 'condensed' }, poster ? 2 : 3);       // en modo portada el título se compacta para dejar sitio al verso y a la barra
         lines.forEach((ln, i) => K.txt(ln.join(' '), x + (1 - k) * -60, v.t + m + 210 + size * .9 + i * size * 1.02, { size, w: 800, i: 1, font: 'display' }));
         const ty = v.t + m + 210 + size * .9 + lines.length * size * 1.02 + 30;
-        K.txt(md.artist, x, ty + 10, { font: 'hand', size: 74, w: 600, i: 2 }); if (md.album) K.code(md.album.toUpperCase(), x, ty + 54, { size: 17 });
+        K.txt(md.artist, x, ty + 10, { font: 'hand', size: poster ? 62 : 74, w: 600, i: 2 }); if (md.album) K.code(md.album.toUpperCase(), x, ty + 54, { size: 17 });
+        // la ficha: lo que la canción dijo, no un agradecimiento
+        let fy = ty + 54;
+        if (F.verses) {
+          const r1 = [durS ? 'DURACIÓN ' + fmt(durS) : '', F.verses + ' VERSOS', F.sections + (F.sections === 1 ? ' ESTROFA' : ' ESTROFAS')].filter(Boolean).join(' · '),
+            r2 = [F.word ? 'MÁS DICHA «' + F.word[0].toUpperCase() + '» ×' + F.word[1] : '', F.mood ? 'ÁNIMO ' + (MOOD_NAME[F.mood] || F.mood).toUpperCase() : ''].filter(Boolean).join(' · ');
+          fy += 30; K.code(r1, x, fy, { size: 16 }); if (r2) { fy += 26; K.code(r2, x, fy, { size: 16, i: 2 }); }
+        }
         if (IN.preparing) K.postit(x, ty + 90, 330, 96, -.03, ['preparando el', 'videoclip…'], { size: 30, fill: 3, ft: .5 });
+        if (poster) {                                                  // modo portada: el verso que suena y el avance, sin salir de esta pantalla
+          const yb = v.b - m - 70, pw = w * 1.02, yv = Math.max(fy + 34, v.t + v.h * .6), hv = yb - 50 - yv;
+          if (showText && hv > 70) { const u = writeLine(text, x, yv, pw, hv - (s.text?.tr ? 70 : 0), age, dur, { size: 60, font: 'hand' }); if (s.text?.tr) trBox(s.text.tr, x, Math.min(yv + u.h + 10, yb - 100), pw, 'left', 26); }
+          const pos = timeNow(), p = durS ? clamp(pos / durS) : 0;
+          K.code(fmt(pos), x, yb - 10, { size: 15 }); K.code(fmt(durS), x + pw, yb - 10, { size: 15, align: 'right' });
+          K.rect(x, yb, pw, 22, { f: -1, s: 1, lw: 3.5 }); K.rect(x + 4, yb + 4, Math.max(0, (pw - 8) * p), 14, { f: 2, ft: .9 });
+          for (const cut of IN.cuts.slice(1)) if (durS) K.line(x + pw * cut / durS, yb - 4, x + pw * cut / durS, yb + 26, 3, 1, 1);
+        }
       });
-      notes({ ...s, notes: s.notes.filter(n => n !== 'stat') }, time, 'postL');
+      notes({ ...s, notes: s.notes.filter(n => n !== 'stat') }, time, poster ? 'noStamp' : 'postL');
     }
   }
 
@@ -260,8 +292,13 @@
     if (RC.lastKey !== key) { RC.lastKey = key; RC.recentScenes = []; RC.shot = null; RC.pending = null; RC.kindHist.length = 0; RC.sceneState = {}; RC.lastScene = ''; RC.count = 0; }
     if (st.sceneId !== 'clip') st.setScene('clip', { instant: true });
     const cur = RC.shot, dur = proc.dur || 0, lyricT0 = IN.lines.find(l => l.text)?.t ?? 99;
+    const poster = RC.poster = !!window.CFG && CFG.clip === 'portada';           // modo portada: la pantalla de título se queda fija
     let why = '';
+    // una toma de cambio que quedó sin terminar (el escenario cambió de escena a mitad) no puede bloquear las siguientes
+    if (RC.pending && !st.cut) { RC.shot = RC.pending; RC.pending = null; }
     if (!cur) why = 'title';
+    else if (poster) { if (cur.kind !== 'title' && !st.cut && !RC.pending) why = 'title'; }
+    else if (!st.cut && !RC.pending && ((cur.kind === 'outro' && dur && time < dur - 7) || time < cur.t0 - 2)) why = time < 4 ? 'title' : 'seek';   // la canción se reinició o retrocedió: el cierre no se queda
     else if (!st.cut && !RC.pending) {
       const age = time - cur.t0;
       if (dur && time > dur - 6 && cur.kind !== 'outro') why = 'outro';
@@ -274,6 +311,7 @@
     }
     if (why) {
       const next = makeShot(li, sec, time, why === 'title' || why === 'outro' ? why : '');
+      if (poster && next.kind === 'title') next.notes = ['code', 'circuit'];
       if (!cur) { RC.shot = next; RC.count = 1; }
       else { RC.pending = next; st.cutTo(() => { RC.shot = next; RC.pending = null; RC.count++; }, next.cut); }
     }
@@ -284,9 +322,17 @@
     x.drawImage(st.canvas, 0, 0, W, H);
   }
   RC.frame = frame;
+  RC.h = { artCanvas, wrap, writeLine, drawBg, fitText, trBox, scribble, keyWord, storyOf, meta, fmt, hash, secOf, lineIdx, timeNow, pad2 };
 
   // ---------- conexión con el video de siempre ----------
   const enabled = () => !window.CFG || CFG.clip !== 'clasico';
+  // el título clásico y el fondo viejo no llegan a pintarse: el videoclip se enciende en el mismo instante que arranca el video
+  const _tc = titleCard;
+  titleCard = function (title, artist) {
+    if (!(mode === 'proc' && enabled() && st.ok)) return _tc(title, artist);
+    lyr.innerHTML = ''; document.body.classList.add('riso-clip');
+    try { x.fillStyle = '#f4ead4'; x.fillRect(0, 0, W, H); } catch (e) {}
+  };
   const _pf = procFrame;
   procFrame = function (t, dt) {
     const on = mode === 'proc' && enabled() && st.ok;
