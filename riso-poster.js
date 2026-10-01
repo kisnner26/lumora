@@ -183,7 +183,7 @@
   const esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const topWords = (lines, n) => { const cnt = {}; for (const l of lines || []) for (const w of (norm(l).match(/[a-zñ']{4,}/g) || [])) if (!STOP.has(w.replace(/'/g, ''))) cnt[w] = (cnt[w] || 0) + 1; return Object.entries(cnt).sort((a, b) => b[1] - a[1] || b[0].length - a[0].length).slice(0, n).map(q => q[0]); };
   const OPT = { layout: [['clasico', 'clásico'], ['cartel', 'cartel'], ['palabra', 'palabra']], cover: [['s', 'chica'], ['m', 'media'], ['l', 'grande']], frame: [['doble', 'doble'], ['simple', 'simple'], ['ninguno', 'sin borde']], paper: [['crema', 'crema'], ['blanco', 'blanco'], ['kraft', 'kraft'], ['periodico', 'periódico']] };
-  const SHOW = [['shots', 'tomas'], ['word', 'palabra'], ['facts', 'datos'], ['date', 'sello y fecha'], ['foot', 'pie']];
+  const SHOW = [['shots', 'las 4 escenas'], ['word', 'palabra'], ['facts', 'datos'], ['date', 'sello y fecha'], ['foot', 'pie']];
   const css = document.createElement('style'); css.textContent = `
     #posterToast { position:fixed; right:20px; bottom:20px; z-index:9; max-width:min(420px,calc(100vw - 40px)); padding:12px 14px; background:var(--rkp,#f7edd8); color:var(--rk1,#212b80); border:3px solid var(--rk1,#212b80); box-shadow:6px 6px 0 -1px var(--rk1,#212b80);
       font:600 13px 'Martian Mono',monospace; letter-spacing:.06em; text-transform:uppercase; opacity:0; transform:translateY(12px); transition:opacity .4s, transform .4s; pointer-events:none; }

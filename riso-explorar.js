@@ -52,6 +52,8 @@
   async function load() {
     const [songs, letras, cri] = await Promise.all([ST.list('historial'), ST.list('letras'), ST.get('criatura', 'estado')]);
     const byKey = {}; for (const s of songs) byKey[s.id] = s;
+    // la canción en curso todavía no se guardó (se guarda al terminar o cambiar): se cuenta en vivo
+    try { const r = window.RISOSTORE && RISOSTORE.actual; if (r && typeof IN !== 'undefined' && IN.synced && !letras.some(l => l.id === r.key)) { const ls = (IN.lines || []).filter(l => l.text).map(l => [l.t, l.text]); if (ls.length) letras.push({ id: r.key, name: r.name, artist: r.artist, lineas: ls }); } } catch (e) {}
     // ciudades nombradas
     const hits = {}; for (const row of letras) { const seen = new Set(); for (const [, tx] of row.lineas || []) { const t = norm(tx); for (const c of CITIES) if (c.rx.test(t)) { (hits[c.id] = hits[c.id] || { n: 0, songs: new Map() }).n++; seen.add(c.id); hits[c.id].songs.set(row.id, { name: row.name, artist: row.artist, line: tx }); } } }
     const artists = new Set(songs.map(s => s.artist).filter(Boolean));
