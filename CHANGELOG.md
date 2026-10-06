@@ -2,6 +2,7 @@
 
 ## sin publicar
 
+- la criatura muestra cuántas escuchas faltan para el siguiente nivel, tus 3 artistas y canciones más escuchados, qué significa su estado y permite guardar su imagen en PNG.
 - opción en el menú de la barra para abrir lumora al iniciar sesión.
 - pruebas del puente (`python3 -m unittest discover -s tests`) y su paso en la integración continua.
 - letras propias: un `.lrc` o `.txt` en `~/Library/Application Support/Lumora/letras/` tiene prioridad sobre lrclib.
