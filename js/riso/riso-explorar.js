@@ -140,9 +140,16 @@
     const cnt = (f) => { const c = {}; for (const s of d.songs) { const k = f(s); if (k) c[k] = (c[k] || 0) + (s.veces || 1); } return Object.entries(c).sort((a, b) => b[1] - a[1]); };
     const moods = cnt(s => s.mood), gens = cnt(s => s.genre), last = d.songs.reduce((a, s) => Math.max(a, s.ultima || 0), 0), days = last ? Math.floor((Date.now() - last) / 864e5) : 999;
     const level = Math.min(12, Math.floor(Math.sqrt(d.total))), name = d.cri.nombre || autoName(d);
-    return { moods, gens, artists: d.artists, songs: d.songs.length, total: d.total, level, name, days, top: moods[0]?.[0] || '', genre: gens[0]?.[0] || '', state: !d.total ? 'huevo' : days > 10 ? 'dormido' : days > 3 ? 'hambriento' : 'contento' };
+    const desde = level * level, hasta = (level + 1) * (level + 1), falta = level >= 12 ? 0 : hasta - d.total, avance = level >= 12 ? 1 : (d.total - desde) / (hasta - desde);
+    return { moods, gens, artists: d.artists, songs: d.songs.length, total: d.total, level, falta, avance, topArtistas: cnt(s => s.artist).slice(0, 3), topCanciones: [...d.songs].sort((a, b) => (b.veces || 1) - (a.veces || 1)).slice(0, 3), name, days, top: moods[0]?.[0] || '', genre: gens[0]?.[0] || '', state: !d.total ? 'huevo' : days > 10 ? 'dormido' : days > 3 ? 'hambriento' : 'contento' };
   }
   EXP.stats = stats;
+  // qué significa el estado de la criatura y qué hacer para cambiarlo
+  const consejo = st => st.state === 'huevo' ? 'ponle música: nace con tu primera canción.'
+    : st.state === 'dormido' ? `lleva ${st.days} días sin música y se quedó dormida. pon cualquier canción y despierta.`
+    : st.state === 'hambriento' ? `hace ${st.days} días que no escuchas nada: tiene hambre. con una canción hoy se pone contenta.`
+    : 'está contenta: escuchaste música en los últimos 3 días.';
+  EXP.consejo = consejo;
   function drawCreature(K, job) {
     const s = job.st, t = job.t || 0, rr = R.rng(hash(s.name + s.genre)), cx = 800, base = 640, L = s.level;
     K.bg(3, .07); K.circ(cx, 470, 400, { f: -1 }); K.circ(cx, 470, 400, { s: 1, lw: 5 });
@@ -194,6 +201,8 @@
     #expWin .ex-tip { position:absolute; z-index:4; pointer-events:none; padding:6px 10px; border:3px solid var(--rk1,#212b80); background:var(--rkl,#faf3e4); box-shadow:4px 4px 0 -1px var(--rk1,#212b80); font:600 12px 'Martian Mono',monospace; letter-spacing:.04em; opacity:0; transition:opacity .12s; max-width:280px; }
     #expWin .ex-tip.on { opacity:1; } #expWin .ex-tip b { display:block; font:800 18px/1.05 'Anybody',sans-serif; font-stretch:75%; text-transform:uppercase; }
     #expWin .ex-side { position:absolute; right:14px; top:14px; bottom:14px; width:min(330px,82vw); padding:14px; overflow:auto; background:var(--rkp,#f4ead4); border:4px solid var(--rk1,#212b80); box-shadow:8px 8px 0 -1px var(--rk1,#212b80); z-index:2; transition:transform .25s; font:500 12px 'Martian Mono',monospace; text-transform:uppercase; letter-spacing:.05em; }
+    #expWin .ex-prog { height:12px; margin:2px 0 6px; border:3px solid var(--rk1,#212b80); background:var(--rkl,#faf3e4); } #expWin .ex-prog i { display:block; height:100%; background:var(--rk2,#f97a2a); transition:width .4s; }
+    #expWin .ex-side h4 { margin:10px 0 2px; font:800 15px 'Anybody',sans-serif; font-stretch:80%; text-transform:uppercase; } #expWin .ex-top { margin:0 0 4px; padding-left:20px; font:500 13px 'Martian Mono',monospace; } #expWin .ex-side .ex-top li { margin:0; padding:1px 0; border:0; background:none; box-shadow:none; cursor:default; } #expWin .ex-top span { opacity:.6; }
     #expWin .ex-side.off { transform:translateX(calc(100% + 40px)); } #expWin .ex-side h3 { margin:0 0 8px; font:800 26px/1 'Anybody',sans-serif; font-stretch:70%; } #expWin .ex-side p { text-transform:none; letter-spacing:0; font-size:12px; line-height:1.4; margin:0 0 8px; } #expWin .ex-side ul { margin:0; padding:0; }
     #expWin .ex-side li { list-style:none; margin:0 0 7px; padding:6px 8px; border:2px solid var(--rk1,#212b80); background:var(--rkl,#faf3e4); cursor:pointer; text-transform:none; letter-spacing:0; font-size:12px; } #expWin .ex-side li:hover, #expWin .ex-side li.on { background:var(--rk2,#f97a2a); color:#fff; } #expWin .ex-side li b { text-transform:uppercase; letter-spacing:.04em; }
     #expWin .ex-side input { width:100%; padding:8px; border:3px solid var(--rk1,#212b80); background:#fff; color:var(--rk1,#212b80); font:600 20px 'Caveat',cursive; margin-bottom:10px; }
@@ -256,8 +265,10 @@
         (sel ? `<h3 style="margin-top:14px">${MOODS[sel.m]}</h3><ul>${[...sel.g].sort((a, b) => (b.veces || 1) - (a.veces || 1)).map(s => `<li data-s="${esc(s.id)}"><b>${esc(s.name)}</b><br>${esc(s.artist)} · ${s.veces || 1}×</li>`).join('')}</ul>` : '');
     }
     if (tab === 'criatura' && EXP.st) { const st = EXP.st, dias = st.days > 900 ? 'nunca' : st.days === 0 ? 'hoy' : st.days === 1 ? 'ayer' : 'hace ' + st.days + ' días';
-      return `<h3>tu criatura</h3><input id="exName" maxlength="14" value="${esc(st.name)}" aria-label="nombre de la criatura" spellcheck="false"><p>nivel <b>${st.level}</b> de 12 · ${st.state}</p><p>${st.total} escuchas · ${st.songs} canciones · ${st.artists} artistas</p><p>ánimo dominante: ${esc(MOODS[st.top] || '—')}<br>género dominante: ${esc(st.genre || '—')}<br>última música: ${dias}</p>
-        <p>crece con lo que escuchas: más nivel, más grande; antenas al 3, corona al 10. sus manchas son tus artistas, sus orejas tu género, sus colores tu ánimo.</p><button data-a="pet">acariciar</button>`; }
+      return `<h3>tu criatura</h3><input id="exName" maxlength="14" value="${esc(st.name)}" aria-label="nombre de la criatura" spellcheck="false"><p>nivel <b>${st.level}</b> de 12 · ${st.state}</p>${st.level >= 12 ? '<p>nivel máximo alcanzado</p>' : `<div class="ex-prog" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(st.avance * 100)}"><i style="width:${Math.round(st.avance * 100)}%"></i></div><p>faltan <b>${st.falta}</b> ${st.falta === 1 ? 'escucha' : 'escuchas'} para el nivel ${st.level + 1}</p>`}<p>${st.total} escuchas · ${st.songs} canciones · ${st.artists} artistas</p><p>ánimo dominante: ${esc(MOODS[st.top] || '—')}<br>género dominante: ${esc(st.genre || '—')}<br>última música: ${dias}</p>
+        ${st.topArtistas.length ? `<h4>tus artistas</h4><ol class="ex-top">${st.topArtistas.map(([a, n]) => `<li>${esc(a)} <span>${n}×</span></li>`).join('')}</ol><h4>tus canciones</h4><ol class="ex-top">${st.topCanciones.map(c => `<li>${esc(c.name)} <span>${c.veces || 1}×</span></li>`).join('')}</ol>` : ''}
+        <p class="ex-consejo"><b>${esc(consejo(st))}</b></p>
+        <p>crece con lo que escuchas: más nivel, más grande; antenas al 3, corona al 10. sus manchas son tus artistas, sus orejas tu género, sus colores tu ánimo.</p><button data-a="pet">acariciar</button> <button data-a="guardar">guardar imagen</button>`; }
     return '';
   }
   const renderSide = () => { const sd = $('exSide'); if (sd && EXP.tab !== 'coleccion') { const keep = sd.scrollTop; sd.innerHTML = sideHTML(); sd.scrollTop = keep; } };
@@ -307,6 +318,11 @@
     if (a === 'zout') return zoomAt(avail() / 2, $('exMain').clientHeight / 2, 1 / 1.5);
     if (a === 'zfit') { cancelAnimationFrame(anim); V.k = 1; V.tx = V.ty = 0; return place(); }
     if (a === 'pet') { EXP.pet = 1; return; }
+    if (a === 'guardar') {                                  // la criatura como imagen PNG
+      const cv = $('exStage').querySelector('canvas'); if (!cv) return;
+      cv.toBlob(b => { if (!b) return; const u = URL.createObjectURL(b), l = document.createElement('a'); l.href = u; l.download = 'criatura-' + (EXP.st ? EXP.st.name : 'lumora').toLowerCase() + '.png'; document.body.append(l); l.click(); l.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000); }, 'image/png');
+      return;
+    }
     if (b?.dataset.sort) { EXP.sort = b.dataset.sort; return collectionView(); }
     if (card && a && EXP.tab === 'coleccion') {
       const id = card.dataset.id, pid = card.dataset.pid;
