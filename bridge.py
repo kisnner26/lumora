@@ -103,8 +103,33 @@ def clean_title(t):
     return t.strip()
 
 
+LETRAS_DIR = os.path.expanduser('~/Library/Application Support/Lumora/letras')
+
+
+def letra_propia(artist, title):
+    """letra del propio usuario: ~/Library/Application Support/Lumora/letras/<artista> - <título>.lrc (o .txt, sin tiempos)"""
+    def limpio(x):
+        return re.sub(r'[\\/:*?"<>|]+', '', x).strip().lower()
+    nombres = {limpio('%s - %s' % (artist, title)), limpio('%s - %s' % (artist.split(',')[0].split('&')[0], clean_title(title)))}
+    try:
+        for f in os.listdir(LETRAS_DIR):
+            base, ext = os.path.splitext(f)
+            if ext.lower() in ('.lrc', '.txt') and limpio(base) in nombres:
+                with open(os.path.join(LETRAS_DIR, f), encoding='utf-8', errors='replace') as fh:
+                    texto = fh.read()
+                if ext.lower() == '.lrc' and re.search(r'\[\d+:\d+', texto):
+                    return {'synced': texto, 'source': 'propia'}
+                return {'plain': texto, 'source': 'propia', 'approx': 'plain'}
+    except OSError:
+        pass
+    return None
+
+
 def fetch_lyrics(artist, title, album, dur):
     key = (artist.lower(), title.lower())
+    propia = letra_propia(artist, title)
+    if propia:                                   # la letra que puso el usuario manda sobre cualquier servicio
+        return propia
     if key in LYR_CACHE:
         return LYR_CACHE[key]
     a = artist.split(',')[0].split('&')[0].strip()
