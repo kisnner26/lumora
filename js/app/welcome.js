@@ -22,6 +22,16 @@ async function welcomeTick() {
   else if (s.state === 'playing') setSt('stMusic', 'ok', (s.src === 'spotify' ? 'Spotify' : 'Música') + ' · sonando');
   else if (s.state === 'paused') setSt('stMusic', 'ok', (s.src === 'spotify' ? 'Spotify' : 'Música') + ' · en pausa');
   else setSt('stMusic', '', 'conectado · esperando una canción');
+  // la carátula de lo que suena, en la barra de abajo
+  const art = $('hudArt'), has = ext.has() && art && art.style.display !== 'none' && art.src;
+  if (has && $('nowArt').src !== art.src) $('nowArt').src = art.src;
+  $('nowDot').classList.toggle('has', !!has);
+  const sleeve = $('wSleeveImg'), url = ext.has() ? ext.artUrl : '';
+  if (url && sleeve.getAttribute('src') !== url) sleeve.src = url;
+  sleeve.hidden = !url; $('wArtEmpty').hidden = !!url;
+  $('wSleeveArtist').textContent = ext.has() ? s.artist || 'artista desconocido' : 'música → imagen';
+  $('wSleeveAlbum').textContent = ext.has() ? s.album || s.name : 'hecho para escuchar con los ojos';
+  kineticWelcome();
   if (WEL.claude === null) {
     WEL.claude = false;
     try { WEL.claude = await fetch('/story').then(r => r.json()); } catch (e) { WEL.claude = { ready: false }; }
@@ -33,11 +43,7 @@ async function welcomeTick() {
   else if (!LT.on) setSt('stLights', '', 'desactivadas');
   else if (LT.devices.length) setSt('stLights', 'ok', LT.devices.length + (LT.devices.length === 1 ? ' luz Govee' : ' luces Govee'));
   else setSt('stLights', '', 'ninguna encontrada');
-  // la carátula de lo que suena, en la barra de abajo
-  const art = $('hudArt'), has = ext.has() && art && art.style.display !== 'none' && art.src;
-  if (has && $('nowArt').src !== art.src) $('nowArt').src = art.src;
-  $('nowDot').classList.toggle('has', !!has);
-  kineticWelcome();
+
 }
 setInterval(welcomeTick, 1200); setTimeout(welcomeTick, 200);
 
@@ -45,8 +51,8 @@ setInterval(welcomeTick, 1200); setTimeout(welcomeTick, 200);
 const TAGS_W = [
   [['cada verso', 'tiene su escena'], 'escena'],
   [['la letra', 'se vuelve luz'], 'luz'],
-  [['tu canción,', 'su video oficial'], 'oficial'],
-  [['Claude la lee', 'antes de filmarla'], 'filmarla'],
+  [['tu canción,', 'un mundo propio'], 'propio'],
+  [['tinta y música', 'en la misma página'], 'página'],
   [['cada play', 'es un estreno'], 'estreno'],
 ];
 function cleanTitle(t) { return (t || '').replace(/\s*[\(\[].*?[\)\]]\s*/g, ' ').replace(/\s+-\s+.*$/, '').trim(); }
@@ -111,11 +117,14 @@ addEventListener('keydown', e => { if (e.key === 'Escape' && $('panel').classLis
 // taxi cab necesita su letra: si falta, se abre su panel
 { const f = startTaxiAuto; startTaxiAuto = function () { f(); if (mode === 'panel') openDrawer('autor'); }; }
 
-// entrada escalonada (sin clases: ui() reescribe las de la barra)
-for (const [sel, d] of [['.w-top', 0], ['.w-eyebrow', 150], ['.w-lede', 900], ['#now', 1100]]) {
-  const el = document.querySelector(sel);
-  el?.animate([{ opacity: 0, transform: 'translateY(14px)' }, { opacity: 1, transform: 'none' }], { duration: 1000, delay: d, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'backwards' });
-}
-
 // modo autor: abre el editor desde su panel
 $('openAutorBtn')?.addEventListener('click', async () => { closeDrawer(); if (!(await openAutor())) openDrawer('autor'); });
+
+// accesos de la bienvenida: reutilizan los modos y controles existentes.
+for (const b of document.querySelectorAll('[data-w-mode]')) b.addEventListener('click', () => {
+  const target = b.dataset.wMode;
+  if (target === 'lyric') { if (!ext.has()) return say('pon una canción en Música o Spotify para abrir el video'); return $('proc').click(); }
+  if (target === 'cover') { if (!ext.artUrl) return say('pon una canción con carátula en Música o Spotify'); return toggleCover(true); }
+  if (target === 'fx') return window.FX?.open();
+  if (target === 'explore') return window.RISOEXP?.open();
+});

@@ -365,12 +365,7 @@
 <div id="panel" class="w2">
   <div class="w-grain"></div>
   <header class="w-top">
-    <a class="w-mark" href="#" onclick="return false">lumora<i></i></a>
-    <div class="w-tray" aria-label="estado del sistema">
-      <div class="st" id="stMusic"><i></i><div><b>música</b><span>buscando</span></div></div>
-      <div class="st" id="stClaude"><i></i><div><b>director</b><span>comprobando</span></div></div>
-      <div class="st" id="stLights"><i></i><div><b>luces</b><span>buscando</span></div></div>
-    </div>
+    <span class="w-mark">lumora<i aria-hidden="true"></i></span>
     <nav class="w-nav">
       <button data-drawer="como">cómo funciona</button>
       <button data-drawer="autor">modo autor</button>
@@ -380,11 +375,37 @@
   </header>
 
   <main class="w-hero">
-    <div class="w-eyebrow" id="wEyebrow">lyric videos en vivo</div>
-    <h1 class="w-line" id="wLine" aria-live="polite"></h1>
-    <p class="w-lede">pon cualquier canción en Música o Spotify. Claude la lee completa antes de empezar y el video arranca solo, verso a verso.</p>
-    <div id="msg"></div>
+    <div class="w-copy">
+      <div class="w-edition"><span>lumora / estudio visual</span><span>vol. 01</span></div>
+      <div class="w-eyebrow" id="wEyebrow">lyric videos en vivo</div>
+      <h1 class="w-line" id="wLine" aria-live="polite"></h1>
+      <p class="w-lede">tu música se convierte en imágenes. elige cómo verla; lumora se encarga del resto.</p>
+      <nav class="w-modes" aria-label="experiencias visuales">
+        <button data-w-mode="lyric"><span class="w-num">01</span><span><b>lyric video</b><small>cada verso, una escena</small></span><span aria-hidden="true">↗</span></button>
+        <button data-w-mode="cover"><span class="w-num">02</span><span><b>carátula</b><small>el disco, en primer plano</small></span><span aria-hidden="true">↗</span></button>
+        <button data-w-mode="fx"><span class="w-num">03</span><span><b>fondos vivos</b><small>tinta en movimiento</small></span><span aria-hidden="true">↗</span></button>
+        <button data-w-mode="explore"><span class="w-num">04</span><span><b>explorar</b><small>el universo de tu música</small></span><span aria-hidden="true">↗</span></button>
+      </nav>
+      <div id="msg" role="status"></div>
+    </div>
+    <figure class="w-sleeve">
+      <div class="w-sleeve-top"><span>en la mesa de impresión</span><span aria-hidden="true">a / b</span></div>
+      <button class="w-sleeve-art" data-w-mode="cover" aria-label="abrir carátula del álbum">
+        <span class="w-record" aria-hidden="true"><i></i></span>
+        <img id="wSleeveImg" alt="carátula del álbum actual" hidden>
+        <span class="w-art-empty" id="wArtEmpty">dale<br>play<span>el siguiente estreno es tuyo.</span></span>
+        <span class="w-art-tag" aria-hidden="true">33⅓ / estéreo</span>
+      </button>
+      <figcaption><span id="wSleeveArtist">música → imagen</span><span id="wSleeveAlbum">hecho para escuchar con los ojos</span></figcaption>
+      <div class="w-registration" aria-hidden="true"><span>+ lumora records</span><span class="w-inks"><i></i><i></i><i></i></span><span>+ lado a</span></div>
+    </figure>
   </main>
+  <div class="w-system">    <div class="w-tray" aria-label="estado del sistema">
+      <div class="st" id="stMusic"><i></i><div><b>música</b><span>buscando</span></div></div>
+      <div class="st" id="stClaude"><i></i><div><b>director</b><span>comprobando</span></div></div>
+      <div class="st" id="stLights"><i></i><div><b>luces</b><span>buscando</span></div></div>
+    </div>
+<span class="w-system-note">sonido → tinta → escena</span></div>
 
   <section class="w-strip now" id="now">
     <div class="w-art dot" id="nowDot"><i></i><img id="nowArt" alt=""></div>
