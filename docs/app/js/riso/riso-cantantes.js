@@ -2,7 +2,7 @@
 // riso-cantantes.js — los artistas del catálogo salen cantando en el videoclip.
 // Si quien suena es uno de los músicos del catálogo de famosos (Shakira, Bad Bunny, Queen, Los Beatles…), el
 // clip intercala tomas «cantante»: una figura de trazo con micrófono, sin rostro ni parecido real (solo su
-// emblema en una medalla y su nombre en una etiqueta). En una colaboración salen todos los créditos (hasta 3)
+// emblema en una medalla y su nombre en una etiqueta). The Weeknd usa una figura escénica propia. En una colaboración salen todos los créditos (hasta 3)
 // y el micrófono se «pasa» de uno a otro verso a verso; los que no están en el catálogo salen como figura
 // genérica con su nombre. No es detección de voz: el turno va por orden de versos, y así se declara.
 // ============================================================
@@ -14,7 +14,7 @@
   const hash = s => { let h = 2166136261; for (const c of String(s)) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return h >>> 0; };
   // quién es quién: nombre del artista (sin tildes) → dibujo del catálogo
   const MAP = [['michael_jackson', /michael jackson|^mj$/], ['elvis', /elvis/], ['bob_marley', /marley/], ['beatles', /beatles/], ['freddie_mercury', /^queen$|freddie mercury/], ['david_bowie', /bowie/], ['kurt_cobain', /nirvana|kurt cobain/],
-    ['jimi_hendrix', /hendrix/], ['bad_bunny', /bad bunny/], ['shakira', /shakira/], ['selena', /^selena( quintanilla)?$/], ['celia_cruz', /celia cruz/], ['luis_miguel', /luis miguel/], ['beyonce', /beyonc/], ['rihanna', /rihanna/],
+    ['jimi_hendrix', /hendrix/], ['bad_bunny', /bad bunny/], ['the_weeknd', /^(?:the )?weeknd$|^abel tesfaye$/], ['shakira', /shakira/], ['selena', /^selena( quintanilla)?$/], ['celia_cruz', /celia cruz/], ['luis_miguel', /luis miguel/], ['beyonce', /beyonc/], ['rihanna', /rihanna/],
     ['taylor_swift', /taylor swift/], ['eminem', /eminem/], ['tupac', /tupac|2pac/], ['daddy_yankee', /daddy yankee/], ['adele', /^adele$/], ['amy_winehouse', /winehouse/], ['madonna', /^madonna$/], ['juanes', /^juanes$/]];
   SG.ids = MAP.map(m => m[0]);
   SG.idOf = part => { const t = norm(part); for (const [id, rx] of MAP) if (rx.test(t) && R.props.DEFS[id]) return id; return null; };
@@ -62,12 +62,15 @@
     list.forEach((sg, i) => {
       const active = i === act && !!line, open = active ? clamp(.25 + .75 * Math.abs(sin(kt * 9 + i)) + R.A.beat * .3) : 0, y = ground + (1 - p) * 420, x = xs[i];
       if (active && n > 1) { K.poly([[x, 40], [x - 150 * k, y], [x + 150 * k, y]], { f: 2, ft: .18 }); }
-      person(x, y, k, { h: sg.h, fill: [2, 3, 1][i % 3], open, sway: sin(kt * 1.6 + i * 2) * (active ? 1.4 : .6), arm: R.A.e > .55 && !!line && active, active, name: sg.name });
+      if (sg.id === 'the_weeknd') {
+        // la figura completa sustituye al cantante genérico; conserva entrada y ritmo.
+        R.props.drawProp(K, sg.id, x, y - 240 * k, 1.24 * k, 1, { seed: s.seed + i, ph: sg.h % 6, rot: sin(kt * 1.6 + i * 2) * (active ? .018 : .008) });
+      } else person(x, y, k, { h: sg.h, fill: [2, 3, 1][i % 3], open, sway: sin(kt * 1.6 + i * 2) * (active ? 1.4 : .6), arm: R.A.e > .55 && !!line && active, active, name: sg.name });
       // etiqueta con el nombre y medalla con el emblema
       K.c.save(); K.c.translate(x, ground + 52); K.c.rotate((i % 2 ? .012 : -.012));
       const nm = sg.name.toUpperCase().slice(0, 26), w = Math.min(330, K.measure(nm, { font: 'display', size: 34 * Math.min(1, k + .1), w: 800, stretch: 'condensed' }) + 40);
       K.rect(-w / 2 + 6, 6, w, 46, { f: 1, ft: .3, over: true }); K.rect(-w / 2, 0, w, 46, { f: -1, s: 1, lw: 3.5 }); K.txt(nm, 0, 35, { font: 'display', size: 34 * Math.min(1, k + .1), w: 800, stretch: 'condensed', align: 'center', i: active ? 2 : 1 }); K.c.restore();
-      if (sg.id) { const mx = n === 1 ? x + (s.flip ? 250 : -250) : x, my = n === 1 ? 300 : 120, rr = (n === 1 ? 104 : 74) * Math.min(1, k + .15); K.circ(mx, my, rr, { f: -1, s: 1, lw: 6 }); K.circ(mx, my, rr, { f: 3, ft: .3 });
+      if (sg.id && sg.id !== 'the_weeknd') { const mx = n === 1 ? x + (s.flip ? 250 : -250) : x, my = n === 1 ? 300 : 120, rr = (n === 1 ? 104 : 74) * Math.min(1, k + .15); K.circ(mx, my, rr, { f: -1, s: 1, lw: 6 }); K.circ(mx, my, rr, { f: 3, ft: .3 });
         R.props.drawProp(K, sg.id, mx, my, rr / 92 * .5, easeOut(clamp((kt - .3) / 1)), { seed: s.seed + i, ph: sg.h % 6, rot: 0 }); K.tape(mx - 40, my - rr, 80, 26, -.4); }
     });
     K.code(n > 1 ? `DÚO · ${n} VOCES · EL MICRÓFONO PASA VERSO A VERSO` : 'EN EL MICRÓFONO', (s.flip ? v.r - 60 : v.l + 60) + (s.flip ? 0 : 0), 815, { align: s.flip ? 'right' : 'left', size: 14, bg: true });
