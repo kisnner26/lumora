@@ -827,11 +827,6 @@ def es_lumora(port):
             return False
 
 
-def puerto_libre(port):
-    with socket.socket() as sk:
-        return sk.connect_ex(('127.0.0.1', port)) != 0
-
-
 if __name__ == '__main__':
     try:
         sys.stdout.reconfigure(line_buffering=True)
@@ -845,15 +840,12 @@ if __name__ == '__main__':
         if es_lumora(port):                                          # ya hay un puente de lumora: se reutiliza
             print(f'ya hay un puente de lumora en http://127.0.0.1:{port}/index.html')
             sys.exit(0)
-        if not puerto_libre(port):
-            print(f'el puerto {port} está ocupado por otro programa, pruebo el siguiente')
-            continue
         try:
-            server = Servidor(('127.0.0.1', port), Handler)
+            server = Servidor(('127.0.0.1', port), Handler)      # si el puerto está ocupado, bind falla al instante (connect podía quedarse colgado)
             PORT = port
             break
         except OSError:
-            continue
+            print(f'el puerto {port} está ocupado por otro programa, pruebo el siguiente')
     if server is None:
         print('no encontré un puerto libre'); sys.exit(1)
     try:
