@@ -5,7 +5,7 @@
 # Sin Playwright las pruebas con navegador se omiten (y se dice cuáles); no cuentan como fallo.
 cd "$(dirname "$0")/.." || exit 1
 fallo=0; omitidas=""
-for f in *.js tools/*.mjs; do node --check "$f" >/dev/null 2>&1 || { echo "sintaxis: $f"; fallo=1; }; done
+for f in $(find . -maxdepth 4 -name '*.js' -not -path './docs/*' -not -path './node_modules/*' -not -path './.venv*' -not -path './app/*' -not -path './personal/*') tools/*.mjs; do node --check "$f" >/dev/null 2>&1 || { echo "sintaxis: $f"; fallo=1; }; done
 [ $fallo = 0 ] || exit 1
 hay_pw=0; node -e "import('./tools/lib.mjs').then(m=>m.tienePlaywright()).then(ok=>process.exit(ok?0:1))" >/dev/null 2>&1 && hay_pw=1
 corre() { # archivo
