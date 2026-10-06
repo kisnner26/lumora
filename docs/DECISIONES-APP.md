@@ -23,3 +23,11 @@
 - los enlaces externos y `window.open` se abren en el navegador predeterminado; cerrar la ventana solo la oculta.
 - el micrófono se concede solo al origen 127.0.0.1 (lumora usa getUserMedia como entrada de audio alternativa); por eso `NSMicrophoneUsageDescription` en Info.plist.
 - WKWebView y MediaRecorder: Safari graba mp4/h264 directo, así que con la ventana propia los clips salen en mp4 sin necesitar ffmpeg.
+
+## 2026-10-06, fase 3: empaquetado
+
+- **puente congelado con PyInstaller** (onedir, arm64, python 3.14 de Homebrew) en `.venv-empaque` dentro del repo, ignorado por git. motivo: la app no depende de ningún python del usuario ni de las herramientas de línea de comandos. alternativa descartada: embeber un framework de python (frágil al reubicar y firmar). si falta el congelado, la app cae a los fuentes con el python del sistema.
+- **universal**: no. arm64 solamente (ver DISTRIBUCION.md).
+- **ffmpeg** no se empaqueta; con la ventana propia los clips salen en mp4 directo. `/salud` y el menú avisan "sin ffmpeg: clips en webm".
+- **firma**: hardened runtime también en la ad-hoc. los ejecutables anidados (puente congelado, python, bibliotecas) llevan los mismos entitlements que la app, con `disable-library-validation`; sin eso el puente congelado no carga su propio Python (error real visto en la primera prueba: "different Team IDs"). entitlements: apple-events, audio-input y disable-library-validation; sin sandbox.
+- **DMG**: volumen "Lumora" con acceso directo a Aplicaciones. se omitió la imagen de fondo: para colocarla hay que ordenar iconos con AppleScript sobre Finder, que exige permiso de Automatización y es frágil. `hdiutil create` está marcado como obsoleto por Apple pero funciona.

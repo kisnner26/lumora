@@ -34,3 +34,16 @@ autoprueba interna (`LUMORA_AUTOPRUEBA=1 open --env LUMORA_AUTOPRUEBA=1 Lumora.a
 | salir | sin procesos restantes |
 
 sin verificar a mano: captura de versos con grabación real de video, modo carátula y pantalla completa con clic (se comprobó que las APIs existen, no su uso completo); pegado de imagen en otra app.
+
+## fase 3 (empaquetado)
+
+| prueba | resultado |
+|---|---|
+| `tools/empaquetar.sh` | construye y genera `Lumora.dmg` de 9.9 MB (la app de 22 MB) |
+| `codesign --verify --deep --strict` | válida (ad-hoc con hardened runtime) |
+| `spctl --assess` | rejected, como corresponde a una firma ad-hoc |
+| montar el DMG y copiar la app a /tmp, con la carpeta del repo renombrada | la app abre, el puente congelado arranca desde dentro de la app, `index.html`, `riso.js` y `web-bridge.js` dan 200, `/story` listo, `/translate` traduce "hello world" con la herramienta nativa incluida |
+| salir | sin procesos restantes |
+| primer intento (error encontrado y corregido) | el puente congelado no cargaba su Python por la validación de bibliotecas; se arregló firmando lo anidado con los entitlements |
+
+sin verificar: con música real sonando, funciones del catálogo y captura de versos con grabación completa dentro de la app empaquetada (se comprobó el servidor, no una sesión de uso larga); instalación en otro Mac limpio (Gatekeeper con la cuarentena de una descarga).
