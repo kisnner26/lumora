@@ -300,13 +300,30 @@ AUDIO = {'clients': [], 'error': '', 'running': False}
 AUDIO_LOCK = threading.Lock()
 
 
+def oido_permitido(pedir=False):
+    """ya tiene lumora el permiso de grabación de pantalla; solo con pedir=True macOS muestra su aviso"""
+    try:
+        return subprocess.run([OIDO_BIN, '--pedir' if pedir else '--comprobar'], capture_output=True, timeout=120).returncode == 0
+    except Exception:
+        return False
+
+
 def audio_loop():
-    # arranca el oído mientras haya páginas escuchando; si falta el permiso, reintenta cada 30 s
+    # arranca el oído mientras haya páginas escuchando. el aviso de permiso de macOS se pide una sola vez por sesión;
+    # después solo se comprueba en silencio cada 30 s por si el usuario lo concede
+    pedido = False
     while True:
         with AUDIO_LOCK:
             want = bool(AUDIO['clients'])
         if not want or not os.path.exists(OIDO_BIN):
             time.sleep(1); continue
+        if not oido_permitido():
+            AUDIO['error'] = 'permiso'
+            if not pedido:
+                pedido = True
+                if oido_permitido(pedir=True):
+                    continue
+            time.sleep(30); continue
         p = subprocess.Popen([OIDO_BIN], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, bufsize=1)
         AUDIO['running'] = True
         for line in p.stdout:

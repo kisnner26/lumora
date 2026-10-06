@@ -78,6 +78,11 @@ final class Oido: NSObject, SCStreamOutput, SCStreamDelegate {
 
 @main struct Main {
     static func main() async {
+        // sin permiso no se toca ScreenCaptureKit: llamarlo es lo que hace salir el aviso de macOS cada vez
+        let arg = CommandLine.arguments.dropFirst().first
+        if arg == "--comprobar" { exit(CGPreflightScreenCaptureAccess() ? 0 : 3) }
+        if arg == "--pedir" { exit(CGRequestScreenCaptureAccess() ? 0 : 3) }      // muestra el aviso una vez
+        guard CGPreflightScreenCaptureAccess() else { FileHandle.standardError.write("sin permiso de grabación de pantalla\n".data(using: .utf8)!); exit(3) }
         let oido = Oido()
         oido.setupAnalysis()
         do {
