@@ -27,7 +27,7 @@ class Puente:
         with open(os.path.join(web, 'index.html'), 'w') as f:
             f.write('<title>prueba</title>')
         env = dict(os.environ, HOME=self.tmp.name, LUMORA_ROOT=web, LUMORA_PORT=str(puerto))
-        self.proc = subprocess.Popen([sys.executable, '-u', os.path.join(RAIZ, 'bridge.py')], env=env,
+        self.proc = subprocess.Popen([sys.executable, '-X', 'faulthandler', '-u', os.path.join(RAIZ, 'bridge.py')], env=env,
                                      stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         self.puerto = puerto
 
@@ -46,7 +46,7 @@ class Puente:
     def diagnostico(self):
         """lo que imprimió el puente, para que un fallo en la integración continua diga por qué"""
         if self.proc.poll() is None:
-            self.proc.terminate()
+            self.proc.send_signal(signal.SIGABRT)    # faulthandler vuelca dónde estaba cada hilo
         try:
             salida, _ = self.proc.communicate(timeout=5)
         except Exception:
