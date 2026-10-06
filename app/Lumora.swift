@@ -1,6 +1,7 @@
 // Lumora.app: lanzador. Arranca el puente (bridge.py), espera a que responda y abre lumora.
 import AppKit
 import Foundation
+import ServiceManagement
 import WebKit
 
 let bundleId = "com.kisnner.lumora"
@@ -174,6 +175,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var avisoTools = ""
     var ventana: Ventana?
     var modoItem: NSMenuItem!
+    var inicioItem: NSMenuItem!
     var enVentana: Bool {
         get { UserDefaults.standard.object(forKey: "abrirEnVentana") as? Bool ?? true }
         set { UserDefaults.standard.set(newValue, forKey: "abrirEnVentana") }
@@ -217,6 +219,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         m.addItem(mi("abrir lumora", #selector(abrirMenu), "o"))
         modoItem = mi(enVentana ? "abrir en: ventana propia" : "abrir en: navegador", #selector(cambiarModo), "")
         m.addItem(modoItem)
+        inicioItem = mi("abrir al iniciar sesión", #selector(cambiarInicio), "")
+        inicioItem.state = SMAppService.mainApp.status == .enabled ? .on : .off
+        m.addItem(inicioItem)
         m.addItem(mi("ver permisos", #selector(verPermisos), ""))
         m.addItem(mi("mostrar el registro", #selector(verRegistro), ""))
         m.addItem(mi("acerca de lumora", #selector(acerca), ""))
@@ -409,6 +414,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 }
             }
         }
+    }
+    @objc func cambiarInicio() {
+        let svc = SMAppService.mainApp
+        do {
+            if svc.status == .enabled { try svc.unregister() } else { try svc.register() }
+        } catch {
+            log("no pude cambiar el inicio de sesión: \(error.localizedDescription)")
+            alerta("no se pudo cambiar", "macOS no dejó cambiar el inicio automático. revísalo en Ajustes del Sistema > General > Ítems de inicio.")
+        }
+        inicioItem.state = svc.status == .enabled ? .on : .off
+        log("inicio de sesión: \(svc.status == .enabled ? "activado" : "desactivado")")
     }
     @objc func cambiarModo() {
         enVentana.toggle(); modoItem.title = enVentana ? "abrir en: ventana propia" : "abrir en: navegador"

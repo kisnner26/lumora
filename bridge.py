@@ -5,7 +5,7 @@ GET  /now          -> estado de Música en JSON (se refresca 4 veces por segundo
 GET  /art          -> carátula de la canción actual
 POST /cmd?c=...    -> playpause | seek:+5 | seek:-5 | start
 """
-import hashlib, json, os, queue, re, shutil, signal, socket, subprocess, sys, threading, time, tempfile, urllib.request, urllib.parse
+import hashlib, json, os, queue, re, shutil, signal, socket, socketserver, subprocess, sys, threading, time, tempfile, urllib.request, urllib.parse
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
@@ -579,18 +579,15 @@ def poll():
 
 
 def salud():
-    """estado del puente para el lanzador; sin datos personales"""
-    def running(app):
+    """estado del puente para el lanzador; sin datos personales y sin llamar a osascript (responde en milisegundos)"""
+    def abierta(app):
         try:
-            return osa('tell application "System Events" to (name of processes) contains "%s"' % app, 2) == 'true'
+            return subprocess.run(['pgrep', '-x', app], capture_output=True, timeout=2).returncode == 0
         except Exception:
             return None
-    try:
-        osa('return 1', 2); osa_ok = True
-    except Exception:
-        osa_ok = False
+    osa_ok = shutil.which('osascript') is not None
     return {'lumora': True, 'version': VERSION, 'puerto': PORT, 'root': ROOT, 'osascript': osa_ok,
-            'musica': running('Music') if osa_ok else None, 'spotify': running('Spotify') if osa_ok else None,
+            'musica': abierta('Music') if osa_ok else None, 'spotify': abierta('Spotify') if osa_ok else None,
             'oido': os.path.exists(OIDO_BIN), 'traducir': os.path.exists(TR_BIN),
             'ffmpeg': shutil.which('ffmpeg') is not None, 'cancion': state.get('state', 'off')}
 
@@ -812,6 +809,11 @@ class Handler(SimpleHTTPRequestHandler):
 
 
 class Servidor(ThreadingHTTPServer):
+    def server_bind(self):
+        # HTTPServer.server_bind hace una resolución inversa (getfqdn) que en redes con DNS lento puede tardar muchos segundos
+        socketserver.TCPServer.server_bind(self)
+        self.server_name, self.server_port = '127.0.0.1', self.server_address[1]
+
     def handle_error(self, request, client_address):
         if isinstance(sys.exc_info()[1], (BrokenPipeError, ConnectionResetError)):   # el navegador cerró la conexión: no es un error
             return
@@ -830,11 +832,6 @@ def es_lumora(port):
             return False
 
 
-def puerto_libre(port):
-    with socket.socket() as sk:
-        return sk.connect_ex(('127.0.0.1', port)) != 0
-
-
 if __name__ == '__main__':
     try:
         sys.stdout.reconfigure(line_buffering=True)
@@ -848,15 +845,12 @@ if __name__ == '__main__':
         if es_lumora(port):                                          # ya hay un puente de lumora: se reutiliza
             print(f'ya hay un puente de lumora en http://127.0.0.1:{port}/index.html')
             sys.exit(0)
-        if not puerto_libre(port):
-            print(f'el puerto {port} está ocupado por otro programa, pruebo el siguiente')
-            continue
         try:
-            server = Servidor(('127.0.0.1', port), Handler)
+            server = Servidor(('127.0.0.1', port), Handler)      # si el puerto está ocupado, bind falla al instante (connect podía quedarse colgado)
             PORT = port
             break
         except OSError:
-            continue
+            print(f'el puerto {port} está ocupado por otro programa, pruebo el siguiente')
     if server is None:
         print('no encontré un puerto libre'); sys.exit(1)
     try:
