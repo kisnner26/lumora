@@ -1,5 +1,9 @@
 # historial de cambios
 
+## sin publicar
+
+- letras propias: un `.lrc` o `.txt` en `~/Library/Application Support/Lumora/letras/` tiene prioridad sobre lrclib.
+
 ## 1.0
 
 - **Lumora.app** para Mac: icono en la barra de menú, arranca el puente sola, ventana propia con WebKit y salida limpia sin procesos sueltos.
