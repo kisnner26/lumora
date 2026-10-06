@@ -1,0 +1,22 @@
+name: error
+description: algo no funciona como debería
+labels: [bug]
+body:
+  - type: textarea
+    id: que
+    attributes:
+      label: qué pasó
+      description: qué esperabas y qué ocurrió en cambio
+    validations:
+      required: true
+  - type: textarea
+    id: pasos
+    attributes:
+      label: cómo reproducirlo
+    validations:
+      required: true
+  - type: input
+    id: entorno
+    attributes:
+      label: entorno
+      description: versión de macos, si usas la app o el código, y si suena música o spotify
