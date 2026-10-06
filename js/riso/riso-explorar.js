@@ -144,6 +144,12 @@
     return { moods, gens, artists: d.artists, songs: d.songs.length, total: d.total, level, falta, avance, topArtistas: cnt(s => s.artist).slice(0, 3), topCanciones: [...d.songs].sort((a, b) => (b.veces || 1) - (a.veces || 1)).slice(0, 3), name, days, top: moods[0]?.[0] || '', genre: gens[0]?.[0] || '', state: !d.total ? 'huevo' : days > 10 ? 'dormido' : days > 3 ? 'hambriento' : 'contento' };
   }
   EXP.stats = stats;
+  // qué significa el estado de la criatura y qué hacer para cambiarlo
+  const consejo = st => st.state === 'huevo' ? 'ponle música: nace con tu primera canción.'
+    : st.state === 'dormido' ? `lleva ${st.days} días sin música y se quedó dormida. pon cualquier canción y despierta.`
+    : st.state === 'hambriento' ? `hace ${st.days} días que no escuchas nada: tiene hambre. con una canción hoy se pone contenta.`
+    : 'está contenta: escuchaste música en los últimos 3 días.';
+  EXP.consejo = consejo;
   function drawCreature(K, job) {
     const s = job.st, t = job.t || 0, rr = R.rng(hash(s.name + s.genre)), cx = 800, base = 640, L = s.level;
     K.bg(3, .07); K.circ(cx, 470, 400, { f: -1 }); K.circ(cx, 470, 400, { s: 1, lw: 5 });
@@ -261,6 +267,7 @@
     if (tab === 'criatura' && EXP.st) { const st = EXP.st, dias = st.days > 900 ? 'nunca' : st.days === 0 ? 'hoy' : st.days === 1 ? 'ayer' : 'hace ' + st.days + ' días';
       return `<h3>tu criatura</h3><input id="exName" maxlength="14" value="${esc(st.name)}" aria-label="nombre de la criatura" spellcheck="false"><p>nivel <b>${st.level}</b> de 12 · ${st.state}</p>${st.level >= 12 ? '<p>nivel máximo alcanzado</p>' : `<div class="ex-prog" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(st.avance * 100)}"><i style="width:${Math.round(st.avance * 100)}%"></i></div><p>faltan <b>${st.falta}</b> ${st.falta === 1 ? 'escucha' : 'escuchas'} para el nivel ${st.level + 1}</p>`}<p>${st.total} escuchas · ${st.songs} canciones · ${st.artists} artistas</p><p>ánimo dominante: ${esc(MOODS[st.top] || '—')}<br>género dominante: ${esc(st.genre || '—')}<br>última música: ${dias}</p>
         ${st.topArtistas.length ? `<h4>tus artistas</h4><ol class="ex-top">${st.topArtistas.map(([a, n]) => `<li>${esc(a)} <span>${n}×</span></li>`).join('')}</ol><h4>tus canciones</h4><ol class="ex-top">${st.topCanciones.map(c => `<li>${esc(c.name)} <span>${c.veces || 1}×</span></li>`).join('')}</ol>` : ''}
+        <p class="ex-consejo"><b>${esc(consejo(st))}</b></p>
         <p>crece con lo que escuchas: más nivel, más grande; antenas al 3, corona al 10. sus manchas son tus artistas, sus orejas tu género, sus colores tu ánimo.</p><button data-a="pet">acariciar</button>`; }
     return '';
   }
