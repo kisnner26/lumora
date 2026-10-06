@@ -15,3 +15,11 @@
 - **sin icono en el Dock** (LSUIElement): es una utilidad de barra de menú; la ventana propia (fase 2) no cambia eso.
 - **apple event de salir**: `osascript -e 'tell application id "com.kisnner.lumora" to quit'` devuelve -600 desde la terminal de pruebas; no se usó como prueba. las rutas reales (menú, Cmd+Q, SIGTERM de cierre de sesión) pasan por `NSApp.terminate` y se probaron con SIGTERM.
 - **ffmpeg**: no se empaqueta. la app añade `/opt/homebrew/bin` y `/usr/local/bin` al PATH del puente porque una app lanzada desde Finder arranca con un PATH mínimo.
+
+## 2026-10-06, fase 2: ventana propia
+
+- la ventana propia (WKWebView) es el modo por defecto; el menú de la barra permite cambiar a "abrir en: navegador" (se guarda en UserDefaults).
+- las descargas (blobs y adjuntos) usan WKDownloadDelegate: van a ~/Descargas sin pisar archivos existentes y se revelan en Finder.
+- los enlaces externos y `window.open` se abren en el navegador predeterminado; cerrar la ventana solo la oculta.
+- el micrófono se concede solo al origen 127.0.0.1 (lumora usa getUserMedia como entrada de audio alternativa); por eso `NSMicrophoneUsageDescription` en Info.plist.
+- WKWebView y MediaRecorder: Safari graba mp4/h264 directo, así que con la ventana propia los clips salen en mp4 sin necesitar ffmpeg.
