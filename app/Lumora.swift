@@ -276,15 +276,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             log("reutilizo el puente que ya corre en el puerto \(p)")
             setStatus("lumora lista"); if abrirAlTerminar { abrir() }; return
         }
-        guard let py = findPython() else {
-            setStatus("error: falta python 3")
-            log("no hay python 3")
-            alerta("falta python 3", "lumora necesita python 3 para hablar con música y spotify.\n\nabre la terminal y escribe:\n\nxcode-select --install\n\ncuando termine, abre lumora otra vez.")
-            return
-        }
+        // puente congelado dentro de la app (no necesita python); si no existe, python del sistema
+        let congelado = res + "/bridge/lumora-bridge/lumora-bridge"
         let bridge = res + "/bridge/bridge.py"
-        guard FileManager.default.fileExists(atPath: bridge) else {
-            setStatus("error: falta bridge.py"); log("no existe \(bridge)"); alerta("instalación incompleta", "no encuentro el puente de lumora dentro de la aplicación. vuelve a descargarla."); return
+        var exe = congelado
+        var args: [String] = []
+        if !FileManager.default.isExecutableFile(atPath: congelado) {
+            guard let py = findPython() else {
+                setStatus("error: falta python 3")
+                log("no hay python 3")
+                alerta("falta python 3", "lumora necesita python 3 para hablar con música y spotify.\n\nabre la terminal y escribe:\n\nxcode-select --install\n\ncuando termine, abre lumora otra vez.")
+                return
+            }
+            guard FileManager.default.fileExists(atPath: bridge) else {
+                setStatus("error: falta bridge.py"); log("no existe \(bridge)"); alerta("instalación incompleta", "no encuentro el puente de lumora dentro de la aplicación. vuelve a descargarla."); return
+            }
+            exe = py; args = ["-u", bridge]
         }
         let tools = res + "/tools"
         var faltan: [String] = []
@@ -293,13 +300,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         avisoTools = faltan.isEmpty ? "" : "sin: " + faltan.joined(separator: ", ")
         try? FileManager.default.removeItem(atPath: portFile)
         let p = Process()
-        p.executableURL = URL(fileURLWithPath: py)
-        p.arguments = ["-u", bridge]
+        p.executableURL = URL(fileURLWithPath: exe)
+        p.arguments = args
         var env = ProcessInfo.processInfo.environment
         env["LUMORA_ROOT"] = res + "/web"
         env["LUMORA_TOOLS"] = tools
         env["LUMORA_PARENT"] = String(getpid())
-        env["PYTHONDONTWRITEBYTECODE"] = "1"
+        env["PYTHONDONTWRITEBYTECODE"] = "1"; env["PYTHONUNBUFFERED"] = "1"
         p.environment = env
         p.currentDirectoryURL = URL(fileURLWithPath: NSHomeDirectory())
         if let h = logHandle() { p.standardOutput = h; p.standardError = h }
@@ -309,7 +316,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         do { try p.run() } catch { setStatus("error: no pude arrancar el puente"); log("run falló: \(error)"); alerta("no pude arrancar lumora", "\(error.localizedDescription)\n\nrevisa el registro desde el menú."); return }
         child = p; ownsBridge = true
-        log("puente arrancado con \(py), pid \(p.processIdentifier)")
+        log("puente arrancado con \(exe), pid \(p.processIdentifier)")
         // esperar a que escriba el puerto y responda /salud (20 s máximo)
         let limite = Date().addingTimeInterval(20)
         while Date() < limite {
