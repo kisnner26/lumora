@@ -1886,15 +1886,16 @@ $('play').onclick = start;
 $('sync').onclick = startSync;
 $('audio').onchange = e => {
   const f = e.target.files[0]; if (!f) return;
-  audio.src = URL.createObjectURL(f);
+  audio.src = URL.createObjectURL(f); audioBase = f.name.replace(/\.[^.]+$/, '') || 'letra';
   const st = load('tc_times');
   $('audioName').textContent = f.name + (st ? ' · hay una sincronización guardada' : ' · aún sin sincronizar');
 };
+let audioBase = 'letra';                                   // el .lrc se llama como el audio: «artista - título» lo reconoce lumora como letra propia
 $('dl').onclick = () => {
   if (!build()) return;
   const fmt = t => `${String(Math.floor(t / 60)).padStart(2, '0')}:${(t % 60).toFixed(2).padStart(5, '0')}`;
   const blob = new Blob([L.map(l => `[${fmt(l.start)}]${l.text}`).join('\n')], { type: 'text/plain' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'taxi-cab.lrc'; a.click();
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = audioBase + '.lrc'; a.click();
 };
 src.value = load('tc_lyrics') ?? '';
 if (!src.value) try { src.value = localStorage.getItem('tc_lyrics') || ''; } catch {}
