@@ -1,5 +1,10 @@
 # historial de cambios
 
+## sin publicar
+
+- opción en el menú de la barra para abrir lumora al iniciar sesión.
+- pruebas del puente (`python3 -m unittest discover -s tests`) y su paso en la integración continua.
+
 ## 1.0
 
 - **Lumora.app** para Mac: icono en la barra de menú, arranca el puente sola, ventana propia con WebKit y salida limpia sin procesos sueltos.
