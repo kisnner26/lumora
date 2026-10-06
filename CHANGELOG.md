@@ -2,6 +2,7 @@
 
 ## sin publicar
 
+- la criatura es interactiva: sus ojos siguen al cursor, salta y suena al tocarla (la voz depende de su nombre), habla en un globo, baila al ritmo de lo que suena, hace un supersalto con doble toque y se puede silenciar; barra espaciadora para acariciarla.
 - la criatura muestra cuántas escuchas faltan para el siguiente nivel, tus 3 artistas y canciones más escuchados, qué significa su estado y permite guardar su imagen en PNG.
 - opción en el menú de la barra para abrir lumora al iniciar sesión.
 - pruebas del puente (`python3 -m unittest discover -s tests`) y su paso en la integración continua.
