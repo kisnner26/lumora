@@ -21,7 +21,7 @@ generado con `node tools/catalogo_md.mjs` desde el motor real. total: **739** di
 | fiestas | 23 |
 | ropa | 17 |
 | cuerpo | 18 |
-| originales (riso-props.js) | 107 |
+| originales (js/riso/props/riso-props.js) | 107 |
 
 ## banderas (69)
 
@@ -744,4 +744,4 @@ generado con `node tools/catalogo_md.mjs` desde el motor real. total: **739** di
 
 `sun`, `flowers`, `beach`, `love`, `moon`, `dark`, `stars`, `rain`, `snow`, `fire`, `sea`, `beachx`, `city`, `road`, `car`, `fly`, `plane`, `time`, `heaven`, `death`, `tears`, `dream`, `gold`, `fashion`, `home`, `thunder`, `dance`, `woman`, `man`, `couple`, `crowd`, `eyes`, `light`, `phone`, `music`, `drink`, `money`, `mountain`, `forest`, `smoke`, `fireworks`, `love_b`, `love_c`, `moon_b`, `moon_c`, `dark_b`, `dark_c`, `stars_b`, `stars_c`, `sun_b`, `sun_c`, `fire_b`, `fire_c`, `rain_b`, `rain_c`, `city_b`, `city_c`, `road_b`, `road_c`, `car_b`, `car_c`, `dance_b`, `dance_c`, `phone_b`, `phone_c`, `time_b`, `time_c`, `eyes_b`, `eyes_c`, `tears_b`, `tears_c`, `flowers_b`, `flowers_c`, `sea_b`, `sea_c`, `heaven_b`, `heaven_c`, `gold_b`, `gold_c`, `money_b`, `money_c`, `home_b`, `home_c`, `dream_b`, `dream_c`, `death_b`, `death_c`, `thunder_b`, `thunder_c`, `light_b`, `light_c`, `music_b`, `music_c`, `drink_b`, `drink_c`, `mountain_b`, `mountain_c`, `forest_b`, `forest_c`, `snow_b`, `snow_c`, `smoke_b`, `smoke_c`, `fly_b`, `fly_c`, `fireworks_b`, `fireworks_c`
 
-se disparan con el léxico de `interpret.js` (LEX).
+se disparan con el léxico de `js/guion/interpret.js` (LEX).
