@@ -258,7 +258,7 @@
   const $ = id => document.getElementById(id), TABS = ['mapa', 'atlas', 'criatura', 'coleccion'];
   const V = { k: 1, tx: 0, ty: 0, sw: 0, sh: 0 }; let aspect = 16 / 9, drag = null, anim = 0;
   const HINTS = { mapa: '<kbd>rueda</kbd> acercar · <kbd>arrastrar</kbd> moverte · <kbd>doble clic</kbd> zoom · <kbd>/</kbd> buscar · <kbd>←</kbd><kbd>→</kbd> pestañas · <kbd>p</kbd> panel · <kbd>esc</kbd> cerrar',
-    atlas: '<kbd>rueda</kbd> acercar · <kbd>arrastrar</kbd> moverte · pasa el cursor sobre un pueblito · <kbd>/</kbd> buscar · <kbd>←</kbd><kbd>→</kbd> pestañas · <kbd>esc</kbd> cerrar', criatura: 'toca a tu criatura para acariciarla · <kbd>←</kbd><kbd>→</kbd> pestañas · <kbd>esc</kbd> cerrar',
+    atlas: '<kbd>rueda</kbd> acercar · <kbd>arrastrar</kbd> moverte · pasa el cursor sobre un pueblito · <kbd>/</kbd> buscar · <kbd>←</kbd><kbd>→</kbd> pestañas · <kbd>esc</kbd> cerrar', criatura: 'toca a tu criatura: salta y habla · doble toque: supersalto · espacio: acariciar · <kbd>←</kbd><kbd>→</kbd> pestañas · <kbd>esc</kbd> cerrar',
     coleccion: 'toca una lámina para abrirla y personalizarla · <kbd>/</kbd> buscar · <kbd>←</kbd><kbd>→</kbd> pestañas · <kbd>esc</kbd> cerrar' };
   // ancho libre: con el panel abierto el lienzo se centra en el espacio que queda a su izquierda
   const avail = () => { const sd = $('exSide'), m = $('exMain'); return m.clientWidth - (sd.classList.contains('off') || win.dataset.mode === 'coleccion' ? 0 : sd.offsetWidth + 26); };
