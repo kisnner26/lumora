@@ -6,3 +6,4 @@ tools/oido
 tools/traducir
 personal/
 app/build/
+.venv-empaque/

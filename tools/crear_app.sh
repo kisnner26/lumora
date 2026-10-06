@@ -13,8 +13,15 @@ cp app/Info.plist "$OUT/Contents/Info.plist"
 swiftc -O -parse-as-library tools/traducir.swift -o "$OUT/Contents/Resources/tools/traducir"
 swiftc -O -parse-as-library tools/oido.swift -o "$OUT/Contents/Resources/tools/oido"
 
-# puente
-cp bridge.py guion.py "$OUT/Contents/Resources/bridge/"
+# puente: congelado con PyInstaller si existe .venv-empaque (la app no necesita python); si no, los fuentes
+if [ -x .venv-empaque/bin/pyinstaller ]; then
+  .venv-empaque/bin/pyinstaller --noconfirm --onedir --name lumora-bridge --paths . --hidden-import guion \
+    --distpath app/build/dist --workpath app/build/work --specpath app/build bridge.py >app/build/pyinstaller.log 2>&1
+  mv app/build/dist/lumora-bridge "$OUT/Contents/Resources/bridge/lumora-bridge"
+  rm -rf app/build/dist app/build/work app/build/lumora-bridge.spec
+else
+  cp bridge.py guion.py "$OUT/Contents/Resources/bridge/"
+fi
 
 # web: solo lo que index.html carga (sin personal/, extras/, docs/, tools/ ni .git)
 cp index.html "$OUT/Contents/Resources/web/"
@@ -33,6 +40,6 @@ done
 iconutil -c icns "$SET" -o "$OUT/Contents/Resources/AppIcon.icns"
 rm -rf "$SET" app/build/icono app/build/icono1024.png
 
-# firma ad-hoc para que macOS la abra en local
+# firma ad-hoc (tools/empaquetar.sh la rehace con hardened runtime y, si hay cuenta, con Developer ID)
 codesign --force --deep -s - --entitlements app/entitlements.plist "$OUT"
 echo "listo: $OUT"
