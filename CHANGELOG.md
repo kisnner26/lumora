@@ -1,0 +1,8 @@
+# historial de cambios
+
+## 1.0
+
+- **Lumora.app** para Mac: icono en la barra de menú, arranca el puente sola, ventana propia con WebKit y salida limpia sin procesos sueltos.
+- **Lumora.dmg** con el puente de python congelado, así que no necesita python instalado; firma con hardened runtime.
+- el puente acepta `LUMORA_ROOT`, `LUMORA_TOOLS` y `LUMORA_PORT`, usa un puerto alterno si 8888 está ocupado, reutiliza un puente vivo y expone `GET /salud`.
+- videoclip en risografía con 31 escenas, modo carátula, captura de versos, modo autor y versión web en GitHub Pages.
