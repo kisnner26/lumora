@@ -268,7 +268,7 @@
       return `<h3>tu criatura</h3><input id="exName" maxlength="14" value="${esc(st.name)}" aria-label="nombre de la criatura" spellcheck="false"><p>nivel <b>${st.level}</b> de 12 · ${st.state}</p>${st.level >= 12 ? '<p>nivel máximo alcanzado</p>' : `<div class="ex-prog" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(st.avance * 100)}"><i style="width:${Math.round(st.avance * 100)}%"></i></div><p>faltan <b>${st.falta}</b> ${st.falta === 1 ? 'escucha' : 'escuchas'} para el nivel ${st.level + 1}</p>`}<p>${st.total} escuchas · ${st.songs} canciones · ${st.artists} artistas</p><p>ánimo dominante: ${esc(MOODS[st.top] || '—')}<br>género dominante: ${esc(st.genre || '—')}<br>última música: ${dias}</p>
         ${st.topArtistas.length ? `<h4>tus artistas</h4><ol class="ex-top">${st.topArtistas.map(([a, n]) => `<li>${esc(a)} <span>${n}×</span></li>`).join('')}</ol><h4>tus canciones</h4><ol class="ex-top">${st.topCanciones.map(c => `<li>${esc(c.name)} <span>${c.veces || 1}×</span></li>`).join('')}</ol>` : ''}
         <p class="ex-consejo"><b>${esc(consejo(st))}</b></p>
-        <p>crece con lo que escuchas: más nivel, más grande; antenas al 3, corona al 10. sus manchas son tus artistas, sus orejas tu género, sus colores tu ánimo.</p><button data-a="pet">acariciar</button>`; }
+        <p>crece con lo que escuchas: más nivel, más grande; antenas al 3, corona al 10. sus manchas son tus artistas, sus orejas tu género, sus colores tu ánimo.</p><button data-a="pet">acariciar</button> <button data-a="guardar">guardar imagen</button>`; }
     return '';
   }
   const renderSide = () => { const sd = $('exSide'); if (sd && EXP.tab !== 'coleccion') { const keep = sd.scrollTop; sd.innerHTML = sideHTML(); sd.scrollTop = keep; } };
@@ -318,6 +318,11 @@
     if (a === 'zout') return zoomAt(avail() / 2, $('exMain').clientHeight / 2, 1 / 1.5);
     if (a === 'zfit') { cancelAnimationFrame(anim); V.k = 1; V.tx = V.ty = 0; return place(); }
     if (a === 'pet') { EXP.pet = 1; return; }
+    if (a === 'guardar') {                                  // la criatura como imagen PNG
+      const cv = $('exStage').querySelector('canvas'); if (!cv) return;
+      cv.toBlob(b => { if (!b) return; const u = URL.createObjectURL(b), l = document.createElement('a'); l.href = u; l.download = 'criatura-' + (EXP.st ? EXP.st.name : 'lumora').toLowerCase() + '.png'; document.body.append(l); l.click(); l.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000); }, 'image/png');
+      return;
+    }
     if (b?.dataset.sort) { EXP.sort = b.dataset.sort; return collectionView(); }
     if (card && a && EXP.tab === 'coleccion') {
       const id = card.dataset.id, pid = card.dataset.pid;
