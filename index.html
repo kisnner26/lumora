@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<script src="config-web.js"></script>
-<script src="web-bridge.js"></script>
+<script src="js/app/config-web.js"></script>
+<script src="js/app/web-bridge.js"></script>
 
 <title>lumora</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1981,17 +1981,17 @@ function frame(t0) {
 requestAnimationFrame(frame);
 </script>
 <script>addEventListener("error",e=>navigator.sendBeacon("/log",(e.message||"")+" @ "+(e.filename||"").split("/").pop()+":"+e.lineno));addEventListener("unhandledrejection",e=>navigator.sendBeacon("/log","promesa: "+(e.reason&&e.reason.stack||e.reason)));</script>
-<script src="live.js"></script>
+<script src="js/app/live.js"></script>
 <script src="js/guion/interpret.js"></script>
 <script src="js/clasico/earth.js"></script>
 <script src="js/guion/identity.js"></script>
 <script src="js/clasico/symbols.js"></script>
 <script src="js/guion/genre.js"></script>
-<script src="nowplaying.js"></script>
+<script src="js/app/nowplaying.js"></script>
 <script src="js/clasico/reality.js"></script>
 <script src="js/guion/artists.js"></script>
 <script src="js/audio/moments.js"></script>
-<script src="record.js"></script>
+<script src="js/app/record.js"></script>
 <script src="js/audio/lights.js"></script>
 <script src="js/clasico/depth.js"></script>
 <script src="js/guion/variety.js"></script>
@@ -2006,10 +2006,10 @@ requestAnimationFrame(frame);
 <script src="js/guion/director.js"></script>
 <script src="js/guion/mix.js"></script>
 <script src="js/guion/story.js"></script>
-<script src="settings.js"></script>
-<script src="welcome.js"></script>
+<script src="js/app/settings.js"></script>
+<script src="js/app/welcome.js"></script>
 <script src="js/modos/autor.js"></script>
-<script src="hud.js"></script>
+<script src="js/app/hud.js"></script>
 <script src="js/modos/cover.js"></script>
 <script src="js/riso/riso-store.js"></script>
 <script src="js/riso/riso.js"></script>
