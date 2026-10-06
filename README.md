@@ -8,6 +8,7 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/kisnner26/lumora/actions/workflows/ci.yml"><img alt="estado de la integración continua" src="https://github.com/kisnner26/lumora/actions/workflows/ci.yml/badge.svg"></a>
   <img alt="licencia: PolyForm Noncommercial" src="https://img.shields.io/badge/licencia-PolyForm%20Noncommercial-1f2a8a">
   <img alt="plataforma: macOS" src="https://img.shields.io/badge/macOS-26%2B-black">
   <img alt="sin dependencias de python" src="https://img.shields.io/badge/puente-python%20stdlib-f26a21">
