@@ -554,18 +554,15 @@ def poll():
 
 
 def salud():
-    """estado del puente para el lanzador; sin datos personales"""
-    def running(app):
+    """estado del puente para el lanzador; sin datos personales y sin llamar a osascript (responde en milisegundos)"""
+    def abierta(app):
         try:
-            return osa('tell application "System Events" to (name of processes) contains "%s"' % app, 2) == 'true'
+            return subprocess.run(['pgrep', '-x', app], capture_output=True, timeout=2).returncode == 0
         except Exception:
             return None
-    try:
-        osa('return 1', 2); osa_ok = True
-    except Exception:
-        osa_ok = False
+    osa_ok = shutil.which('osascript') is not None
     return {'lumora': True, 'version': VERSION, 'puerto': PORT, 'root': ROOT, 'osascript': osa_ok,
-            'musica': running('Music') if osa_ok else None, 'spotify': running('Spotify') if osa_ok else None,
+            'musica': abierta('Music') if osa_ok else None, 'spotify': abierta('Spotify') if osa_ok else None,
             'oido': os.path.exists(OIDO_BIN), 'traducir': os.path.exists(TR_BIN),
             'ffmpeg': shutil.which('ffmpeg') is not None, 'cancion': state.get('state', 'off')}
 
