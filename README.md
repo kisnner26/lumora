@@ -188,6 +188,10 @@ apple music / spotify ─► bridge.py (osascript) ─► http://127.0.0.1:8888
 
 ## instalación
 
+**descarga `Lumora.dmg`** (en las releases del repositorio), arrastra `Lumora.app` a Aplicaciones y ábrela. aparece un icono en la barra de menú, arranca el puente sola y abre lumora en su propia ventana; detecta lo que suena en Música o Spotify. la primera vez macOS pide permiso de Automatización para Música y Spotify (y Grabación de pantalla para el audio del sistema). mientras la app no esté notarizada, ábrela con clic derecho > abrir. cómo construirla y firmarla: `docs/DISTRIBUCION.md`.
+
+si prefieres el código:
+
 ```sh
 git clone https://github.com/kisnner26/lumora.git
 cd lumora
@@ -195,7 +199,7 @@ cd lumora
 python3 bridge.py
 ```
 
-abre `http://127.0.0.1:8888/index.html` y dale play a cualquier canción. `,` abre los ajustes.
+abre `http://127.0.0.1:8888/index.html` y dale play a cualquier canción. `,` abre los ajustes. para construir la app tú mismo: `tools/empaquetar.sh`.
 
 ## versión web (github pages)
 
