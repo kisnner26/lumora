@@ -5,7 +5,7 @@ GET  /now          -> estado de Música en JSON (se refresca 4 veces por segundo
 GET  /art          -> carátula de la canción actual
 POST /cmd?c=...    -> playpause | seek:+5 | seek:-5 | start
 """
-import hashlib, json, os, queue, re, shutil, socket, subprocess, sys, threading, time, tempfile, urllib.request, urllib.parse
+import hashlib, json, os, queue, re, shutil, signal, socket, subprocess, sys, threading, time, tempfile, urllib.request, urllib.parse
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
@@ -839,9 +839,21 @@ if __name__ == '__main__':
         open(PORT_FILE, 'w').write(str(PORT))
     except OSError:
         pass
+    def salir(*_):                                                   # al apagarse no deja osascript ni herramientas nativas huérfanas
+        subprocess.run(['pkill', '-TERM', '-P', str(os.getpid())])
+        os._exit(0)
+    signal.signal(signal.SIGTERM, salir)
+    signal.signal(signal.SIGINT, salir)
     threading.Thread(target=poll, daemon=True).start()
     threading.Thread(target=audio_loop, daemon=True).start()
     threading.Thread(target=lights_loop, daemon=True).start()
     threading.Thread(target=lambda: (translate(['hello'], 'en', 'es'), translate(['hola'], 'es', 'en')), daemon=True).start()   # precalienta ambas direcciones
     print(f'abre http://127.0.0.1:{PORT}/index.html')
+    if os.environ.get('LUMORA_PARENT'):                              # lanzado por Lumora.app: si la app desaparece, el puente se apaga solo
+        def vigilar(padre):
+            while os.getppid() == padre:
+                time.sleep(2)
+            subprocess.run(['pkill', '-TERM', '-P', str(os.getpid())])
+            os._exit(0)
+        threading.Thread(target=vigilar, args=(int(os.environ['LUMORA_PARENT']),), daemon=True).start()
     server.serve_forever()
