@@ -50,6 +50,10 @@ python3 bridge.py
 
 abre `http://127.0.0.1:8888/index.html` y dale play a cualquier canción. `,` abre los ajustes. para construir la app tú mismo: `tools/empaquetar.sh`.
 
+### letras propias
+
+si prefieres no depender de un servicio, pon tus letras en `~/Library/Application Support/Lumora/letras/` con el nombre `artista - título.lrc` (con tiempos) o `.txt` (sin tiempos). la letra propia tiene prioridad sobre lrclib.
+
 ## versión web (github pages)
 
 **https://kisnner26.github.io/lumora/app/** corre lumora en el navegador, sin instalar nada: conectas spotify (login oficial de spotify, el token se queda en tu navegador) y al darle play a una canción lumora la detecta, trae la letra de lrclib y arma el video. no incluye lo que necesita la mac: traducción en el dispositivo, guion de claude, luces govee ni el análisis de audio del sistema. `js/app/web-bridge.js` reemplaza al puente de python; `tools/build_pages.sh` copia la app a `docs/app`. el client id de spotify va en `js/app/config-web.js` y, mientras la app de spotify esté en modo desarrollo, cada persona que la pruebe debe estar agregada por correo en el panel de spotify (hasta 25).
