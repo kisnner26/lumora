@@ -1,6 +1,7 @@
 // Lumora.app: lanzador. Arranca el puente (bridge.py), espera a que responda y abre lumora.
 import AppKit
 import Foundation
+import WebKit
 
 let bundleId = "com.kisnner.lumora"
 let res = Bundle.main.resourcePath ?? "."
@@ -71,6 +72,94 @@ func findPython() -> String? {
     return c.first { fm.isExecutableFile(atPath: $0) }
 }
 
+// ---------- ventana propia (WKWebView) ----------
+final class Ventana: NSObject, NSWindowDelegate, WKNavigationDelegate, WKUIDelegate, WKDownloadDelegate {
+    var window: NSWindow!
+    var web: WKWebView!
+    var url: URL?
+    var descargas: [WKDownload: URL] = [:]
+    var cargada: (() -> Void)?
+
+    override init() {
+        super.init()
+        let cfg = WKWebViewConfiguration()
+        cfg.mediaTypesRequiringUserActionForPlayback = []
+        cfg.preferences.isElementFullscreenEnabled = true
+        cfg.preferences.javaScriptCanOpenWindowsAutomatically = false
+        web = WKWebView(frame: .zero, configuration: cfg)
+        web.navigationDelegate = self
+        web.uiDelegate = self
+        if #available(macOS 13.3, *) { web.isInspectable = false }
+        window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1280, height: 800), styleMask: [.titled, .closable, .miniaturizable, .resizable],
+                          backing: .buffered, defer: false)
+        window.title = "lumora"
+        window.contentView = web
+        window.delegate = self
+        window.isReleasedWhenClosed = false
+        window.setFrameAutosaveName("lumora-ventana")
+        window.collectionBehavior = [.fullScreenPrimary]
+        window.backgroundColor = .black
+        window.center()
+    }
+
+    func mostrar(_ u: URL) {
+        if url != u { url = u; web.load(URLRequest(url: u)) }
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+    func windowShouldClose(_ sender: NSWindow) -> Bool { window.orderOut(nil); return false }   // cerrar la ventana no cierra la app
+
+    // navegación: enlaces externos al navegador, blobs y adjuntos como descarga
+    func webView(_ w: WKWebView, decidePolicyFor a: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        if a.shouldPerformDownload { decisionHandler(.download); return }
+        if let u = a.request.url, let host = u.host, u.scheme?.hasPrefix("http") == true, host != "127.0.0.1", host != "localhost", a.navigationType == .linkActivated {
+            NSWorkspace.shared.open(u); decisionHandler(.cancel); return
+        }
+        decisionHandler(.allow)
+    }
+    func webView(_ w: WKWebView, decidePolicyFor r: WKNavigationResponse, decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void) {
+        decisionHandler(r.canShowMIMEType ? .allow : .download)
+    }
+    func webView(_ w: WKWebView, navigationAction a: WKNavigationAction, didBecome d: WKDownload) { d.delegate = self }
+    func webView(_ w: WKWebView, navigationResponse r: WKNavigationResponse, didBecome d: WKDownload) { d.delegate = self }
+    func webView(_ w: WKWebView, didFinish n: WKNavigation!) { cargada?(); cargada = nil }
+    func webViewWebContentProcessDidTerminate(_ w: WKWebView) { log("el proceso de la página se cerró, recargo"); w.reload() }
+
+    // descargas a ~/Descargas sin pisar archivos
+    func download(_ d: WKDownload, decideDestinationUsing r: URLResponse, suggestedFilename name: String, completionHandler: @escaping (URL?) -> Void) {
+        let dir = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first!
+        var dest = dir.appendingPathComponent(name.isEmpty ? "lumora" : name)
+        var n = 1
+        let base = dest.deletingPathExtension().lastPathComponent, ext = dest.pathExtension
+        while FileManager.default.fileExists(atPath: dest.path) {
+            dest = dir.appendingPathComponent("\(base) \(n)" + (ext.isEmpty ? "" : ".\(ext)")); n += 1
+        }
+        descargas[d] = dest
+        completionHandler(dest)
+    }
+    func downloadDidFinish(_ d: WKDownload) {
+        if let u = descargas.removeValue(forKey: d) { log("descargado: \(u.path)"); NSWorkspace.shared.activateFileViewerSelecting([u]) }
+    }
+    func download(_ d: WKDownload, didFailWithError e: Error, resumeData: Data?) { descargas[d] = nil; log("descarga fallida: \(e.localizedDescription)") }
+
+    // permisos y diálogos de la página
+    func webView(_ w: WKWebView, requestMediaCapturePermissionFor o: WKSecurityOrigin, initiatedByFrame f: WKFrameInfo, type: WKMediaCaptureType,
+                 decisionHandler: @escaping (WKPermissionDecision) -> Void) { decisionHandler(o.host == "127.0.0.1" ? .grant : .deny) }
+    func webView(_ w: WKWebView, runOpenPanelWith p: WKOpenPanelParameters, initiatedByFrame f: WKFrameInfo, completionHandler: @escaping ([URL]?) -> Void) {
+        let o = NSOpenPanel(); o.allowsMultipleSelection = p.allowsMultipleSelection; o.canChooseDirectories = p.allowsDirectories
+        o.begin { completionHandler($0 == .OK ? o.urls : nil) }
+    }
+    func webView(_ w: WKWebView, runJavaScriptAlertPanelWithMessage m: String, initiatedByFrame f: WKFrameInfo, completionHandler: @escaping () -> Void) {
+        let a = NSAlert(); a.messageText = m; a.addButton(withTitle: "ok"); a.runModal(); completionHandler()
+    }
+    func webView(_ w: WKWebView, runJavaScriptConfirmPanelWithMessage m: String, initiatedByFrame f: WKFrameInfo, completionHandler: @escaping (Bool) -> Void) {
+        let a = NSAlert(); a.messageText = m; a.addButton(withTitle: "aceptar"); a.addButton(withTitle: "cancelar"); completionHandler(a.runModal() == .alertFirstButtonReturn)
+    }
+    func webView(_ w: WKWebView, createWebViewWith c: WKWebViewConfiguration, for a: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
+        if let u = a.request.url { NSWorkspace.shared.open(u) }; return nil       // window.open y target=_blank van al navegador
+    }
+}
+
 final class AppDelegate: NSObject, NSApplicationDelegate {
     var item: NSStatusItem!
     var statusLine: NSMenuItem!
@@ -81,7 +170,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var restarts: [Date] = []
     var timer: Timer?
     var ready = false
+    var autoprueba = false
     var avisoTools = ""
+    var ventana: Ventana?
+    var modoItem: NSMenuItem!
+    var enVentana: Bool {
+        get { UserDefaults.standard.object(forKey: "abrirEnVentana") as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: "abrirEnVentana") }
+    }
 
     func applicationDidFinishLaunching(_ n: Notification) {
         rotateLog()
@@ -93,6 +189,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         DistributedNotificationCenter.default().addObserver(forName: .init("com.kisnner.lumora.abrir"), object: nil, queue: .main) { [weak self] _ in self?.abrir() }
         buildMenu()
+        mainMenu()
         for sig in [SIGTERM, SIGINT, SIGHUP] {
             signal(sig, SIG_IGN)
             let s = DispatchSource.makeSignalSource(signal: sig, queue: .main)
@@ -101,6 +198,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             sources.append(s)
         }
         setStatus("iniciando…")
+        if ProcessInfo.processInfo.environment["LUMORA_AUTOPRUEBA"] != nil { enVentana = true; autoprueba = true }
         DispatchQueue.global().async { self.arrancar(abrirAlTerminar: true) }
         timer = Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { [weak self] _ in
             DispatchQueue.global().async { self?.vigilar() }
@@ -117,12 +215,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         m.addItem(statusLine)
         m.addItem(.separator())
         m.addItem(mi("abrir lumora", #selector(abrirMenu), "o"))
+        modoItem = mi(enVentana ? "abrir en: ventana propia" : "abrir en: navegador", #selector(cambiarModo), "")
+        m.addItem(modoItem)
         m.addItem(mi("ver permisos", #selector(verPermisos), ""))
         m.addItem(mi("mostrar el registro", #selector(verRegistro), ""))
         m.addItem(mi("acerca de lumora", #selector(acerca), ""))
         m.addItem(.separator())
         m.addItem(mi("salir", #selector(salir), "q"))
         item.menu = m
+    }
+    func mainMenu() {
+        let bar = NSMenu()
+        let app = NSMenuItem(); bar.addItem(app)
+        let am = NSMenu(); app.submenu = am
+        am.addItem(withTitle: "salir de lumora", action: #selector(salir), keyEquivalent: "q").target = self
+        let ed = NSMenuItem(); bar.addItem(ed)
+        let em = NSMenu(title: "edición"); ed.submenu = em
+        em.addItem(withTitle: "copiar", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        em.addItem(withTitle: "pegar", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        em.addItem(withTitle: "seleccionar todo", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+        let vt = NSMenuItem(); bar.addItem(vt)
+        let vm = NSMenu(title: "ventana"); vt.submenu = vm
+        vm.addItem(withTitle: "cerrar ventana", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
+        vm.addItem(withTitle: "minimizar", action: #selector(NSWindow.performMiniaturize(_:)), keyEquivalent: "m")
+        vm.addItem(withTitle: "pantalla completa", action: #selector(NSWindow.toggleFullScreen(_:)), keyEquivalent: "f").keyEquivalentModifierMask = [.command, .control]
+        NSApp.mainMenu = bar
     }
     func mi(_ t: String, _ a: Selector, _ k: String) -> NSMenuItem { let i = NSMenuItem(title: t, action: a, keyEquivalent: k); i.target = self; return i }
 
@@ -239,7 +356,56 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // ---------- menú ----------
     func abrir() {
         guard let p = port, let url = URL(string: "http://127.0.0.1:\(p)/index.html") else { return }
-        NSWorkspace.shared.open(url)
+        if enVentana {
+            DispatchQueue.main.async {
+                if self.ventana == nil { self.ventana = Ventana() }
+                self.ventana!.mostrar(url)
+                if self.autoprueba { self.autoprueba = false; self.correrAutoprueba() }
+            }
+        } else { NSWorkspace.shared.open(url) }
+    }
+    func correrAutoprueba() {
+        guard let v = ventana else { return }
+        v.cargada = {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 6) {
+                let js = """
+                  const r = {};
+                  const c = document.createElement('canvas');
+                  r.webgl = !!(c.getContext('webgl2') || c.getContext('webgl'));
+                  r.mediarecorder = typeof MediaRecorder !== 'undefined';
+                  r.mp4 = r.mediarecorder && MediaRecorder.isTypeSupported('video/mp4;codecs=avc1');
+                  r.webm = r.mediarecorder && MediaRecorder.isTypeSupported('video/webm');
+                  r.clipboard = !!(navigator.clipboard && navigator.clipboard.write);
+                  r.fullscreen = !!document.documentElement.requestFullscreen || !!document.documentElement.webkitRequestFullscreen;
+                  r.titulo = document.title;
+                  r.escenas = document.querySelectorAll('canvas').length;
+                  let tecla = 0; addEventListener('keydown', () => tecla++);
+                  window.__tecla = () => tecla;
+                  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['prueba de descarga'], {type: 'text/plain'})); a.download = 'lumora-prueba.txt';
+                  document.body.appendChild(a); a.click();
+                  return JSON.stringify(r);
+                """
+                v.web.callAsyncJavaScript(js, in: nil, in: .page) { res in
+                    switch res {
+                    case .success(let r): log("autoprueba ventana: \(r)")
+                    case .failure(let e): log("autoprueba ventana falló: \(e)")
+                    }
+                    let tecla = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [], timestamp: 0, windowNumber: v.window.windowNumber,
+                                                 context: nil, characters: "v", charactersIgnoringModifiers: "v", isARepeat: false, keyCode: 9)!
+                    v.window.makeFirstResponder(v.web); v.web.keyDown(with: tecla)
+                    v.web.takeSnapshot(with: nil) { img, _ in
+                        if let img = img, let tiff = img.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff), let png = rep.representation(using: .png, properties: [:]) {
+                            try? png.write(to: URL(fileURLWithPath: "/tmp/lumora-ventana.png")); log("captura de la ventana guardada")
+                        }
+                        v.web.evaluateJavaScript("window.__tecla()") { n, _ in log("autoprueba teclas recibidas por la página: \(n ?? "?")") }
+                    }
+                }
+            }
+        }
+    }
+    @objc func cambiarModo() {
+        enVentana.toggle(); modoItem.title = enVentana ? "abrir en: ventana propia" : "abrir en: navegador"
+        if !enVentana { ventana?.window.orderOut(nil) }
     }
     @objc func abrirMenu() {
         if ready { abrir() } else { DispatchQueue.global().async { self.arrancar(abrirAlTerminar: true) } }
