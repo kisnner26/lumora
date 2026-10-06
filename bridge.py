@@ -5,12 +5,19 @@ GET  /now          -> estado de Música en JSON (se refresca 4 veces por segundo
 GET  /art          -> carátula de la canción actual
 POST /cmd?c=...    -> playpause | seek:+5 | seek:-5 | start
 """
-import hashlib, json, os, queue, re, socket, subprocess, threading, time, tempfile, urllib.request, urllib.parse
+import hashlib, json, os, queue, re, shutil, signal, socket, subprocess, sys, threading, time, tempfile, urllib.request, urllib.parse
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
-PORT = 8888
-ROOT = os.path.dirname(os.path.abspath(__file__))
+VERSION = '1.0'
+PORT = int(os.environ.get('LUMORA_PORT') or 8888)
+HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.abspath(os.environ.get('LUMORA_ROOT') or HERE)                  # carpeta con index.html y la web
+TOOLS = os.path.abspath(os.environ.get('LUMORA_TOOLS') or os.path.join(ROOT, 'tools'))
+PORT_FILE = os.path.expanduser('~/Library/Application Support/Lumora/puerto')
+for _d in ('/opt/homebrew/bin', '/usr/local/bin'):                              # una app de Finder arranca con un PATH mínimo; ffmpeg suele vivir aquí
+    if os.path.isdir(_d) and _d not in os.environ.get('PATH', '').split(':'):
+        os.environ['PATH'] = os.environ.get('PATH', '/usr/bin:/bin') + ':' + _d
 ART = os.path.join(tempfile.gettempdir(), 'lumora-art.bin')
 # cada carátula queda guardada con su token: la estantería y "artista" del modo carátula
 # piden portadas de canciones que ya pasaron, y /art a secas solo tiene la actual
@@ -164,7 +171,7 @@ def fetch_bpm(artist, title, dur):
 
 
 # ---------- traducción en el dispositivo (traductor de Apple, tools/traducir) ----------
-TR_BIN = os.path.join(ROOT, 'tools', 'traducir')
+TR_BIN = os.path.join(TOOLS, 'traducir')
 TR_FILE = os.path.expanduser('~/Library/Caches/lumora-traducciones.json')
 try:
     TR_CACHE = json.load(open(TR_FILE))
@@ -263,7 +270,7 @@ def fetch_wiki(q, lang):
 
 
 # ---------- oído: niveles del audio del sistema (tools/oido, ScreenCaptureKit) ----------
-OIDO_BIN = os.path.join(ROOT, 'tools', 'oido')
+OIDO_BIN = os.path.join(TOOLS, 'oido')
 AUDIO = {'clients': [], 'error': '', 'running': False}
 AUDIO_LOCK = threading.Lock()
 
@@ -546,6 +553,23 @@ def poll():
         time.sleep(1)                        # si osascript muere, se relanza
 
 
+def salud():
+    """estado del puente para el lanzador; sin datos personales"""
+    def running(app):
+        try:
+            return osa('tell application "System Events" to (name of processes) contains "%s"' % app, 2) == 'true'
+        except Exception:
+            return None
+    try:
+        osa('return 1', 2); osa_ok = True
+    except Exception:
+        osa_ok = False
+    return {'lumora': True, 'version': VERSION, 'puerto': PORT, 'root': ROOT, 'osascript': osa_ok,
+            'musica': running('Music') if osa_ok else None, 'spotify': running('Spotify') if osa_ok else None,
+            'oido': os.path.exists(OIDO_BIN), 'traducir': os.path.exists(TR_BIN),
+            'ffmpeg': shutil.which('ffmpeg') is not None, 'cancion': state.get('state', 'off')}
+
+
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *a, **k):
         super().__init__(*a, directory=ROOT, **k)
@@ -567,6 +591,8 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         path = urlparse(self.path).path
+        if path == '/salud':
+            return self.send_json(salud())
         if path == '/story':
             import guion
             if parse_qs(urlparse(self.path).query).get('catalog'):
@@ -760,12 +786,74 @@ class Handler(SimpleHTTPRequestHandler):
             return self.send_json({'error': str(e)[:200]}, 500)
 
 
+class Servidor(ThreadingHTTPServer):
+    def handle_error(self, request, client_address):
+        if isinstance(sys.exc_info()[1], (BrokenPipeError, ConnectionResetError)):   # el navegador cerró la conexión: no es un error
+            return
+        super().handle_error(request, client_address)
+
+
+def es_lumora(port):
+    try:
+        with urllib.request.urlopen('http://127.0.0.1:%d/salud' % port, timeout=1.5) as r:
+            return bool(json.loads(r.read()).get('lumora'))
+    except Exception:
+        try:                                                   # puentes anteriores a /salud
+            with urllib.request.urlopen('http://127.0.0.1:%d/now' % port, timeout=1.5) as r:
+                return 'server' in json.loads(r.read())
+        except Exception:
+            return False
+
+
+def puerto_libre(port):
+    with socket.socket() as sk:
+        return sk.connect_ex(('127.0.0.1', port)) != 0
+
+
 if __name__ == '__main__':
+    try:
+        sys.stdout.reconfigure(line_buffering=True)
+        sys.stderr.reconfigure(line_buffering=True)
+    except Exception:
+        pass
+    ThreadingHTTPServer.daemon_threads = True
+    ThreadingHTTPServer.request_queue_size = 128                     # la página pide ~25 scripts a la vez; con la cola por defecto (5) se perdían
+    server = None
+    for port in range(PORT, PORT + 20):
+        if es_lumora(port):                                          # ya hay un puente de lumora: se reutiliza
+            print(f'ya hay un puente de lumora en http://127.0.0.1:{port}/index.html')
+            sys.exit(0)
+        if not puerto_libre(port):
+            print(f'el puerto {port} está ocupado por otro programa, pruebo el siguiente')
+            continue
+        try:
+            server = Servidor(('127.0.0.1', port), Handler)
+            PORT = port
+            break
+        except OSError:
+            continue
+    if server is None:
+        print('no encontré un puerto libre'); sys.exit(1)
+    try:
+        os.makedirs(os.path.dirname(PORT_FILE), exist_ok=True)
+        open(PORT_FILE, 'w').write(str(PORT))
+    except OSError:
+        pass
+    def salir(*_):                                                   # al apagarse no deja osascript ni herramientas nativas huérfanas
+        subprocess.run(['pkill', '-TERM', '-P', str(os.getpid())])
+        os._exit(0)
+    signal.signal(signal.SIGTERM, salir)
+    signal.signal(signal.SIGINT, salir)
     threading.Thread(target=poll, daemon=True).start()
     threading.Thread(target=audio_loop, daemon=True).start()
     threading.Thread(target=lights_loop, daemon=True).start()
     threading.Thread(target=lambda: (translate(['hello'], 'en', 'es'), translate(['hola'], 'es', 'en')), daemon=True).start()   # precalienta ambas direcciones
     print(f'abre http://127.0.0.1:{PORT}/index.html')
-    ThreadingHTTPServer.daemon_threads = True
-    ThreadingHTTPServer.request_queue_size = 128                     # la página pide ~25 scripts a la vez; con la cola por defecto (5) se perdían
-    ThreadingHTTPServer(('127.0.0.1', PORT), Handler).serve_forever()
+    if os.environ.get('LUMORA_PARENT'):                              # lanzado por Lumora.app: si la app desaparece, el puente se apaga solo
+        def vigilar(padre):
+            while os.getppid() == padre:
+                time.sleep(2)
+            subprocess.run(['pkill', '-TERM', '-P', str(os.getpid())])
+            os._exit(0)
+        threading.Thread(target=vigilar, args=(int(os.environ['LUMORA_PARENT']),), daemon=True).start()
+    server.serve_forever()

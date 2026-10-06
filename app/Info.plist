@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleIdentifier</key><string>com.kisnner.lumora</string>
+	<key>CFBundleName</key><string>Lumora</string>
+	<key>CFBundleDisplayName</key><string>Lumora</string>
+	<key>CFBundleExecutable</key><string>Lumora</string>
+	<key>CFBundleIconFile</key><string>AppIcon</string>
+	<key>CFBundlePackageType</key><string>APPL</string>
+	<key>CFBundleShortVersionString</key><string>1.0</string>
+	<key>CFBundleVersion</key><string>1</string>
+	<key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+	<key>LSMinimumSystemVersion</key><string>13.0</string>
+	<key>LSUIElement</key><true/>
+	<key>NSHighResolutionCapable</key><true/>
+	<key>NSHumanReadableCopyright</key><string>lumora, licencia PolyForm Noncommercial 1.0.0</string>
+	<key>NSAppleEventsUsageDescription</key><string>lumora necesita hablar con música y spotify para saber qué canción suena y controlar la reproducción.</string>
+	<key>NSAppleMusicUsageDescription</key><string>lumora lee la canción que suena en música para mostrar su letra y su portada.</string>
+	<key>NSMicrophoneUsageDescription</key><string>lumora puede usar una entrada de audio para que la imagen siga el ritmo de la música. no graba ni guarda el sonido.</string>
+	<key>NSScreenCaptureUsageDescription</key><string>lumora escucha el audio del sistema para que la imagen siga el ritmo de la música. no graba la pantalla.</string>
+</dict>
+</plist>
