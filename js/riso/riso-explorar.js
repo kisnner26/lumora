@@ -9,7 +9,7 @@
 (() => {
   const R = window.RISO, POS = window.RISOPOSTER, ST = window.RISOSTORE; if (!R || !POS || !ST) return;
   const K = R.K, clamp = R.clamp, TAU = Math.PI * 2, sin = Math.sin, cos = Math.cos;
-  const EXP = window.RISOEXP = { tab: 'mapa', job: null, sel: null, busy: false };
+  const EXP = window.RISOEXP = { tab: 'mapa', job: null, sel: null, busy: false, i: { lx: 0, ly: 0 } };   // i: interacción con la criatura
   const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
   const hash = s => { let h = 2166136261; for (const c of String(s)) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return h >>> 0; };
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -173,7 +173,7 @@
     for (let i = 0; i < Math.min(10, s.artists); i++) { const a = rr() * TAU, r = .35 + rr() * .5; K.circ(cx + cos(a) * W2 * r, by + H2 * .45 + sin(a) * H2 * r * .7, 9 + rr() * 12, { f: 1, ft: .7 }); }
     // cara
     const ey = by + H2 * .32, nEyes = clamp(1 + Math.min(2, s.moods.length >= 5 ? 2 : s.moods.length >= 3 ? 1 : 0), 1, 3), blink = (t % 4) < .12 || s.state === 'dormido';
-    for (let i = 0; i < nEyes; i++) { const ox = (i - (nEyes - 1) / 2) * 62 * size; if (blink) K.line(cx + ox - 16, ey, cx + ox + 16, ey, 1, 6); else { K.circ(cx + ox, ey, 22 * size, { f: -1, s: 1, lw: 5 }); K.circ(cx + ox + sin(t) * 5, ey + 2, 10 * size, { f: 1 }); } }
+    for (let i = 0; i < nEyes; i++) { const ox = (i - (nEyes - 1) / 2) * 62 * size; if (blink) K.line(cx + ox - 16, ey, cx + ox + 16, ey, 1, 6); else { K.circ(cx + ox, ey, 22 * size, { f: -1, s: 1, lw: 5 }); K.circ(cx + ox + sin(t) * 5 * (job.lx || job.ly ? .15 : 1) + (job.lx || 0) * 11 * size, ey + 2 + (job.ly || 0) * 8 * size, 10 * size, { f: 1 }); } }
     const my = ey + 58 * size, sad = s.state === 'hambriento', open = s.state === 'contento' && Math.sin(t * 3.4) > .6;
     if (s.state === 'dormido') { K.txt('z', cx + 130, by - 10 - (t * 20) % 40, { font: 'hand', size: 50, w: 600, i: 2 }); K.txt('Z', cx + 170, by - 50 - (t * 20) % 40, { font: 'hand', size: 34, w: 600, i: 2 }); }
     K.c.beginPath(); K.c.moveTo(cx - 34 * size, my); K.c.quadraticCurveTo(cx, my + (sad ? -26 : 34) * size, cx + 34 * size, my); if (open) { K.paint({ f: 1, ft: .9, s: 1, lw: 5 }); } else K.paint({ s: 1, lw: 6 });
@@ -299,7 +299,7 @@
       if (tab === 'mapa') { putCanvas(paint(2400, 1350, 0, drawMap, { data: d, sel: EXP.sel, t: 0 })); EXP.pts = EXP.job.pts; }
       else if (tab === 'atlas') { putCanvas(paint(2400, 1350, 2, drawAtlas, { data: d, sel: EXP.sel })); EXP.pts = EXP.job.pts; }
       else if (tab === 'criatura') { const st = EXP.st = stats(d); EXP.pet = 0; const tick = () => { if (EXP.tab !== 'criatura' || !win.classList.contains('on')) return; EXP.t = (EXP.t || 0) + .16; EXP.pet = Math.max(0, EXP.pet - .05);
-        putCanvas(paint(720, 720, MOOD_INK[st.top] || 0, drawCreature, { st: EXP.st, t: EXP.t, petting: EXP.pet })); EXP.timer = setTimeout(tick, 140); }; tick(); }
+        putCanvas(paint(720, 720, MOOD_INK[st.top] || 0, drawCreature, { st: EXP.st, t: EXP.t, petting: EXP.pet, lx: EXP.i.lx, ly: EXP.i.ly })); EXP.timer = setTimeout(tick, 140); }; tick(); }
       else await collectionView();
       place(); renderSide();
     } finally { EXP.busy = false; }
@@ -338,6 +338,9 @@
     if (li?.dataset.s) { const s = songOf(li.dataset.s), pt = EXP.pts?.find(p => p.id === li.dataset.s); return choose(s ? (MOODS[s.mood] ? s.mood : '') : EXP.sel, pt?.x, pt?.y); }
   });
   // arrastrar mueve el lienzo; un toque sin mover elige; la criatura se acaricia con un toque
+  // la criatura te mira: sus pupilas siguen al cursor
+  $('exStage').addEventListener('pointermove', e => { if (EXP.tab !== 'criatura') return; const r = $('exStage').getBoundingClientRect(); EXP.i.lx = clamp(((e.clientX - r.left) / r.width - .5) * 2, -1, 1); EXP.i.ly = clamp(((e.clientY - r.top) / r.height - .5) * 2, -1, 1); });
+  $('exStage').addEventListener('pointerleave', () => { EXP.i.lx = 0; EXP.i.ly = 0; });
   $('exStage').addEventListener('pointerdown', e => { if (EXP.tab === 'criatura') { EXP.pet = 1; return; } drag = { x: e.clientX, y: e.clientY, tx: V.tx, ty: V.ty, moved: false }; $('exStage').setPointerCapture(e.pointerId); });
   $('exStage').addEventListener('pointermove', e => {
     const tip = $('exTip'), st = $('exStage');
