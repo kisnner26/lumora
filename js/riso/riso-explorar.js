@@ -190,7 +190,7 @@
     K.rect(-3200, base, 8000, 400, { f: 3, ft: .28 }); K.line(-3200, base, 8000, base, 1, 5);
     const h = new Date().getHours(); if (h >= 7 && h < 19) K.circ(1130, 230, 46, { f: 2, ft: .95, s: 1, lw: 4 }); else { K.circ(1130, 230, 40, { f: -1, s: 1, lw: 4 }); K.circ(1148, 220, 34, { f: 3, ft: .5 }); }
     if (s.state === 'huevo') { const y = base - 110 + sin(t * 2) * 3; K.c.save(); K.c.translate(cx, y); K.c.rotate(sin(t * 3) * .05); K.c.beginPath(); K.c.ellipse(0, 0, 110, 140, 0, 0, TAU); K.paint({ f: -1, s: 1, lw: 7 }); K.poly([[-70, -40], [-40, -70], [-10, -35], [20, -70], [50, -40], [90, -10]], { s: 1, lw: 5 }, false); for (let i = 0; i < 6; i++) K.circ(-60 + i * 25, 30 + sin(i) * 40, 10, { f: 2, ft: .85 }); K.c.restore(); K.txt('un huevo esperando música', cx, base + 90, { font: 'hand', size: 44, w: 600, align: 'center' }); return; }
-    const size = 1 + L * .05, bob = s.state === 'dormido' ? sin(t * 1.2) * 4 : sin(t * 3.4) * (s.state === 'hambriento' ? 3 : 10), sq = 1 - bob * .004, W2 = 170 * size * (1 + bob * .004), H2 = 150 * size * sq, by = base - H2 + 6 - Math.max(0, bob) * .6 - (job.hop ? Math.sin(job.hop * Math.PI) * 130 : 0), fill = MOOD_INK[s.top] % 3 + 1, hairy = rr();
+    const size = 1 + L * .05, bob = job.dance && s.state !== 'dormido' && s.state !== 'huevo' ? sin(Date.now() / 1000 * TAU * job.dance / 120) * 16 : s.state === 'dormido' ? sin(t * 1.2) * 4 : sin(t * 3.4) * (s.state === 'hambriento' ? 3 : 10), sq = 1 - bob * .004, W2 = 170 * size * (1 + bob * .004), H2 = 150 * size * sq, by = base - H2 + 6 - Math.max(0, bob) * .6 - (job.hop ? Math.sin(job.hop * Math.PI) * 130 : 0), fill = MOOD_INK[s.top] % 3 + 1, hairy = rr();
     // cola
     K.c.save(); K.c.translate(cx + W2 * .85, by + H2 * .55); K.c.rotate(sin(t * 5) * .3 * (s.state === 'contento' ? 1 : .2)); K.poly([[0, 0], [70 * size, -40 * size], [90 * size, -10 * size], [10, 24]], { f: fill === 1 ? 2 : fill, ft: .8, s: 1, lw: 6 }); K.c.restore();
     // orejas según el género
@@ -334,7 +334,7 @@
       if (tab === 'mapa') { putCanvas(paint(2400, 1350, 0, drawMap, { data: d, sel: EXP.sel, t: 0 })); EXP.pts = EXP.job.pts; }
       else if (tab === 'atlas') { putCanvas(paint(2400, 1350, 2, drawAtlas, { data: d, sel: EXP.sel })); EXP.pts = EXP.job.pts; }
       else if (tab === 'criatura') { const st = EXP.st = stats(d); EXP.pet = 0; const tick = () => { if (EXP.tab !== 'criatura' || !win.classList.contains('on')) return; EXP.t = (EXP.t || 0) + .16; EXP.pet = Math.max(0, EXP.pet - .05); if (Date.now() > (EXP.i.proxima || 0)) { if (EXP.i.proxima) decir(EXP.st); EXP.i.proxima = Date.now() + 9000 + Math.random() * 8000; } if (EXP.i.hop) { EXP.i.hop += .1; if (EXP.i.hop >= 1) EXP.i.hop = 0; }
-        putCanvas(paint(720, 720, MOOD_INK[st.top] || 0, drawCreature, { st: EXP.st, t: EXP.t, petting: EXP.pet, lx: EXP.i.lx, ly: EXP.i.ly, hop: EXP.i.hop, say: EXP.i.sayHasta > Date.now() ? EXP.i.say : '' })); EXP.timer = setTimeout(tick, EXP.i.hop || EXP.pet ? 60 : 140); }; tick(); }
+        putCanvas(paint(720, 720, MOOD_INK[st.top] || 0, drawCreature, { st: EXP.st, t: EXP.t, petting: EXP.pet, lx: EXP.i.lx, ly: EXP.i.ly, hop: EXP.i.hop, hopK: EXP.i.hopK, dance: window.AUD && AUD.live && typeof IN !== 'undefined' ? Math.max(70, Math.min(180, IN.bpm || 100)) : 0, say: EXP.i.sayHasta > Date.now() ? EXP.i.say : '' })); EXP.timer = setTimeout(tick, EXP.i.hop || EXP.pet || (window.AUD && AUD.live) ? 60 : 140); }; tick(); }
       else await collectionView();
       place(); renderSide();
     } finally { EXP.busy = false; }
