@@ -43,6 +43,16 @@ class Puente:
                 time.sleep(0.2)
         return False
 
+    def diagnostico(self):
+        """lo que imprimió el puente, para que un fallo en la integración continua diga por qué"""
+        if self.proc.poll() is None:
+            self.proc.terminate()
+        try:
+            salida, _ = self.proc.communicate(timeout=5)
+        except Exception:
+            salida = ''
+        return 'el puente no arrancó (código %s). salida:\n%s' % (self.proc.returncode, salida)
+
     def cerrar(self):
         if self.proc.poll() is None:
             self.proc.send_signal(signal.SIGTERM)
@@ -61,6 +71,10 @@ class PruebasPuente(unittest.TestCase):
         for p in self.abiertos:
             p.cerrar()
 
+    def arrancado(self, p):
+        if not p.esperar():                      # el diagnóstico solo se arma si falla
+            self.fail(p.diagnostico())
+
     def lanzar(self, puerto):
         p = Puente(puerto)
         self.abiertos.append(p)
@@ -68,7 +82,7 @@ class PruebasPuente(unittest.TestCase):
 
     def test_salud_y_web_desde_lumora_root(self):
         p = self.lanzar(puerto_libre())
-        self.assertTrue(p.esperar(), 'el puente no arrancó')
+        self.arrancado(p)
         estado, cuerpo = pedir(p.puerto, '/salud')
         datos = json.loads(cuerpo)
         self.assertEqual(estado, 200)
@@ -86,7 +100,7 @@ class PruebasPuente(unittest.TestCase):
             p = self.lanzar(base)
             siguiente = base + 1
             p.puerto = siguiente
-            self.assertTrue(p.esperar(), 'no tomó el puerto siguiente')
+            self.arrancado(p)
             self.assertEqual(json.loads(pedir(siguiente, '/salud')[1])['puerto'], siguiente)
             with open(os.path.join(p.tmp.name, 'Library/Application Support/Lumora/puerto')) as f:
                 guardado = f.read().strip()
@@ -94,7 +108,7 @@ class PruebasPuente(unittest.TestCase):
 
     def test_segundo_puente_reutiliza_el_primero(self):
         primero = self.lanzar(puerto_libre())
-        self.assertTrue(primero.esperar())
+        self.arrancado(primero)
         segundo = Puente(primero.puerto)
         self.abiertos.append(segundo)
         salida, _ = segundo.proc.communicate(timeout=15)
@@ -104,7 +118,7 @@ class PruebasPuente(unittest.TestCase):
 
     def test_sigterm_apaga_sin_hijos_huerfanos(self):
         p = self.lanzar(puerto_libre())
-        self.assertTrue(p.esperar())
+        self.arrancado(p)
         pid = p.proc.pid
         p.proc.send_signal(signal.SIGTERM)
         p.proc.wait(5)
