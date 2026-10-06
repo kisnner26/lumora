@@ -9,8 +9,13 @@ import hashlib, json, os, queue, re, socket, subprocess, threading, time, tempfi
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
-PORT = 8888
-ROOT = os.path.dirname(os.path.abspath(__file__))
+PORT = int(os.environ.get('LUMORA_PORT') or 8888)
+HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.abspath(os.environ.get('LUMORA_ROOT') or HERE)                  # carpeta con index.html y la web
+TOOLS = os.path.abspath(os.environ.get('LUMORA_TOOLS') or os.path.join(ROOT, 'tools'))
+for _d in ('/opt/homebrew/bin', '/usr/local/bin'):                              # una app de Finder arranca con un PATH mínimo; ffmpeg suele vivir aquí
+    if os.path.isdir(_d) and _d not in os.environ.get('PATH', '').split(':'):
+        os.environ['PATH'] = os.environ.get('PATH', '/usr/bin:/bin') + ':' + _d
 ART = os.path.join(tempfile.gettempdir(), 'lumora-art.bin')
 # cada carátula queda guardada con su token: la estantería y "artista" del modo carátula
 # piden portadas de canciones que ya pasaron, y /art a secas solo tiene la actual
@@ -164,7 +169,7 @@ def fetch_bpm(artist, title, dur):
 
 
 # ---------- traducción en el dispositivo (traductor de Apple, tools/traducir) ----------
-TR_BIN = os.path.join(ROOT, 'tools', 'traducir')
+TR_BIN = os.path.join(TOOLS, 'traducir')
 TR_FILE = os.path.expanduser('~/Library/Caches/lumora-traducciones.json')
 try:
     TR_CACHE = json.load(open(TR_FILE))
@@ -263,7 +268,7 @@ def fetch_wiki(q, lang):
 
 
 # ---------- oído: niveles del audio del sistema (tools/oido, ScreenCaptureKit) ----------
-OIDO_BIN = os.path.join(ROOT, 'tools', 'oido')
+OIDO_BIN = os.path.join(TOOLS, 'oido')
 AUDIO = {'clients': [], 'error': '', 'running': False}
 AUDIO_LOCK = threading.Lock()
 
