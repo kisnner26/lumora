@@ -21,7 +21,13 @@ OPC="--force --options runtime --timestamp=none"
 
 # firmar de dentro hacia fuera: cada ejecutable y biblioteca, luego el paquete
 find "$APP" -type f \( -perm -u+x -o -name '*.dylib' -o -name '*.so' \) | while read -r f; do
-  if file "$f" | grep -q 'Mach-O'; then codesign $OPC -s "$ID" --entitlements app/entitlements.plist "$f"; fi
+  if file "$f" | grep -q 'Mach-O'; then
+    case "$(basename "$f")" in
+      oido|traducir|lumora-bridge) IDF="-i com.kisnner.lumora.$(basename "$f")" ;;   # identificador fijo: el permiso de macOS no se pierde al recompilar
+      *) IDF="" ;;
+    esac
+    codesign $OPC $IDF -s "$ID" --entitlements app/entitlements.plist "$f"
+  fi
 done
 codesign $OPC -s "$ID" --entitlements app/entitlements.plist "$APP"
 codesign --verify --deep --strict --verbose=2 "$APP"
