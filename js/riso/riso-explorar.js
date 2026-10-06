@@ -144,6 +144,25 @@
     return { moods, gens, artists: d.artists, songs: d.songs.length, total: d.total, level, falta, avance, topArtistas: cnt(s => s.artist).slice(0, 3), topCanciones: [...d.songs].sort((a, b) => (b.veces || 1) - (a.veces || 1)).slice(0, 3), name, days, top: moods[0]?.[0] || '', genre: gens[0]?.[0] || '', state: !d.total ? 'huevo' : days > 10 ? 'dormido' : days > 3 ? 'hambriento' : 'contento' };
   }
   EXP.stats = stats;
+  // voz de la criatura: notas cortas de un sintetizador; el tono sale de su nombre, así cada criatura suena distinta
+  let AC = null;
+  const sonidoOn = () => { try { return localStorage.getItem('lumoraCriaturaSonido') !== '0'; } catch (e) { return true; } };
+  function chirp(tipo) {
+    EXP.i.ultimoSonido = tipo; if (!sonidoOn()) return;
+    try {
+      AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume();
+      const base = 330 + (hash(EXP.st ? EXP.st.name : 'lumora') % 180), now = AC.currentTime;
+      const notas = tipo === 'salto' ? [[1, 1.5, .16]] : tipo === 'giro' ? [[1, 1.26, .08], [1.26, 1.5, .08], [1.5, 2, .12]] : tipo === 'dormir' ? [[.7, .5, .5]] : [[1, 1.19, .1], [1.19, 1.5, .14]];
+      let t0 = now;
+      for (const [a, b, dur] of notas) {
+        const o = AC.createOscillator(), g = AC.createGain(); o.type = 'triangle';
+        o.frequency.setValueAtTime(base * a, t0); o.frequency.exponentialRampToValueAtTime(base * b, t0 + dur);
+        g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(.18, t0 + .015); g.gain.exponentialRampToValueAtTime(.0001, t0 + dur + .05);
+        o.connect(g).connect(AC.destination); o.start(t0); o.stop(t0 + dur + .08); t0 += dur * .9;
+      }
+    } catch (e) {}
+  }
+  EXP.chirp = chirp;
   // qué significa el estado de la criatura y qué hacer para cambiarlo
   const consejo = st => st.state === 'huevo' ? 'ponle música: nace con tu primera canción.'
     : st.state === 'dormido' ? `lleva ${st.days} días sin música y se quedó dormida. pon cualquier canción y despierta.`
@@ -156,7 +175,7 @@
     K.rect(-3200, base, 8000, 400, { f: 3, ft: .28 }); K.line(-3200, base, 8000, base, 1, 5);
     const h = new Date().getHours(); if (h >= 7 && h < 19) K.circ(1130, 230, 46, { f: 2, ft: .95, s: 1, lw: 4 }); else { K.circ(1130, 230, 40, { f: -1, s: 1, lw: 4 }); K.circ(1148, 220, 34, { f: 3, ft: .5 }); }
     if (s.state === 'huevo') { const y = base - 110 + sin(t * 2) * 3; K.c.save(); K.c.translate(cx, y); K.c.rotate(sin(t * 3) * .05); K.c.beginPath(); K.c.ellipse(0, 0, 110, 140, 0, 0, TAU); K.paint({ f: -1, s: 1, lw: 7 }); K.poly([[-70, -40], [-40, -70], [-10, -35], [20, -70], [50, -40], [90, -10]], { s: 1, lw: 5 }, false); for (let i = 0; i < 6; i++) K.circ(-60 + i * 25, 30 + sin(i) * 40, 10, { f: 2, ft: .85 }); K.c.restore(); K.txt('un huevo esperando música', cx, base + 90, { font: 'hand', size: 44, w: 600, align: 'center' }); return; }
-    const size = 1 + L * .05, bob = s.state === 'dormido' ? sin(t * 1.2) * 4 : sin(t * 3.4) * (s.state === 'hambriento' ? 3 : 10), sq = 1 - bob * .004, W2 = 170 * size * (1 + bob * .004), H2 = 150 * size * sq, by = base - H2 + 6 - Math.max(0, bob) * .6, fill = MOOD_INK[s.top] % 3 + 1, hairy = rr();
+    const size = 1 + L * .05, bob = s.state === 'dormido' ? sin(t * 1.2) * 4 : sin(t * 3.4) * (s.state === 'hambriento' ? 3 : 10), sq = 1 - bob * .004, W2 = 170 * size * (1 + bob * .004), H2 = 150 * size * sq, by = base - H2 + 6 - Math.max(0, bob) * .6 - (job.hop ? Math.sin(job.hop * Math.PI) * 130 : 0), fill = MOOD_INK[s.top] % 3 + 1, hairy = rr();
     // cola
     K.c.save(); K.c.translate(cx + W2 * .85, by + H2 * .55); K.c.rotate(sin(t * 5) * .3 * (s.state === 'contento' ? 1 : .2)); K.poly([[0, 0], [70 * size, -40 * size], [90 * size, -10 * size], [10, 24]], { f: fill === 1 ? 2 : fill, ft: .8, s: 1, lw: 6 }); K.c.restore();
     // orejas según el género
@@ -298,8 +317,8 @@
       const d = EXP.data = await load(); EXP.pts = null; if (!keep) $('exSide').classList.remove('off'); renderSide();
       if (tab === 'mapa') { putCanvas(paint(2400, 1350, 0, drawMap, { data: d, sel: EXP.sel, t: 0 })); EXP.pts = EXP.job.pts; }
       else if (tab === 'atlas') { putCanvas(paint(2400, 1350, 2, drawAtlas, { data: d, sel: EXP.sel })); EXP.pts = EXP.job.pts; }
-      else if (tab === 'criatura') { const st = EXP.st = stats(d); EXP.pet = 0; const tick = () => { if (EXP.tab !== 'criatura' || !win.classList.contains('on')) return; EXP.t = (EXP.t || 0) + .16; EXP.pet = Math.max(0, EXP.pet - .05);
-        putCanvas(paint(720, 720, MOOD_INK[st.top] || 0, drawCreature, { st: EXP.st, t: EXP.t, petting: EXP.pet, lx: EXP.i.lx, ly: EXP.i.ly })); EXP.timer = setTimeout(tick, 140); }; tick(); }
+      else if (tab === 'criatura') { const st = EXP.st = stats(d); EXP.pet = 0; const tick = () => { if (EXP.tab !== 'criatura' || !win.classList.contains('on')) return; EXP.t = (EXP.t || 0) + .16; EXP.pet = Math.max(0, EXP.pet - .05); if (EXP.i.hop) { EXP.i.hop += .1; if (EXP.i.hop >= 1) EXP.i.hop = 0; }
+        putCanvas(paint(720, 720, MOOD_INK[st.top] || 0, drawCreature, { st: EXP.st, t: EXP.t, petting: EXP.pet, lx: EXP.i.lx, ly: EXP.i.ly, hop: EXP.i.hop })); EXP.timer = setTimeout(tick, EXP.i.hop || EXP.pet ? 60 : 140); }; tick(); }
       else await collectionView();
       place(); renderSide();
     } finally { EXP.busy = false; }
@@ -317,7 +336,7 @@
     if (a === 'zin') return zoomAt(avail() / 2, $('exMain').clientHeight / 2, 1.5);
     if (a === 'zout') return zoomAt(avail() / 2, $('exMain').clientHeight / 2, 1 / 1.5);
     if (a === 'zfit') { cancelAnimationFrame(anim); V.k = 1; V.tx = V.ty = 0; return place(); }
-    if (a === 'pet') { EXP.pet = 1; return; }
+    if (a === 'pet') { EXP.pet = 1; chirp('caricia'); return; }
     if (a === 'guardar') {                                  // la criatura como imagen PNG
       const cv = $('exStage').querySelector('canvas'); if (!cv) return;
       cv.toBlob(b => { if (!b) return; const u = URL.createObjectURL(b), l = document.createElement('a'); l.href = u; l.download = 'criatura-' + (EXP.st ? EXP.st.name : 'lumora').toLowerCase() + '.png'; document.body.append(l); l.click(); l.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000); }, 'image/png');
@@ -341,7 +360,7 @@
   // la criatura te mira: sus pupilas siguen al cursor
   $('exStage').addEventListener('pointermove', e => { if (EXP.tab !== 'criatura') return; const r = $('exStage').getBoundingClientRect(); EXP.i.lx = clamp(((e.clientX - r.left) / r.width - .5) * 2, -1, 1); EXP.i.ly = clamp(((e.clientY - r.top) / r.height - .5) * 2, -1, 1); });
   $('exStage').addEventListener('pointerleave', () => { EXP.i.lx = 0; EXP.i.ly = 0; });
-  $('exStage').addEventListener('pointerdown', e => { if (EXP.tab === 'criatura') { EXP.pet = 1; return; } drag = { x: e.clientX, y: e.clientY, tx: V.tx, ty: V.ty, moved: false }; $('exStage').setPointerCapture(e.pointerId); });
+  $('exStage').addEventListener('pointerdown', e => { if (EXP.tab === 'criatura') { EXP.pet = 1; if (!EXP.i.hop) EXP.i.hop = .01; chirp(EXP.st && EXP.st.state === 'dormido' ? 'dormir' : 'salto'); return; } drag = { x: e.clientX, y: e.clientY, tx: V.tx, ty: V.ty, moved: false }; $('exStage').setPointerCapture(e.pointerId); });
   $('exStage').addEventListener('pointermove', e => {
     const tip = $('exTip'), st = $('exStage');
     if (drag) { const dx = e.clientX - drag.x, dy = e.clientY - drag.y; if (Math.abs(dx) + Math.abs(dy) > 5) drag.moved = true; if (drag.moved) { st.classList.add('drag'); V.tx = drag.tx + dx; V.ty = drag.ty + dy; place(); tip.classList.remove('on'); } return; }
