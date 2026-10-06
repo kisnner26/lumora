@@ -5,10 +5,11 @@ GET  /now          -> estado de Música en JSON (se refresca 4 veces por segundo
 GET  /art          -> carátula de la canción actual
 POST /cmd?c=...    -> playpause | seek:+5 | seek:-5 | start
 """
-import hashlib, json, os, queue, re, socket, subprocess, sys, threading, time, tempfile, urllib.request, urllib.parse
+import hashlib, json, os, queue, re, shutil, socket, subprocess, sys, threading, time, tempfile, urllib.request, urllib.parse
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
+VERSION = '1.0'
 PORT = int(os.environ.get('LUMORA_PORT') or 8888)
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.environ.get('LUMORA_ROOT') or HERE)                  # carpeta con index.html y la web
@@ -552,6 +553,23 @@ def poll():
         time.sleep(1)                        # si osascript muere, se relanza
 
 
+def salud():
+    """estado del puente para el lanzador; sin datos personales"""
+    def running(app):
+        try:
+            return osa('tell application "System Events" to (name of processes) contains "%s"' % app, 2) == 'true'
+        except Exception:
+            return None
+    try:
+        osa('return 1', 2); osa_ok = True
+    except Exception:
+        osa_ok = False
+    return {'lumora': True, 'version': VERSION, 'puerto': PORT, 'root': ROOT, 'osascript': osa_ok,
+            'musica': running('Music') if osa_ok else None, 'spotify': running('Spotify') if osa_ok else None,
+            'oido': os.path.exists(OIDO_BIN), 'traducir': os.path.exists(TR_BIN),
+            'ffmpeg': shutil.which('ffmpeg') is not None, 'cancion': state.get('state', 'off')}
+
+
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *a, **k):
         super().__init__(*a, directory=ROOT, **k)
@@ -573,6 +591,8 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         path = urlparse(self.path).path
+        if path == '/salud':
+            return self.send_json(salud())
         if path == '/story':
             import guion
             if parse_qs(urlparse(self.path).query).get('catalog'):
