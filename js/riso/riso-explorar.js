@@ -163,6 +163,21 @@
     } catch (e) {}
   }
   EXP.chirp = chirp;
+  // lo que dice la criatura según su estado y tu música
+  const pick = a => a[Math.floor(Math.random() * a.length)], corto = (t, n) => t.length > n ? t.slice(0, n - 1) + '…' : t;
+  function frase(st, tipo) {
+    const a = st.topArtistas[0] && st.topArtistas[0][0], c = st.topCanciones[0] && st.topCanciones[0].name;
+    if (tipo === 'caricia') return pick(['mmm, qué rico', 'más, más', 'ronroneo...', 'me haces cosquillas']);
+    if (tipo === 'salto') return pick(['¡hop!', '¡arriba!', '¡wiii!']);
+    if (st.state === 'huevo') return pick(['...', 'ponme música', 'estoy por nacer']);
+    if (st.state === 'dormido') return pick(['zzz...', 'despiértame con música']);
+    if (st.state === 'hambriento') return pick(['tengo hambre de música', 'hace días que no oigo nada']);
+    const op = [a ? 'me encanta ' + corto(a, 16) : '¡más música!', c ? '¿otra vez ' + corto(c, 14) + '?' : 'qué buen día'];
+    if (st.falta) op.push(st.falta === 1 ? 'una escucha y subo de nivel' : 'faltan ' + st.falta + ' escuchas para subir');
+    return pick(op);
+  }
+  const decir = (st, tipo) => { EXP.i.say = frase(st, tipo); EXP.i.sayHasta = Date.now() + 2600; };
+  EXP.decir = decir;
   // qué significa el estado de la criatura y qué hacer para cambiarlo
   const consejo = st => st.state === 'huevo' ? 'ponle música: nace con tu primera canción.'
     : st.state === 'dormido' ? `lleva ${st.days} días sin música y se quedó dormida. pon cualquier canción y despierta.`
@@ -200,6 +215,7 @@
     // patas
     for (const sgn of [-1, 1]) { K.c.beginPath(); K.c.ellipse(cx + sgn * W2 * .5, base - 8, 44 * size, 20, 0, 0, TAU); K.paint({ f: fill === 1 ? 2 : fill, ft: .9, s: 1, lw: 6 }); }
     if (job.petting > 0) for (let i = 0; i < 4; i++) K.poly(heartPts(cx - 120 + i * 80 + sin(t * 4 + i) * 10, by - 40 - job.petting * 90 - i * 24, 3.2), { f: 2, ft: .9, s: 1, lw: 3 });
+    if (job.say) { const w = Math.min(980, 70 + job.say.length * 25), x = cx - w / 2, y = Math.max(30, by - 160 * size - 70); K.rect(x, y, w, 84, { f: -1, s: 1, lw: 5 }); K.poly([[cx - 18, y + 84], [cx, y + 112], [cx + 18, y + 84]], { f: -1, s: 1, lw: 5 }); K.txt(job.say, cx, y + 58, { font: 'hand', size: 44, w: 600, align: 'center', i: 1 }); }
     K.txt(s.name, cx, 790, { font: 'display', size: 56, w: 900, stretch: 'condensed', align: 'center' }); K.code(`NIVEL ${L} · ${s.state.toUpperCase()}`, cx, 822, { align: 'center', size: 15 });
   }
   const starPts = (x, y, r, n) => Array.from({ length: n * 2 }, (_, i) => { const a = -Math.PI / 2 + i * Math.PI / n, q = i % 2 ? r * .45 : r; return [x + cos(a) * q, y + sin(a) * q]; });
@@ -317,8 +333,8 @@
       const d = EXP.data = await load(); EXP.pts = null; if (!keep) $('exSide').classList.remove('off'); renderSide();
       if (tab === 'mapa') { putCanvas(paint(2400, 1350, 0, drawMap, { data: d, sel: EXP.sel, t: 0 })); EXP.pts = EXP.job.pts; }
       else if (tab === 'atlas') { putCanvas(paint(2400, 1350, 2, drawAtlas, { data: d, sel: EXP.sel })); EXP.pts = EXP.job.pts; }
-      else if (tab === 'criatura') { const st = EXP.st = stats(d); EXP.pet = 0; const tick = () => { if (EXP.tab !== 'criatura' || !win.classList.contains('on')) return; EXP.t = (EXP.t || 0) + .16; EXP.pet = Math.max(0, EXP.pet - .05); if (EXP.i.hop) { EXP.i.hop += .1; if (EXP.i.hop >= 1) EXP.i.hop = 0; }
-        putCanvas(paint(720, 720, MOOD_INK[st.top] || 0, drawCreature, { st: EXP.st, t: EXP.t, petting: EXP.pet, lx: EXP.i.lx, ly: EXP.i.ly, hop: EXP.i.hop })); EXP.timer = setTimeout(tick, EXP.i.hop || EXP.pet ? 60 : 140); }; tick(); }
+      else if (tab === 'criatura') { const st = EXP.st = stats(d); EXP.pet = 0; const tick = () => { if (EXP.tab !== 'criatura' || !win.classList.contains('on')) return; EXP.t = (EXP.t || 0) + .16; EXP.pet = Math.max(0, EXP.pet - .05); if (Date.now() > (EXP.i.proxima || 0)) { if (EXP.i.proxima) decir(EXP.st); EXP.i.proxima = Date.now() + 9000 + Math.random() * 8000; } if (EXP.i.hop) { EXP.i.hop += .1; if (EXP.i.hop >= 1) EXP.i.hop = 0; }
+        putCanvas(paint(720, 720, MOOD_INK[st.top] || 0, drawCreature, { st: EXP.st, t: EXP.t, petting: EXP.pet, lx: EXP.i.lx, ly: EXP.i.ly, hop: EXP.i.hop, say: EXP.i.sayHasta > Date.now() ? EXP.i.say : '' })); EXP.timer = setTimeout(tick, EXP.i.hop || EXP.pet ? 60 : 140); }; tick(); }
       else await collectionView();
       place(); renderSide();
     } finally { EXP.busy = false; }
@@ -336,7 +352,7 @@
     if (a === 'zin') return zoomAt(avail() / 2, $('exMain').clientHeight / 2, 1.5);
     if (a === 'zout') return zoomAt(avail() / 2, $('exMain').clientHeight / 2, 1 / 1.5);
     if (a === 'zfit') { cancelAnimationFrame(anim); V.k = 1; V.tx = V.ty = 0; return place(); }
-    if (a === 'pet') { EXP.pet = 1; chirp('caricia'); return; }
+    if (a === 'pet') { EXP.pet = 1; chirp('caricia'); if (EXP.st) decir(EXP.st, 'caricia'); return; }
     if (a === 'guardar') {                                  // la criatura como imagen PNG
       const cv = $('exStage').querySelector('canvas'); if (!cv) return;
       cv.toBlob(b => { if (!b) return; const u = URL.createObjectURL(b), l = document.createElement('a'); l.href = u; l.download = 'criatura-' + (EXP.st ? EXP.st.name : 'lumora').toLowerCase() + '.png'; document.body.append(l); l.click(); l.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000); }, 'image/png');
@@ -360,7 +376,7 @@
   // la criatura te mira: sus pupilas siguen al cursor
   $('exStage').addEventListener('pointermove', e => { if (EXP.tab !== 'criatura') return; const r = $('exStage').getBoundingClientRect(); EXP.i.lx = clamp(((e.clientX - r.left) / r.width - .5) * 2, -1, 1); EXP.i.ly = clamp(((e.clientY - r.top) / r.height - .5) * 2, -1, 1); });
   $('exStage').addEventListener('pointerleave', () => { EXP.i.lx = 0; EXP.i.ly = 0; });
-  $('exStage').addEventListener('pointerdown', e => { if (EXP.tab === 'criatura') { EXP.pet = 1; if (!EXP.i.hop) EXP.i.hop = .01; chirp(EXP.st && EXP.st.state === 'dormido' ? 'dormir' : 'salto'); return; } drag = { x: e.clientX, y: e.clientY, tx: V.tx, ty: V.ty, moved: false }; $('exStage').setPointerCapture(e.pointerId); });
+  $('exStage').addEventListener('pointerdown', e => { if (EXP.tab === 'criatura') { EXP.pet = 1; if (!EXP.i.hop) EXP.i.hop = .01; chirp(EXP.st && EXP.st.state === 'dormido' ? 'dormir' : 'salto'); if (EXP.st) decir(EXP.st, 'salto'); return; } drag = { x: e.clientX, y: e.clientY, tx: V.tx, ty: V.ty, moved: false }; $('exStage').setPointerCapture(e.pointerId); });
   $('exStage').addEventListener('pointermove', e => {
     const tip = $('exTip'), st = $('exStage');
     if (drag) { const dx = e.clientX - drag.x, dy = e.clientY - drag.y; if (Math.abs(dx) + Math.abs(dy) > 5) drag.moved = true; if (drag.moved) { st.classList.add('drag'); V.tx = drag.tx + dx; V.ty = drag.ty + dy; place(); tip.classList.remove('on'); } return; }
