@@ -1,0 +1,36 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  web:
+    name: comprobaciones de la web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: sh tools/check.sh
+
+  puente:
+    name: puente de python
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m py_compile bridge.py guion.py tools/mock_bridge.py
+
+  app:
+    name: compilar la app de mac
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: swiftc -O app/Lumora.swift -o /tmp/lumora-lanzador
+      - run: swiftc -O -parse-as-library tools/oido.swift -o /tmp/oido
+      - run: swiftc -O -parse-as-library tools/traducir.swift -o /tmp/traducir
