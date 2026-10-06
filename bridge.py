@@ -5,7 +5,7 @@ GET  /now          -> estado de Música en JSON (se refresca 4 veces por segundo
 GET  /art          -> carátula de la canción actual
 POST /cmd?c=...    -> playpause | seek:+5 | seek:-5 | start
 """
-import hashlib, json, os, queue, re, shutil, signal, socket, subprocess, sys, threading, time, tempfile, urllib.request, urllib.parse
+import hashlib, json, os, queue, re, shutil, signal, socket, socketserver, subprocess, sys, threading, time, tempfile, urllib.request, urllib.parse
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
@@ -809,6 +809,11 @@ class Handler(SimpleHTTPRequestHandler):
 
 
 class Servidor(ThreadingHTTPServer):
+    def server_bind(self):
+        # HTTPServer.server_bind hace una resolución inversa (getfqdn) que en redes con DNS lento puede tardar muchos segundos
+        socketserver.TCPServer.server_bind(self)
+        self.server_name, self.server_port = '127.0.0.1', self.server_address[1]
+
     def handle_error(self, request, client_address):
         if isinstance(sys.exc_info()[1], (BrokenPipeError, ConnectionResetError)):   # el navegador cerró la conexión: no es un error
             return
