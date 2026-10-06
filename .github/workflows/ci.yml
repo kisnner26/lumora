@@ -31,6 +31,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+      - run: python3 -m unittest discover -s tests -v
       - run: swiftc -O app/Lumora.swift -o /tmp/lumora-lanzador
       - run: swiftc -O -parse-as-library tools/oido.swift -o /tmp/oido
       - run: swiftc -O -parse-as-library tools/traducir.swift -o /tmp/traducir
