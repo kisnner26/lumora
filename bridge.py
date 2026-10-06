@@ -5,7 +5,7 @@ GET  /now          -> estado de Música en JSON (se refresca 4 veces por segundo
 GET  /art          -> carátula de la canción actual
 POST /cmd?c=...    -> playpause | seek:+5 | seek:-5 | start
 """
-import hashlib, json, os, queue, re, socket, subprocess, threading, time, tempfile, urllib.request, urllib.parse
+import hashlib, json, os, queue, re, socket, subprocess, sys, threading, time, tempfile, urllib.request, urllib.parse
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
@@ -13,6 +13,7 @@ PORT = int(os.environ.get('LUMORA_PORT') or 8888)
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.environ.get('LUMORA_ROOT') or HERE)                  # carpeta con index.html y la web
 TOOLS = os.path.abspath(os.environ.get('LUMORA_TOOLS') or os.path.join(ROOT, 'tools'))
+PORT_FILE = os.path.expanduser('~/Library/Application Support/Lumora/puerto')
 for _d in ('/opt/homebrew/bin', '/usr/local/bin'):                              # una app de Finder arranca con un PATH mínimo; ffmpeg suele vivir aquí
     if os.path.isdir(_d) and _d not in os.environ.get('PATH', '').split(':'):
         os.environ['PATH'] = os.environ.get('PATH', '/usr/bin:/bin') + ':' + _d
@@ -765,12 +766,62 @@ class Handler(SimpleHTTPRequestHandler):
             return self.send_json({'error': str(e)[:200]}, 500)
 
 
+class Servidor(ThreadingHTTPServer):
+    def handle_error(self, request, client_address):
+        if isinstance(sys.exc_info()[1], (BrokenPipeError, ConnectionResetError)):   # el navegador cerró la conexión: no es un error
+            return
+        super().handle_error(request, client_address)
+
+
+def es_lumora(port):
+    try:
+        with urllib.request.urlopen('http://127.0.0.1:%d/salud' % port, timeout=1.5) as r:
+            return bool(json.loads(r.read()).get('lumora'))
+    except Exception:
+        try:                                                   # puentes anteriores a /salud
+            with urllib.request.urlopen('http://127.0.0.1:%d/now' % port, timeout=1.5) as r:
+                return 'server' in json.loads(r.read())
+        except Exception:
+            return False
+
+
+def puerto_libre(port):
+    with socket.socket() as sk:
+        return sk.connect_ex(('127.0.0.1', port)) != 0
+
+
 if __name__ == '__main__':
+    try:
+        sys.stdout.reconfigure(line_buffering=True)
+        sys.stderr.reconfigure(line_buffering=True)
+    except Exception:
+        pass
+    ThreadingHTTPServer.daemon_threads = True
+    ThreadingHTTPServer.request_queue_size = 128                     # la página pide ~25 scripts a la vez; con la cola por defecto (5) se perdían
+    server = None
+    for port in range(PORT, PORT + 20):
+        if es_lumora(port):                                          # ya hay un puente de lumora: se reutiliza
+            print(f'ya hay un puente de lumora en http://127.0.0.1:{port}/index.html')
+            sys.exit(0)
+        if not puerto_libre(port):
+            print(f'el puerto {port} está ocupado por otro programa, pruebo el siguiente')
+            continue
+        try:
+            server = Servidor(('127.0.0.1', port), Handler)
+            PORT = port
+            break
+        except OSError:
+            continue
+    if server is None:
+        print('no encontré un puerto libre'); sys.exit(1)
+    try:
+        os.makedirs(os.path.dirname(PORT_FILE), exist_ok=True)
+        open(PORT_FILE, 'w').write(str(PORT))
+    except OSError:
+        pass
     threading.Thread(target=poll, daemon=True).start()
     threading.Thread(target=audio_loop, daemon=True).start()
     threading.Thread(target=lights_loop, daemon=True).start()
     threading.Thread(target=lambda: (translate(['hello'], 'en', 'es'), translate(['hola'], 'es', 'en')), daemon=True).start()   # precalienta ambas direcciones
     print(f'abre http://127.0.0.1:{PORT}/index.html')
-    ThreadingHTTPServer.daemon_threads = True
-    ThreadingHTTPServer.request_queue_size = 128                     # la página pide ~25 scripts a la vez; con la cola por defecto (5) se perdían
-    ThreadingHTTPServer(('127.0.0.1', PORT), Handler).serve_forever()
+    server.serve_forever()
