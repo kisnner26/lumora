@@ -12,11 +12,11 @@ const cr = await p.evaluate(() => { const f = (a, t) => (RISO.singers.plan(a, t)
 chk('(a) trío: dos del catálogo y uno genérico', cr.trio === 'Bad Bunny:bad_bunny|Daddy Yankee:daddy_yankee|Los Ejemplos:-', cr.trio);
 chk('(a) «feat.» del título suma a Adele', cr.feat === 'Shakira:shakira|Adele:adele', cr.feat);
 chk('(a) bandas: Queen → Freddie, Nirvana → Kurt', /freddie_mercury/.test(cr.queen) && /kurt_cobain/.test(cr.nirv), cr.queen + ' / ' + cr.nirv);
-chk('(a) sin artistas del catálogo no hay cantante (Los Ejemplos, Selena Gomez)', cr.nadie === '' && cr.selena === '', JSON.stringify([cr.nadie, cr.selena]));
+chk('(a) nombres nuevos tienen avatar y Selena Gomez tiene perfil propio', cr.nadie === 'Los Ejemplos:-' && cr.selena === 'Selena Gomez:selena_gomez', JSON.stringify([cr.nadie, cr.selena]));
 chk('(a) Marley con The Wailers: uno del catálogo y uno genérico; Madonna; «x»', /marley:bob_marley|Marley:bob_marley/i.test(cr.marley) && /madonna/.test(cr.madonna) && /adele:adele/i.test(cr.x), JSON.stringify([cr.marley, cr.madonna, cr.x]));
 chk('(a) máximo 3 voces y sin repetidos', cr.cuatro === 3 && cr.dup === 'Shakira:shakira', cr.cuatro + ' ' + cr.dup);
 chk('(a) The Weeknd y su alias usan el personaje propio', cr.weeknd === 'The Weeknd:the_weeknd' && cr.weekndAlias === 'Abel Tesfaye:the_weeknd', cr.weeknd);
-chk('(a) The Weeknd en dúos y feat.; no confundir tributos', cr.weekndDuo === 'The Weeknd:the_weeknd|Bad Bunny:bad_bunny' && cr.weekndFeat.includes('The Weeknd:the_weeknd') && cr.tribute === '', cr.weekndDuo);
+chk('(a) The Weeknd en dúos y feat.; no confundir tributos', cr.weekndDuo === 'The Weeknd:the_weeknd|Bad Bunny:bad_bunny' && cr.weekndFeat.includes('The Weeknd:the_weeknd') && cr.tribute === 'The Weeknd Tribute:-', cr.weekndDuo);
 const custom = await p.evaluate(() => {
   const R = RISO, original = R.props.drawProp, context = R.K.c, calls = [];
   // el kit recibe contexto durante un frame; esta prueba aislada usa su propia plancha.
@@ -36,9 +36,9 @@ await p.evaluate(() => { paused = true; const RC = RISOCLIP; let s = null; const
 // turnos: el micrófono pasa de verso en verso
 const turnos = [0, 1, 2, 3].map(li => li % colab.n).join(',');
 chk('(c) el turno va verso a verso entre las voces', turnos === '0,1,2,0', turnos);
-// (d) sin artista del catálogo: nunca sale
-const nada = await (async () => { await mock('scn=normal'); await espera(3500); return p.evaluate(() => { let n = 0; for (let i = 0; i < 60; i++) if (RISOCLIP.makeShot(IN.lines.findIndex((l, j) => l.text && j > 0), 0, 30, '').kind === 'singer') n++; return n; }); })();
-chk('(d) con un artista fuera del catálogo no salen cantantes', nada === 0, String(nada));
+// (d) un artista nuevo también tiene presencia en el clip
+const nada = await (async () => { await mock('scn=normal'); await espera(3500); return p.evaluate(() => { let n = 0; const lis = IN.lines.map((l, i) => l.text ? i : -1).filter(i => i >= 0); for (let i = 0; i < 60; i++) if (RISOCLIP.makeShot(lis[i % lis.length], 0, 30 + i, '').kind === 'singer') n++; return n; }); })();
+chk('(d) un artista fuera del catálogo tiene personaje', nada > 0, String(nada));
 // (e) ajuste
 await p.evaluate(() => { CFG.singers = false; }); await mock('scn=solo'); await espera(3500);
 const off = await p.evaluate(() => { let n = 0; for (let i = 0; i < 60; i++) if (RISOCLIP.makeShot(IN.lines.findIndex((l, j) => l.text && j > 0), 0, 30, '').kind === 'singer') n++; return n; }); chk('(e) con «cantantes» apagado no salen', off === 0, String(off));
