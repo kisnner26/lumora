@@ -25,6 +25,28 @@ try {
     await p.evaluate(({t, reduced}) => RISO.grief.render(x, W, H, t, { duration: 146.365, reduced, playing: false }), {t, reduced});
     if (file) await p.locator('#c').screenshot({ path: file });
   }
+  const editPlan = await p.evaluate(() => {
+    const g = RISO.grief, shots = new Set(), looks = new Set();
+    for (let t = 0; t < 134; t += .1) {
+      const cue = g.timeline(t, 146.365), look = g.treatment(cue);
+      shots.add(cue.shot); looks.add(look.mono); looks.add(look.panels ? 'mirror' : 'single');
+      if (!Number.isFinite(cue.at) || cue.at < 0 || cue.at > 170.7) throw Error('fuente fuera de rango');
+    }
+    const cut = 16 * 60 / 135;
+    const before = g.timeline(cut - .001), after = g.timeline(cut + .001);
+    const quiet = g.treatment(after, true);
+    return { cuts: shots.size, looks: [...looks], jump: Math.abs(before.at - after.at), quiet,
+      ramp: [g.timeline(1).rate, g.timeline(.01).rate],
+      repeat: JSON.stringify(g.timeline(37)) === JSON.stringify(g.timeline(37)) };
+  });
+  assert.ok(editPlan.cuts > 40);
+  assert.ok(editPlan.jump > 1);
+  assert.ok(editPlan.looks.includes(1) && editPlan.looks.includes('mirror'));
+  assert.ok(editPlan.ramp[1] > editPlan.ramp[0]);
+  assert.ok(editPlan.repeat);
+  assert.equal(editPlan.quiet.blur, 0);
+  assert.equal(editPlan.quiet.rotation, 0);
+  await frame(7.5, '/tmp/lumora-grief-monochrome.png');
   await frame(2, '/tmp/lumora-grief-intro.png');
   await frame(37, '/tmp/lumora-grief-gameplay.png');
   await frame(90, '/tmp/lumora-grief-pressure.png');
