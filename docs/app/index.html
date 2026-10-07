@@ -1948,6 +1948,7 @@ function frame(t0) {
   const dt = Math.min(.08, (t0 - prev) / 1000); prev = t0;
   const t = t0 / 1000;
   readAudio(t);
+  if (mode !== 'proc') window.RISO?.grief?.stop();
   if (mode === 'sync') {
     // mismas escenas que "ver video": la de la línea que acabas de marcar
     if (!audio.src) T += dt;
@@ -1991,8 +1992,9 @@ function frame(t0) {
     if (li !== shown) showLine(li);
     bar.style.width = (time / TOTAL * 100) + '%';
   }
-  if (mode !== 'panel') glow(W / 2, H * .45, S() * .9, 'rgba(255,220,170,A)', energy * .12);
-  if (!window.LOWFX) {
+  const griefFrame = mode === 'proc' && !!window.RISOCLIP?.grief;
+  if (mode !== 'panel' && !griefFrame) glow(W / 2, H * .45, S() * .9, 'rgba(255,220,170,A)', energy * .12);
+  if (!window.LOWFX && !griefFrame) {
     if (!VIGNETTE) { VIGNETTE = document.createElement('canvas'); VIGNETTE.width = 256; VIGNETTE.height = Math.round(256 * H / W);
       const g = VIGNETTE.getContext('2d'), vw = VIGNETTE.width, vh = VIGNETTE.height, v = g.createRadialGradient(vw / 2, vh / 2, Math.min(vw, vh) * .3, vw / 2, vh / 2, Math.max(vw, vh) * .75);
       v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.5)'); g.fillStyle = v; g.fillRect(0, 0, vw, vh); }
@@ -2061,6 +2063,7 @@ requestAnimationFrame(frame);
 <script src="js/riso/riso-artistas.js"></script>
 <script src="js/riso/riso-cantantes.js"></script>
 <script src="js/riso/riso-geometry.js"></script>
+<script src="js/riso/riso-grief.js"></script>
 <script src="js/riso/riso-clip.js"></script>
 <script src="js/riso/riso-poster.js"></script>
 <script src="js/riso/riso-mix.js"></script>
