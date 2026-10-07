@@ -1,4 +1,4 @@
-// homenaje con gameplay real: dos fuentes mudas, reloj musical y tinta en gpu.
+// montaje de grief: cortes por compases, rampas, cámara y tinta en gpu.
 (() => {
   'use strict';
   const R = window.RISO;
@@ -19,10 +19,46 @@
     footage[id] = v;
     return v;
   }
+  const BPM = 135, BEAT = 60 / BPM;
+  // Planos escogidos del showcase: avances y reprises, no un recorrido estirado.
+  const sources = [4, 14.8, 9.3, 50.9, 53.3, 14.8, 59.3, 61, 50.9, 69, 61, 86.2, 98.9, 105.6, 98.9, 122.3, 105.6, 130.2, 122.3, 136.7, 136.7, 130.2, 165, 165.7];
+  function ramp(local, length) {
+    const attack = .22, fast = 2.5, slow = .65, finish = 1.35;
+    if (local < attack) return { distance: fast * local + (slow - fast) * local * local / (2 * attack), rate: fast + (slow - fast) * local / attack };
+    const t = local - attack, span = Math.max(.01, length - attack);
+    return { distance: (fast + slow) * attack / 2 + slow * t + (finish - slow) * t * t / (2 * span), rate: slow + (finish - slow) * t / span };
+  }
   function timeline(time, duration = 146.365) {
     const d = Math.max(20, duration || 146.365), coda = d - 11.9, t = clamp(time, 0, d);
-    return t >= coda ? { id: 'edit', at: Math.min(11.85, t - coda), rate: 1, coda, duration: d, progress: t / d }
-      : { id: 'gameplay', at: t / coda * 170.7, rate: 170.7 / coda, coda, duration: d, progress: t / d };
+    if (t >= coda) return { id: 'edit', at: Math.min(11.85, t - coda), rate: 1, coda, duration: d, progress: t / d, shot: -1, local: t - coda, length: 11.9, phase: 1 };
+    let start = 0, shot = 0, length;
+    while (true) {
+      const beats = start < 7 ? 16 : start < 35 ? 8 : start < 108 ? 4 : 8;
+      length = Math.min(beats * BEAT, coda - start);
+      if (t < start + length || length <= 0) break;
+      start += length; shot++;
+    }
+    const local = t - start, speed = ramp(local, length);
+    // Repartir el catálogo de planos por toda la canción conserva los cambios de sección.
+    const base = Math.floor(start / coda * (sources.length - 1));
+    const source = sources[Math.min(sources.length - 1, base + (shot % 7 === 5 ? 1 : 0))];
+    return { id: 'gameplay', at: Math.min(170.65, source + speed.distance), rate: speed.rate, coda, duration: d, progress: t / d, shot, local, length, phase: local / length };
+  }
+  function treatment(cue, reduced = false) {
+    if (cue.id === 'edit') return { zoom: 1, rotation: 0, x: 0, y: 0, blur: 0, split: 0, mono: 0, panels: false, impact: 0 };
+    const direction = cue.shot % 2 ? -1 : 1;
+    const impact = Math.pow(1 - clamp(cue.local / .24), 3);
+    const release = Math.pow(clamp((cue.local - cue.length + .18) / .18), 2);
+    const mono = cue.shot % 6 === 1 || cue.shot % 6 === 4 ? 1 : 0;
+    if (reduced) return { zoom: 1.08, rotation: 0, x: 0, y: 0, blur: 0, split: 0, mono, panels: false, impact: 0 };
+    return {
+      zoom: 1.12 + .16 * cue.phase + .34 * impact + .18 * release,
+      rotation: direction * (.018 * (1 - cue.phase) + .065 * impact - .04 * release),
+      x: direction * (.025 * Math.sin(cue.phase * Math.PI) + .065 * release),
+      y: .015 * Math.sin(cue.phase * Math.PI * 2),
+      blur: Math.max(impact, release), split: .006 * Math.max(impact, release), mono,
+      panels: cue.shot > 4 && cue.shot % 9 === 7, impact,
+    };
   }
   function sync(cue, playing) {
     const v = video(cue.id);
@@ -57,20 +93,24 @@
     const p = gl.createProgram();
     gl.attachShader(p, shader(gl.VERTEX_SHADER, 'attribute vec2 a; varying vec2 uv; void main(){uv=(a+1.0)*.5;gl_Position=vec4(a,0.,1.);}'));
     gl.attachShader(p, shader(gl.FRAGMENT_SHADER, `precision mediump float;
-      varying vec2 uv; uniform sampler2D image; uniform float pulse; uniform float reduced;
+      varying vec2 uv; uniform sampler2D image; uniform float pulse; uniform float reduced; uniform float mono; uniform float smear; uniform float split;
       void main(){
-        vec2 p=vec2(uv.x,1.-uv.y); vec3 s=texture2D(image,p).rgb;
+        vec2 p=vec2(uv.x,1.-uv.y); vec3 s=vec3(0.);
+        // zoom radial acotado: siete muestras de la misma fuente y reloj.
+        for(int i=0;i<7;i++) {
+          vec2 q=(p-.5)*(1.-smear*float(i)*.018)+.5;
+          s+=vec3(texture2D(image,q+vec2(split,0.)).r,texture2D(image,q).g,texture2D(image,q-vec2(split,0.)).b)/7.;
+        }
         float lum=dot(s,vec3(.299,.587,.114));
-        float dotInk=smoothstep(.22,.48,length(fract(gl_FragCoord.xy/3.)-.5));
-        vec3 ink=mix(vec3(.018,.009,.017),vec3(.48,.035,.065),smoothstep(.025,.20,lum));
-        ink=mix(ink,vec3(.94,.23,.12),smoothstep(.20,.58,lum));
-        ink=mix(ink,s*1.15,.38);
-        float pink=clamp((s.b-s.g)*3.5,0.,1.);
-        ink=mix(ink,s*1.2,pink*.9);
-        ink=mix(ink,ink*.52,dotInk*.34);
-        ink=mix(ink,vec3(.94,.86,.70),smoothstep(.72,.98,lum)*.78);
-        float vignette=1.-.37*dot(uv-.5,uv-.5);
-        gl_FragColor=vec4(ink*vignette*(1.+pulse*.07*(1.-reduced)),1.);
+        float screen=smoothstep(.17,.48,length(fract(gl_FragCoord.xy/3.)-.5));
+        vec3 ink=pow(max(s,vec3(0.)),vec3(.78))*1.22;
+        float red=clamp((s.r-s.g)*3.,0.,1.);
+        ink=mix(ink,vec3(ink.r,ink.g*.45,ink.b*.55),red*.65);
+        float printLight=smoothstep(.035,.55,lum);
+        vec3 paper=vec3(printLight*(1.-screen*.68));
+        ink=mix(ink,paper,mono);
+        float vignette=1.-.8*dot(uv-.5,uv-.5);
+        gl_FragColor=vec4(ink*vignette*(1.+pulse*.055*(1.-reduced)),1.);
       }`));
     gl.linkProgram(p);
     if (!gl.getProgramParameter(p, gl.LINK_STATUS)) return null;
@@ -84,7 +124,7 @@
     c.addEventListener('webglcontextlost', e => { e.preventDefault(); gpu = null; });
     return { c, gl, p };
   }
-  function texture(v, pulse, reduced) {
+  function texture(v, pulse, reduced, look) {
     if (gpu === undefined) { try { gpu = initGPU(); } catch (_) { gpu = null; } }
     if (!gpu) return v;
     try {
@@ -92,80 +132,62 @@
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, v);
       gl.uniform1f(gl.getUniformLocation(p, 'pulse'), pulse);
       gl.uniform1f(gl.getUniformLocation(p, 'reduced'), reduced ? 1 : 0);
+      gl.uniform1f(gl.getUniformLocation(p, 'mono'), look.mono);
+      gl.uniform1f(gl.getUniformLocation(p, 'smear'), look.blur);
+      gl.uniform1f(gl.getUniformLocation(p, 'split'), look.split);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
       return c;
     } catch (_) { gpu = null; return v; }
   }
   function render(ctx, w, h, time, opts = {}) {
-    const cue = timeline(time, opts.duration), reduced = !!opts.reduced;
+    const cue = timeline(time, opts.duration), reduced = !!opts.reduced, look = treatment(cue, reduced);
     const v = sync(cue, !!opts.playing && !document.hidden && !window.HOME?.on);
-    // precarga el cierre sin reproducir su audio ni su imagen antes de tiempo.
     video('edit');
-    const unit = Math.min(w / 1600, h / 900), m = 40 * unit;
-    const beat = time * 135 / 60, pulse = reduced ? 0 : Math.pow(1 - beat % 1, 4);
-    const end = cue.id === 'edit', intro = 1 - ease((time - 2.8) / 2.6);
-    ctx.save(); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; ctx.filter = 'none'; ctx.fillStyle = '#0b070c'; ctx.fillRect(0, 0, w, h);
-    // trama de papel en el margen; la acción conserva toda su relación de aspecto.
-    ctx.fillStyle = '#2d111b';
-    for (let i = 8 * unit; i < w; i += 14 * unit) for (let j = 8 * unit; j < h; j += 14 * unit) {
-      ctx.beginPath(); ctx.arc(i, j, .85 * unit, 0, Math.PI * 2); ctx.fill();
-    }
-    const top = 70 * unit, bottom = 82 * unit;
-    let vh = Math.min(h - top - bottom, (w - m * 2) * (end ? 356 / 576 : 9 / 16));
-    if (end) vh *= .86 + (reduced ? 0 : .025 * ease((time - cue.coda) / 8));
-    const vw = vh * (end ? 576 / 356 : 16 / 9), vx = (w - vw) / 2, vy = top + (h - top - bottom - vh) / 2;
-    ctx.fillStyle = '#aa2027'; ctx.fillRect(vx + 7 * unit, vy + 7 * unit, vw, vh);
+    const unit = Math.min(w / 1600, h / 900), end = cue.id === 'edit';
+    const pulse = reduced ? 0 : Math.pow(1 - (time / BEAT) % 1, 4);
+    ctx.save(); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; ctx.filter = 'none';
+    ctx.fillStyle = '#030204'; ctx.fillRect(0, 0, w, h);
+    // imagen a pantalla completa, sin rótulos permanentes sobre el recorrido.
+    const ratio = end ? 576 / 356 : 16 / 9;
+    const vh = Math.min(h, w / ratio), vw = vh * ratio, vx = (w - vw) / 2, vy = (h - vh) / 2;
     ctx.save(); ctx.beginPath(); ctx.rect(vx, vy, vw, vh); ctx.clip();
     if (v.readyState >= 2) {
-      const zoom = reduced || end ? 1 : 1 + .006 * pulse;
-      ctx.drawImage(texture(v, pulse, reduced), vx - vw * (zoom - 1) / 2, vy - vh * (zoom - 1) / 2, vw * zoom, vh * zoom);
-    } else {
-      ctx.fillStyle = '#19090f'; ctx.fillRect(vx, vy, vw, vh);
+      const image = end ? v : texture(v, pulse, reduced, look);
+      const draw = (cx, cy, width, height, mirror = false) => {
+        ctx.save(); ctx.translate(cx + look.x * width, cy + look.y * height);
+        ctx.rotate(look.rotation); ctx.scale((mirror ? -1 : 1) * look.zoom, look.zoom);
+        ctx.drawImage(image, -width / 2, -height / 2, width, height); ctx.restore();
+      };
+      if (look.panels) {
+        // díptico espejo durante un plano completo.
+        for (let i = 0; i < 2; i++) {
+          ctx.save(); ctx.beginPath(); ctx.rect(vx + i * vw / 2, vy, vw / 2, vh); ctx.clip();
+          draw(vx + (i + .5) * vw / 2, vy + vh / 2, vw, vh, i === 1); ctx.restore();
+        }
+      } else draw(vx + vw / 2, vy + vh / 2, vw, vh);
     }
-    // velo editorial durante la entrada; sale antes del primer corredor largo.
-    if (intro > 0) { ctx.fillStyle = `rgba(11,7,12,${intro * .6})`; ctx.fillRect(vx, vy, vw, vh); }
+    // obturación negra breve en los cortes.
+    if (!end && !reduced && cue.local < .065 && cue.shot > 0) {
+      ctx.fillStyle = `rgba(0,0,0,${.7 * (1 - cue.local / .065)})`; ctx.fillRect(vx, vy, vw, vh);
+    }
     ctx.restore();
-    ctx.strokeStyle = '#b72d32'; ctx.lineWidth = unit; ctx.strokeRect(vx, vy, vw, vh);
-    const txt = (s, px, py, size, color = '#eddfc0', align = 'left', display = false) => {
-      ctx.textAlign = align; ctx.fillStyle = color;
-      ctx.font = `${display ? 900 : 500} ${size * unit}px ${display ? '"Anybody", "Arial Narrow", sans-serif' : '"Martian Mono", monospace'}`;
-      ctx.fillText(s, px, py);
-    };
-    txt('lumora / geometry dash', m, 37 * unit, 13);
-    txt('stalemate · true adam', w - m, 37 * unit, 13, '#eddfc0', 'right');
-    ctx.fillStyle = '#b72d32'; ctx.fillRect(m, 50 * unit, w - m * 2, unit);
+    const intro = 1 - ease((time - 1.3) / 1.1);
     if (intro > .01) {
       ctx.save(); ctx.globalAlpha = intro;
-      const size = Math.min(300, w / unit * .22);
-      const y = h / 2 + 60 * unit + (reduced ? 0 : (1 - ease(time / 1.8)) * 35 * unit);
-      txt('grief', w / 2 + 6 * unit, y + 7 * unit, size, '#941d28', 'center', true);
-      txt('grief', w / 2, y, size, '#eddfc0', 'center', true);
-      txt('lo imposible también termina.', w / 2, y + 50 * unit, 16, '#eddfc0', 'center');
-      ctx.restore();
+      ctx.fillStyle = 'rgba(3,2,4,.52)'; ctx.fillRect(0, 0, w, h);
+      ctx.translate(w / 2, h / 2); ctx.rotate(reduced ? 0 : -.06 + .035 * ease(time / 2));
+      ctx.textAlign = 'center'; ctx.font = `900 ${Math.min(280 * unit, w * .25)}px "Anybody", "Arial Narrow", sans-serif`;
+      ctx.fillStyle = '#7e0714'; ctx.fillText('GRIEF', 9 * unit, 22 * unit);
+      ctx.strokeStyle = '#ee3043'; ctx.lineWidth = 1.5 * unit; ctx.strokeText('GRIEF', 0, 12 * unit);
+      ctx.font = `500 ${13 * unit}px "Martian Mono", monospace`;
+      ctx.fillStyle = '#d5bdc0'; ctx.fillText('stalemate / true adam', 0, 64 * unit); ctx.restore();
     }
-    if (v.readyState < 2) txt(failure || 'preparando el homenaje…', w / 2, h / 2 + 140 * unit, 15, '#eddfc0', 'center');
-    // acentos de doble registro en las fronteras de capítulo, siempre derivados del reloj.
-    const chapterTime = time % (cue.coda / 5);
-    const impact = !reduced && !end && time > 6 ? Math.max(0, 1 - chapterTime / .8) : 0;
-    if (impact > 0) {
-      ctx.save(); ctx.globalAlpha = impact * .65; ctx.strokeStyle = '#f0645a'; ctx.lineWidth = 3 * unit;
-      const offset = 18 * unit * impact;
-      ctx.strokeRect(vx - offset, vy - offset, vw + offset * 2, vh + offset * 2);
-      ctx.restore();
-    }
-    const sections = ['umbral', 'descenso', 'presión', 'resistencia', 'el último tramo'];
-    const chapter = Math.min(4, Math.floor(time / cue.coda * 5));
-    txt(end ? 'epílogo / tu edit' : `0${chapter + 1} / ${sections[chapter]}`, m, h - 42 * unit, 13, '#e26963');
-    txt(end ? 'homenaje a su verificación' : 'grief / un límite superado', w - m, h - 42 * unit, 13, '#eddfc0', 'right');
-    ctx.fillStyle = '#38202a'; ctx.fillRect(m, h - 22 * unit, w - m * 2, 3 * unit);
-    ctx.fillStyle = '#de3e3f'; ctx.fillRect(m, h - 22 * unit, (w - m * 2) * cue.progress, 3 * unit);
-    // las marcas de imprenta enlazan el footage con la risografía de lumora.
-    ctx.strokeStyle = '#eddfc0'; ctx.lineWidth = unit;
-    for (const [cx, cy, sx, sy] of [[vx,vy,-1,-1],[vx+vw,vy,1,-1],[vx,vy+vh,-1,1],[vx+vw,vy+vh,1,1]]) {
-      ctx.beginPath(); ctx.moveTo(cx+sx*8*unit,cy); ctx.lineTo(cx+sx*18*unit,cy); ctx.moveTo(cx,cy+sy*8*unit); ctx.lineTo(cx,cy+sy*18*unit); ctx.stroke();
+    if (v.readyState < 2) {
+      ctx.textAlign = 'center'; ctx.font = `${15 * unit}px monospace`; ctx.fillStyle = '#cbaeb3';
+      ctx.fillText(failure || 'preparando el montaje…', w / 2, h / 2 + 140 * unit);
     }
     ctx.restore();
-    G.current = { ...cue, ready: v.readyState >= 2, sourceTime: v.currentTime, seeking: v.seeking, paused: v.paused };
+    G.current = { ...cue, look, ready: v.readyState >= 2, sourceTime: v.currentTime, seeking: v.seeking, paused: v.paused };
   }
-  const G = R.grief = { detect, timeline, render, stop, footage, current: null };
+  const G = R.grief = { detect, timeline, treatment, render, stop, footage, current: null };
 })();
