@@ -20,7 +20,7 @@ if [ -x .venv-empaque/bin/pyinstaller ]; then
   mv app/build/dist/lumora-bridge "$OUT/Contents/Resources/bridge/lumora-bridge"
   rm -rf app/build/dist app/build/work app/build/lumora-bridge.spec
 else
-  cp bridge.py guion.py "$OUT/Contents/Resources/bridge/"
+  cp bridge.py guion.py media_http.py "$OUT/Contents/Resources/bridge/"
 fi
 
 # web: solo lo que index.html carga (sin personal/, extras/, docs/, tools/ ni .git)
@@ -28,6 +28,9 @@ cp index.html "$OUT/Contents/Resources/web/"
 grep -o 'src="[^"]*"' index.html | sed 's/src="//;s/"$//' | grep -v '^http' | while read -r f; do
   mkdir -p "$OUT/Contents/Resources/web/$(dirname "$f")"; cp "$f" "$OUT/Contents/Resources/web/$f"
 done
+
+mkdir -p "$OUT/Contents/Resources/web/media"
+cp -R media/grief "$OUT/Contents/Resources/web/media/"
 
 # icono
 swiftc -O app/icono.swift -o app/build/icono

@@ -314,6 +314,17 @@
     RC.songKey = skey;
     if (RC.lastKey !== key) { RC.lastKey = key; RC.recentScenes = []; RC.shot = null; RC.pending = null; RC.kindHist.length = 0; RC.sceneState = {}; RC.lastScene = ''; RC.count = 0; }
     if (st.sceneId !== 'clip') st.setScene('clip', { instant: true });
+    const grief = R.grief?.detect(ext.st?.name, ext.st?.artist);
+    if (grief && (!window.CFG || CFG.clip !== 'portada')) {
+      RC.grief = true; RC.geometry = null;
+      if (RC.mix?.on) RC.mix.finish();
+      RC.shot = null; RC.pending = null; st.cut = null;
+      R.grief.render(x, W, H, time, { duration: ext.st?.dur || proc.dur, reduced: !!window.CFG?.reduceMotion, playing: ext.active() ? ext.st?.state === 'playing' : !paused });
+      if (RC.afterFrame) RC.afterFrame(time);
+      return;
+    }
+    if (RC.grief) R.grief?.stop();
+    RC.grief = false;
     const geometry = R.geometry?.detect(ext.st?.name, ext.st?.artist, ext.st?.album);
     if (geometry && (!window.CFG || CFG.clip !== 'portada')) {
       RC.geometry = geometry;
@@ -367,7 +378,7 @@
   RC.h = { writeLine, drawBg, fitText, trBox, scribble, keyWord, storyOf, meta, fmt, hash, secOf, lineIdx, timeNow, pad2, wrap, artCanvas, notes };
 
   // ---------- conexión con el video de siempre ----------
-  const enabled = () => !window.CFG || CFG.clip !== 'clasico' || !!R.geometry?.detect(ext.st?.name, ext.st?.artist, ext.st?.album);
+  const enabled = () => !window.CFG || CFG.clip !== 'clasico' || !!R.geometry?.detect(ext.st?.name, ext.st?.artist, ext.st?.album) || !!R.grief?.detect(ext.st?.name, ext.st?.artist);
   // el título clásico y el fondo viejo no llegan a pintarse: el videoclip se enciende en el mismo instante que arranca el video
   const _tc = titleCard;
   titleCard = function (title, artist) {
@@ -379,7 +390,7 @@
   procFrame = function (t, dt) {
     const on = mode === 'proc' && enabled() && st.ok;
     if (on !== RC.on) { RC.on = on; document.body.classList.toggle('riso-clip', on); if (!on) { RC.shot = null; RC.lastKey = ''; if (st.sceneId === 'clip') st.sceneId = null; } else lyr.innerHTML = ''; }
-    if (!on) return _pf(t, dt);
+    if (!on) { R.grief?.stop(); return _pf(t, dt); }
     const real = dt || .016; if (!ext.active() && !paused) T += real;
     if (st.w !== innerWidth || st.h !== innerHeight) st.resize(innerWidth, innerHeight);
     try { frame(paused ? 0 : real); } catch (e) { if (!RC.err) { RC.err = 1; console.warn('videoclip riso:', e.message, e.stack); } }
