@@ -11,7 +11,10 @@ try {
   await p.goto(BASE + '/index.html?menu=0', { waitUntil: 'domcontentloaded' });
   await p.waitForFunction(() => window.RISOCLIP && ext.st?.artist === 'TRUE ADAM');
   await p.evaluate(() => { HOME.hide(); document.querySelector('#panel').classList.add('hide'); document.querySelector('#hud').style.display = 'none'; CFG.clip = 'clasico'; mode = 'proc'; paused = true; procFrame(18, .016); });
-  await p.waitForFunction(() => RISO.grief.current?.ready && !RISO.grief.footage.gameplay.seeking);
+  await p.waitForFunction(() => { RISO.grief.render(x, W, H, 18, {duration:146.365,playing:false}); return RISO.grief.current?.ready && RISO.grief.current.id === 'hyperframes' && !RISO.grief.footage.hyperframes.seeking; });
+  await p.waitForFunction(() => RISO.grief.footage.hyperframes?.readyState >= 2);
+  await p.evaluate(() => procFrame(18, .016));
+  assert.equal(await p.evaluate(() => RISO.grief.current.id), 'hyperframes');
   assert.equal(await p.evaluate(() => RISOCLIP.grief), true);
   const detection = await p.evaluate(() => {
     const g = RISO.grief;
@@ -21,7 +24,7 @@ try {
   await p.evaluate(() => { window.griefTestFrame = procFrame; procFrame = () => {}; });
   async function frame(t, file, reduced = false) {
     await p.evaluate(({t, reduced}) => { CFG.reduceMotion = reduced; RISO.grief.render(x, W, H, t, { duration: 146.365, reduced, playing: false }); }, {t, reduced});
-    await p.waitForFunction(t => { const g = RISO.grief, c = g.timeline(t, 146.365), v = g.footage[c.id]; return v?.readyState >= 2 && !v.seeking && Math.abs(v.currentTime - c.at) < .1; }, t);
+    await p.waitForFunction(({t, reduced}) => { RISO.grief.render(x, W, H, t, { duration: 146.365, reduced, playing: false }); const g = RISO.grief, c = g.current?.id === 'hyperframes' ? g.current : g.timeline(t, 146.365), v = g.footage[c.id]; return v?.readyState >= 2 && !v.seeking && Math.abs(v.currentTime - c.at) < .1; }, {t, reduced});
     await p.evaluate(({t, reduced}) => RISO.grief.render(x, W, H, t, { duration: 146.365, reduced, playing: false }), {t, reduced});
     if (file) await p.locator('#c').screenshot({ path: file });
   }
@@ -52,24 +55,35 @@ try {
   await frame(90, '/tmp/lumora-grief-pressure.png');
   await frame(143, '/tmp/lumora-grief-coda.png');
   await frame(12, null, true);
-  const stopped = await p.evaluate(() => Object.values(RISO.grief.footage).every(v => v.paused));
+  const stopped = await p.evaluate(() => Object.values(RISO.grief.footage).every(v => !v || v.paused));
   assert.ok(stopped);
   await p.evaluate(() => RISO.grief.render(x, W, H, 12, { duration: 146.365, playing: true }));
-  await p.waitForFunction(() => !RISO.grief.footage.gameplay.paused);
-  const start = await p.evaluate(() => RISO.grief.footage.gameplay.currentTime);
+  await p.waitForFunction(() => { RISO.grief.render(x, W, H, 12, { duration:146.365, playing:true }); return !RISO.grief.footage[RISO.grief.current.id].paused; });
+  const start = await p.evaluate(() => RISO.grief.footage[RISO.grief.current.id].currentTime);
   await p.waitForTimeout(300);
-  assert.ok(await p.evaluate(start => RISO.grief.footage.gameplay.currentTime > start, start));
+  assert.ok(await p.evaluate(start => RISO.grief.footage[RISO.grief.current.id].currentTime > start, start));
+  if (await p.evaluate(() => RISO.grief.footage.hyperframes?.readyState >= 2)) {
+    for (const t of [18, 160, 279]) {
+      await p.evaluate(t => RISO.grief.render(x, W, H, t, { duration: 284.235, playing: false, text: 'missing you' }), t);
+      await p.waitForFunction(t => {
+        RISO.grief.render(x, W, H, t, { duration: 284.235, playing: false, text: 'missing you' });
+        const g = RISO.grief, v = g.footage.hyperframes;
+        return g.current.id === 'hyperframes' && !v.seeking && Math.abs(v.currentTime - g.current.at) < .1 && v.paused;
+      }, t);
+    }
+    await p.locator('#c').screenshot({ path: '/tmp/lumora-hyperframes-lyrics.png' });
+  }
   await p.evaluate(() => { procFrame = window.griefTestFrame; });
   await mock('song=grief2&pos=70&state=paused');
   await p.waitForFunction(() => ext.st?.name === 'Stalemate - Grief');
   await p.evaluate(() => procFrame(70, .016));
   assert.equal(await p.evaluate(() => RISOCLIP.grief), true);
   await p.evaluate(() => { CFG.clip = 'portada'; RISOCLIP.frame(0); });
-  assert.ok(await p.evaluate(() => !RISOCLIP.grief && Object.values(RISO.grief.footage).every(v => v.paused)));
+  assert.ok(await p.evaluate(() => !RISOCLIP.grief && Object.values(RISO.grief.footage).every(v => !v || v.paused)));
   await mock('song=solo&pos=30&state=paused');
   await p.waitForFunction(() => ext.st?.artist === 'Shakira');
   await p.evaluate(() => { CFG.clip = 'riso'; RISOCLIP.frame(.016); });
   assert.equal(await p.evaluate(() => RISOCLIP.grief), false);
   assert.deepEqual(errores, []);
   console.log('ok: grief, dos títulos, video decodificado, rangos, intro, coda, pausa, seek, movimiento reducido y salida');
-} finally { await b.close(); srv.stop(); }
+} catch (e) { console.error(await p.evaluate(() => ({current:RISO.grief.current, videos:Object.fromEntries(Object.entries(RISO.grief.footage).map(([k,v])=>[k,v && {src:v.src,ready:v.readyState,seeking:v.seeking,time:v.currentTime,duration:v.duration,error:v.error?.message}]))}))); throw e; } finally { await b.close(); srv.stop(); }

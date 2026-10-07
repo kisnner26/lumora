@@ -7,7 +7,7 @@
   const ease = v => 1 - Math.pow(1 - clamp(v), 3);
   const norm = s => String(s || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
   const detect = (name, artist, id = '') => id === '4uwxWWxb6zPMrNsK13VErG' || id === 'spotify:episode:4uwxWWxb6zPMrNsK13VErG' || norm(name) === 'pop culture madeon mix' || (norm(artist) === 'true adam' && norm(name) === 'stalemate grief');
-  const footage = { gameplay: null, edit: null };
+  const footage = { gameplay: null, edit: null, hyperframes: null };
   let active = null, failure = '', gpu;
   function video(id) {
     if (footage[id]) return footage[id];
@@ -15,7 +15,7 @@
     v.muted = true; v.defaultMuted = true; v.playsInline = true; v.preload = 'auto';
     v.setAttribute('playsinline', ''); v.setAttribute('aria-hidden', 'true');
     v.src = 'media/grief/' + id + '.mp4';
-    v.addEventListener('error', () => { failure = 'no se pudo cargar el gameplay'; });
+    v.addEventListener('error', () => { if (id !== 'hyperframes') failure = 'no se pudo cargar el gameplay'; });
     footage[id] = v;
     return v;
   }
@@ -140,7 +140,13 @@
     } catch (_) { gpu = null; return v; }
   }
   function render(ctx, w, h, time, opts = {}) {
-    const cue = timeline(time, opts.duration), reduced = !!opts.reduced, look = treatment(cue, reduced);
+    const hf = video('hyperframes');
+    const useHF = !opts.reduced && hf.readyState >= 1 && Number.isFinite(hf.duration) && hf.duration > 12;
+    const total = opts.duration || hf.duration;
+    const body = Math.max(1, hf.duration - 11.9);
+    const at = total - time <= 11.9 ? hf.duration - Math.max(0, total - time) : time % body;
+    const cue = useHF ? { id: 'hyperframes', at: Math.max(0, Math.min(hf.duration - .04, at)), rate: 1 } : timeline(time, opts.duration);
+    const reduced = !!opts.reduced, look = useHF ? { zoom: 1, rotation: 0, x: 0, y: 0, panels: false } : treatment(cue, reduced);
     const v = sync(cue, !!opts.playing && !document.hidden && !window.HOME?.on);
     video('edit');
     const unit = Math.min(w / 1600, h / 900), end = cue.id === 'edit';
@@ -152,7 +158,7 @@
     const vh = Math.min(h, w / ratio), vw = vh * ratio, vx = (w - vw) / 2, vy = (h - vh) / 2;
     ctx.save(); ctx.beginPath(); ctx.rect(vx, vy, vw, vh); ctx.clip();
     if (v.readyState >= 2) {
-      const image = end ? v : texture(v, pulse, reduced, look);
+      const image = end || useHF ? v : texture(v, pulse, reduced, look);
       const draw = (cx, cy, width, height, mirror = false) => {
         ctx.save(); ctx.translate(cx + look.x * width, cy + look.y * height);
         ctx.rotate(look.rotation); ctx.scale((mirror ? -1 : 1) * look.zoom, look.zoom);
@@ -167,11 +173,11 @@
       } else draw(vx + vw / 2, vy + vh / 2, vw, vh);
     }
     // obturación negra breve en los cortes.
-    if (!end && !reduced && cue.local < .065 && cue.shot > 0) {
+    if (!useHF && !end && !reduced && cue.local < .065 && cue.shot > 0) {
       ctx.fillStyle = `rgba(0,0,0,${.7 * (1 - cue.local / .065)})`; ctx.fillRect(vx, vy, vw, vh);
     }
     ctx.restore();
-    const intro = 1 - ease((time - 1.3) / 1.1);
+    const intro = useHF ? 0 : 1 - ease((time - 1.3) / 1.1);
     if (intro > .01) {
       ctx.save(); ctx.globalAlpha = intro;
       ctx.fillStyle = 'rgba(3,2,4,.52)'; ctx.fillRect(0, 0, w, h);

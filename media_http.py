@@ -3,7 +3,7 @@ import os
 import re
 from urllib.parse import urlsplit
 
-MEDIA = {'/media/grief/gameplay.mp4', '/media/grief/edit.mp4'}
+MEDIA = {'/media/grief/gameplay.mp4', '/media/grief/edit.mp4', '/media/grief/hyperframes.mp4'}
 
 
 def serve_media(handler, root, head=False):

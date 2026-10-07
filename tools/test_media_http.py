@@ -16,6 +16,7 @@ class MediaTest(unittest.TestCase):
             path = Path(root, 'media/grief/gameplay.mp4')
             path.parent.mkdir(parents=True)
             path.write_bytes(bytes(range(256)))
+            path.with_name('hyperframes.mp4').write_bytes(bytes(range(256)))
             class Handler(SimpleHTTPRequestHandler):
                 def log_message(self, *args): pass
                 def do_GET(self):
@@ -31,6 +32,7 @@ class MediaTest(unittest.TestCase):
                     r = c.getresponse(); result = r.status, dict(r.getheaders()), r.read(); c.close()
                     return result
                 self.assertEqual(request()[2], bytes(range(256)))
+                self.assertEqual(request('bytes=20-21', url='/media/grief/hyperframes.mp4')[::2], (206, bytes([20, 21])))
                 for value, start, end in [('bytes=0-1', 0, 1), ('bytes=20-', 20, 255), ('bytes=-16', 240, 255), ('bytes=250-999', 250, 255)]:
                     status, headers, body = request(value)
                     self.assertEqual(status, 206)
