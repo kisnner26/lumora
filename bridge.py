@@ -9,6 +9,8 @@ import hashlib, json, os, queue, re, shutil, signal, socket, socketserver, subpr
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
+from media_http import serve_media
+
 VERSION = '1.0'
 PORT = int(os.environ.get('LUMORA_PORT') or 8888)
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -628,7 +630,13 @@ class Handler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def do_HEAD(self):
+        if not serve_media(self, ROOT, head=True):
+            super().do_HEAD()
+
     def do_GET(self):
+        if serve_media(self, ROOT):
+            return
         path = urlparse(self.path).path
         if path == '/salud':
             return self.send_json(salud())

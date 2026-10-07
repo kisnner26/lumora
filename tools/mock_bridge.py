@@ -23,6 +23,9 @@ from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, ROOT)
+from media_http import serve_media
+
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8899
 
 # ---------- canciones de ejemplo (letras mezcladas en español e inglés, con países, objetos y emociones) ----------
@@ -46,6 +49,8 @@ SONGS = {
     'a': dict(name='Noche de Neón', artist='Los Ejemplos', album='Prueba I', dur=200, lines=A_LINES, bpm=104, genre='pop', art=1),
     'b': dict(name='Tren de Medianoche', artist='Banda Simulada', album='Prueba II', dur=185, lines=B_LINES, bpm=92, genre='rock', art=2),
     'c': dict(name='Ambiente sin Voz', artist='Instrumental Co.', album='Prueba III', dur=150, lines=None, bpm=78, genre='ambient', art=3),
+    'grief': dict(name='Stalemate (Grief)', artist='TRUE ADAM', album='Stalemate', dur=146.365, lines=None, bpm=135, genre='electronic', art=3),
+    'grief2': dict(name='Stalemate - Grief', artist='TRUE ADAM', album='Stalemate', dur=146.365, lines=None, bpm=135, genre='electronic', art=3),
     'gd': dict(name='Stereo Madness', artist='ForeverBound', album='Geometry Dash', dur=180, lines=None, bpm=160, genre='electronic', art=3),
     'dash': dict(name='Geometry Dash (Official Theme Song)', artist='MDK', album='Dash', dur=180, lines=None, bpm=128, genre='electronic', art=3),
     'solo': dict(name='Canción de Prueba', artist='Shakira', album='Prueba VI', dur=200, lines=A_LINES, bpm=104, genre='pop', art=1),
@@ -107,7 +112,13 @@ class H(SimpleHTTPRequestHandler):
     def j(self, obj, code=200):
         b = json.dumps(obj).encode()
         self.send_response(code); self.send_header('Content-Type', 'application/json'); self.send_header('Content-Length', str(len(b))); self.send_header('Cache-Control', 'no-store'); self.end_headers(); self.wfile.write(b)
+    def do_HEAD(self):
+        if not serve_media(self, ROOT, head=True):
+            super().do_HEAD()
+
     def do_GET(self):
+        if serve_media(self, ROOT):
+            return
         u = urlparse(self.path); q = {k: v[0] for k, v in parse_qs(u.query).items()}; p = u.path
         if p == '/now': return self.j(snapshot())
         if p == '/mock/estado': return self.j({**snapshot(), 'song': ST['song']})
