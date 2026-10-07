@@ -11,3 +11,5 @@ el motor monta planos escogidos del showcase sobre una cuadrícula de 135 bpm: c
 la música viene del reproductor externo; ambos vídeos permanecen mudos. la posición musical determina cortes, fuente, velocidad y efectos, también después de pausar o buscar. la cuadrícula no sustituye un análisis de transitorios del audio externo. movimiento reducido desactiva giros, desenfoques, separación de canales y espejo; conserva los cortes y el tratamiento de color.
 
 los archivos originales permanecen intactos. estos recursos aportados por el usuario conservan los derechos de sus respectivos autores; no se les atribuye autoría de lumora.
+
+`hyperframes.mp4` es la exportación del proyecto `lumora-video/videos/grief-impact`: 1280 × 720, 30 fps y sin audio. el reproductor lo prefiere al montaje procedural, conserva su velocidad y repite el cuerpo cuando la canción es más larga; reserva los últimos 11,9 s para el cierre. las letras se dibujan encima con el reloj musical. con movimiento reducido utiliza el motor procedural.
