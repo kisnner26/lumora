@@ -6,7 +6,7 @@
   const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
   const ease = v => 1 - Math.pow(1 - clamp(v), 3);
   const norm = s => String(s || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
-  const detect = (name, artist) => norm(artist) === 'true adam' && norm(name) === 'stalemate grief';
+  const detect = (name, artist, id = '') => id === '4uwxWWxb6zPMrNsK13VErG' || id === 'spotify:episode:4uwxWWxb6zPMrNsK13VErG' || norm(name) === 'pop culture madeon mix' || (norm(artist) === 'true adam' && norm(name) === 'stalemate grief');
   const footage = { gameplay: null, edit: null };
   let active = null, failure = '', gpu;
   function video(id) {
@@ -180,13 +180,24 @@
       ctx.fillStyle = '#7e0714'; ctx.fillText('GRIEF', 9 * unit, 22 * unit);
       ctx.strokeStyle = '#ee3043'; ctx.lineWidth = 1.5 * unit; ctx.strokeText('GRIEF', 0, 12 * unit);
       ctx.font = `500 ${13 * unit}px "Martian Mono", monospace`;
-      ctx.fillStyle = '#d5bdc0'; ctx.fillText('stalemate / true adam', 0, 64 * unit); ctx.restore();
+      ctx.fillStyle = '#d5bdc0'; ctx.fillText(opts.title || 'stalemate / true adam', 0, 64 * unit); ctx.restore();
     }
     if (v.readyState < 2) {
       ctx.textAlign = 'center'; ctx.font = `${15 * unit}px monospace`; ctx.fillStyle = '#cbaeb3';
       ctx.fillText(failure || 'preparando el montaje…', w / 2, h / 2 + 140 * unit);
     }
     ctx.restore();
+    if (opts.text) {
+      ctx.save();
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = `700 ${Math.max(22, Math.min(44 * unit, w / 30))}px "Anybody", sans-serif`;
+      const width = Math.min(w * .86, ctx.measureText(opts.text).width + 56 * unit);
+      const y = h * .87;
+      ctx.fillStyle = 'rgba(8,3,7,.82)'; ctx.fillRect((w - width) / 2, y - 34 * unit, width, 68 * unit);
+      ctx.fillStyle = '#e5233f'; ctx.fillRect((w - width) / 2, y + 32 * unit, width, 3 * unit);
+      ctx.fillStyle = '#f3dfe3'; ctx.fillText(opts.text, w / 2, y, w * .82);
+      ctx.restore();
+    }
     G.current = { ...cue, look, ready: v.readyState >= 2, sourceTime: v.currentTime, seeking: v.seeking, paused: v.paused };
   }
   const G = R.grief = { detect, timeline, treatment, render, stop, footage, current: null };

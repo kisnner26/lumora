@@ -314,12 +314,14 @@
     RC.songKey = skey;
     if (RC.lastKey !== key) { RC.lastKey = key; RC.recentScenes = []; RC.shot = null; RC.pending = null; RC.kindHist.length = 0; RC.sceneState = {}; RC.lastScene = ''; RC.count = 0; }
     if (st.sceneId !== 'clip') st.setScene('clip', { instant: true });
-    const grief = R.grief?.detect(ext.st?.name, ext.st?.artist);
+    const grief = R.grief?.detect(ext.st?.name, ext.st?.artist, ext.st?.id);
     if (grief && (!window.CFG || CFG.clip !== 'portada')) {
       RC.grief = true; RC.geometry = null;
       if (RC.mix?.on) RC.mix.finish();
       RC.shot = null; RC.pending = null; st.cut = null;
-      R.grief.render(x, W, H, time, { duration: ext.st?.dur || proc.dur, reduced: !!window.CFG?.reduceMotion, playing: ext.active() ? ext.st?.state === 'playing' : !paused });
+      const lyric = li >= 0 && IN.show !== false ? IN.lines[li] : null;
+      const text = lyric ? (IN.trMode === 'es' && IN.tr?.[li] ? IN.tr[li] : lyric.text) : '';
+      R.grief.render(x, W, H, time, { text, title: ext.st?.name, duration: ext.st?.dur || proc.dur, reduced: !!window.CFG?.reduceMotion, playing: ext.active() ? ext.st?.state === 'playing' : !paused });
       if (RC.afterFrame) RC.afterFrame(time);
       return;
     }
@@ -378,7 +380,7 @@
   RC.h = { writeLine, drawBg, fitText, trBox, scribble, keyWord, storyOf, meta, fmt, hash, secOf, lineIdx, timeNow, pad2, wrap, artCanvas, notes };
 
   // ---------- conexión con el video de siempre ----------
-  const enabled = () => !window.CFG || CFG.clip !== 'clasico' || !!R.geometry?.detect(ext.st?.name, ext.st?.artist, ext.st?.album) || !!R.grief?.detect(ext.st?.name, ext.st?.artist);
+  const enabled = () => !window.CFG || CFG.clip !== 'clasico' || !!R.geometry?.detect(ext.st?.name, ext.st?.artist, ext.st?.album) || !!R.grief?.detect(ext.st?.name, ext.st?.artist, ext.st?.id);
   // el título clásico y el fondo viejo no llegan a pintarse: el videoclip se enciende en el mismo instante que arranca el video
   const _tc = titleCard;
   titleCard = function (title, artist) {

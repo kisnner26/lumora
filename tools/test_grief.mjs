@@ -15,9 +15,9 @@ try {
   assert.equal(await p.evaluate(() => RISOCLIP.grief), true);
   const detection = await p.evaluate(() => {
     const g = RISO.grief;
-    return [g.detect('Stalemate (Grief)', 'TRUE ADAM'), g.detect('Stalemate - Grief', 'true adam'), g.detect('Stalemate', 'TRUE ADAM'), g.detect('Stalemate - Grief', 'Other artist')];
+    return [g.detect('Stalemate (Grief)', 'TRUE ADAM'), g.detect('Stalemate - Grief', 'true adam'), g.detect('Stalemate', 'TRUE ADAM'), g.detect('Stalemate - Grief', 'Other artist'), g.detect('POP CULTURE - Madeon mix', 'publisher'), g.detect('episode', 'publisher', '4uwxWWxb6zPMrNsK13VErG'), g.detect('pop culture', 'Madeon')];
   });
-  assert.deepEqual(detection, [true, true, false, false]);
+  assert.deepEqual(detection, [true, true, false, false, true, true, false]);
   await p.evaluate(() => { window.griefTestFrame = procFrame; procFrame = () => {}; });
   async function frame(t, file, reduced = false) {
     await p.evaluate(({t, reduced}) => { CFG.reduceMotion = reduced; RISO.grief.render(x, W, H, t, { duration: 146.365, reduced, playing: false }); }, {t, reduced});
