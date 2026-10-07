@@ -37,7 +37,7 @@
     try {
       const a = await access(); if (!a) { S.state = 'off'; S.error = ''; return; }
       const t0 = performance.now();
-      const r = await nativeFetch('https://api.spotify.com/v1/me/player/currently-playing?additional_types=track', { headers: { Authorization: 'Bearer ' + a } });
+      const r = await nativeFetch('https://api.spotify.com/v1/me/player/currently-playing?additional_types=track,episode', { headers: { Authorization: 'Bearer ' + a } });
       if (r.status === 204) { S.state = 'stopped'; S.error = ''; return; }
       if (r.status === 429) { backoff = Date.now() + (+r.headers.get('Retry-After') || 5) * 1000; return; }
       if (r.status === 401) { ls.set('tc_tok', ''); S.state = 'off'; return; }
@@ -45,7 +45,7 @@
       if (!r.ok) { S.error = 'spotify ' + r.status; return; }
       const j = await r.json(); if (!j.item) { S.state = 'stopped'; return; }
       const lat = (performance.now() - t0) / 2000;
-      Object.assign(S, { state: j.is_playing ? 'playing' : 'paused', pos: j.progress_ms / 1000 + (j.is_playing ? lat : 0), at: Date.now() / 1000, name: j.item.name, artist: j.item.artists.map(x => x.name).join(', '), album: j.item.album?.name || '', dur: (j.item.duration_ms || 0) / 1000, art: j.item.album?.images?.[0]?.url || '', error: '', id: j.item.id });
+      Object.assign(S, { state: j.is_playing ? 'playing' : 'paused', pos: j.progress_ms / 1000 + (j.is_playing ? lat : 0), at: Date.now() / 1000, name: j.item.name, artist: (j.item.artists || []).map(x => x.name).join(', ') || j.item.show?.publisher || j.item.show?.name || '', album: j.item.album?.name || j.item.show?.name || '', dur: (j.item.duration_ms || 0) / 1000, art: j.item.album?.images?.[0]?.url || j.item.images?.[0]?.url || '', error: '', id: j.item.id });
     } catch (e) { S.error = 'sin conexión con spotify'; }
   }
   setInterval(poll, 1100); poll();
@@ -83,7 +83,7 @@
     const u = new URL(raw, location.href), p = u.pathname.replace(/^.*\/(?=[a-z]+$)/, '/');
     if (!/^\/[a-z]+$/.test(p) || p === '/index' ) return nativeFetch(input, init);
     switch (p) {
-      case '/now': return Promise.resolve(J({ state: S.state, pos: S.pos, at: S.at, server: Date.now() / 1000, name: S.name, artist: S.artist, album: S.album, dur: S.dur, art: S.art, src: 'spotify', error: S.error }));
+      case '/now': return Promise.resolve(J({ state: S.state, pos: S.pos, at: S.at, server: Date.now() / 1000, name: S.name, artist: S.artist, album: S.album, dur: S.dur, art: S.art, src: 'spotify', id: S.id, error: S.error }));
       case '/lyrics': { const g = k => u.searchParams.get(k) || ''; return lyrics(g('artist'), g('title'), g('album'), +g('dur') || 0).then(J); }
       case '/story': return Promise.resolve(J(u.searchParams.get('catalog') ? {} : { ready: false }));
       case '/translate': return Promise.resolve(J({ error: 'la traducción solo está en la versión de mac' }));
