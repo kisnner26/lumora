@@ -314,6 +314,18 @@
     RC.songKey = skey;
     if (RC.lastKey !== key) { RC.lastKey = key; RC.recentScenes = []; RC.shot = null; RC.pending = null; RC.kindHist.length = 0; RC.sceneState = {}; RC.lastScene = ''; RC.count = 0; }
     if (st.sceneId !== 'clip') st.setScene('clip', { instant: true });
+    const geometry = R.geometry?.detect(ext.st?.name, ext.st?.artist, ext.st?.album);
+    if (geometry && (!window.CFG || CFG.clip !== 'portada')) {
+      RC.geometry = geometry;
+      if (RC.mix?.on) RC.mix.finish();
+      RC.shot = null; RC.pending = null; st.cut = null;
+      const l = li >= 0 && IN.show !== false ? IN.lines[li] : null;
+      const text = l ? (IN.trMode === 'es' && IN.tr?.[li] ? IN.tr[li] : l.text) : '';
+      R.geometry.render(x, W, H, geometry, time, { reduced: !!window.CFG?.reduceMotion, duration: ext.st?.dur || proc.dur || 0, text });
+      if (RC.afterFrame) RC.afterFrame(time);
+      return;
+    }
+    RC.geometry = null;
     if (RC.mix && RC.mix.tick(dt)) {                                               // mezcla entre canciones: las tomas normales esperan
       st.margin = 34; st.notes = false; st.lyric = true; st.speed = 1; st.auto = true; st.setDetail(window.LOWFX ? 1 : 2, true);
       st.frame(Math.max(.001, dt)); x.drawImage(st.canvas, 0, 0, W, H); return;
@@ -355,7 +367,7 @@
   RC.h = { writeLine, drawBg, fitText, trBox, scribble, keyWord, storyOf, meta, fmt, hash, secOf, lineIdx, timeNow, pad2, wrap, artCanvas, notes };
 
   // ---------- conexión con el video de siempre ----------
-  const enabled = () => !window.CFG || CFG.clip !== 'clasico';
+  const enabled = () => !window.CFG || CFG.clip !== 'clasico' || !!R.geometry?.detect(ext.st?.name, ext.st?.artist, ext.st?.album);
   // el título clásico y el fondo viejo no llegan a pintarse: el videoclip se enciende en el mismo instante que arranca el video
   const _tc = titleCard;
   titleCard = function (title, artist) {
