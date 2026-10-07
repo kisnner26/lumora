@@ -41,6 +41,10 @@ no sé si Música y Spotify informan de la canción nueva al empezar o al termin
 - probar «alto contraste» y «reducir movimiento» con el clip sonando en el Mac y revisar que ningún texto quede ilegible; y la vista previa a 60 fps mientras suena música (usa un segundo Stage).
 - en el Mac también: confirmar que los ajustes de «looks» se ven bien con tu paleta y tus luces Govee.
 
-## artistas cantando con micrófono
-- verificado con el puente simulado (tools/test_cantantes.mjs: créditos, solo, trío, turnos, apagado; capturas revisadas). Falta verlo con tus canciones reales: que los nombres de artista de Música/Spotify (p. ej. «Bad Bunny, Jhay Cortez») se separen bien y que la figura y las medallas se vean bien mezcladas con la letra. Se apaga en ajustes > contenido > «Artistas cantando».
-- el turno del micrófono va por orden de versos, no por detección de voz.
+## artistas y geometry dash
+- 56 perfiles vectoriales con peinados, caras, ropa y accesorios propios. the weeknd conserva su figura escénica completa. los artistas fuera del catálogo reciben un avatar estable; su parecido real requiere añadir un perfil.
+- las colaboraciones muestran hasta tres voces. el turno del micrófono sigue el orden de los versos, no detecta quién canta. se apaga en ajustes > contenido > «artistas cantando».
+- las 22 canciones principales de geometry dash, desde stereo madness hasta dash, activan un recorrido original con cubos, naves, bola, ovni, wave, robot, spider, swing y portales. se reconoce título y autor, o contexto explícito del juego, para evitar títulos homónimos. acepta fingerbang y el título oficial de mdk como alias.
+- el recorrido depende del reloj de la canción: funciona con instrumentales, pausa y búsqueda; respeta movimiento reducido y la portada fija. no reproduce los mapas originales.
+- verificado con tools/test_artistas_geometry.mjs, tools/test_geometry_clip.mjs y tools/test_cantantes.mjs. falta revisar las variantes de créditos que entregan bibliotecas reales.
+- referencia de títulos y autores: https://gddocs.omgrod.me/reference/songs/
