@@ -279,7 +279,7 @@ setInterval(() => {
             border:1px solid var(--rule); color:var(--paper); font:400 12.5px 'Anybody',sans-serif; opacity:0; transition:opacity .3s, transform .3s; pointer-events:none; }
   .cv-msg.on { opacity:1; transform:translate(-50%,0); }
   #cover.menu .cv-msg { opacity:0; }
-  body.cover-open #hud { display:none !important; }
+  body.cover-open #hud, body.cover-open #panel { display:none !important; }
   /* interruptores con aire */
   .cv-tiles { grid-template-columns:repeat(3,1fr) !important; gap:12px 10px !important; }
   .cv-tiles i.t-escena { background:linear-gradient(135deg, #2b1f45, #0f2a3d 50%, #3d1f2c); } .cv-tiles i.t-escena::after { content:''; position:absolute; inset:0; background:radial-gradient(circle at 40% 45%, rgba(244,201,131,.55), transparent 45%); filter:blur(4px); }

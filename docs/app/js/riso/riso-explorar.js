@@ -9,7 +9,7 @@
 (() => {
   const R = window.RISO, POS = window.RISOPOSTER, ST = window.RISOSTORE; if (!R || !POS || !ST) return;
   const K = R.K, clamp = R.clamp, TAU = Math.PI * 2, sin = Math.sin, cos = Math.cos;
-  const EXP = window.RISOEXP = { tab: 'mapa', job: null, sel: null, busy: false };
+  const EXP = window.RISOEXP = { tab: 'mapa', job: null, sel: null, busy: false, i: { lx: 0, ly: 0 } };   // i: interacción con la criatura
   const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
   const hash = s => { let h = 2166136261; for (const c of String(s)) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return h >>> 0; };
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -140,16 +140,57 @@
     const cnt = (f) => { const c = {}; for (const s of d.songs) { const k = f(s); if (k) c[k] = (c[k] || 0) + (s.veces || 1); } return Object.entries(c).sort((a, b) => b[1] - a[1]); };
     const moods = cnt(s => s.mood), gens = cnt(s => s.genre), last = d.songs.reduce((a, s) => Math.max(a, s.ultima || 0), 0), days = last ? Math.floor((Date.now() - last) / 864e5) : 999;
     const level = Math.min(12, Math.floor(Math.sqrt(d.total))), name = d.cri.nombre || autoName(d);
-    return { moods, gens, artists: d.artists, songs: d.songs.length, total: d.total, level, name, days, top: moods[0]?.[0] || '', genre: gens[0]?.[0] || '', state: !d.total ? 'huevo' : days > 10 ? 'dormido' : days > 3 ? 'hambriento' : 'contento' };
+    const desde = level * level, hasta = (level + 1) * (level + 1), falta = level >= 12 ? 0 : hasta - d.total, avance = level >= 12 ? 1 : (d.total - desde) / (hasta - desde);
+    return { moods, gens, artists: d.artists, songs: d.songs.length, total: d.total, level, falta, avance, topArtistas: cnt(s => s.artist).slice(0, 3), topCanciones: [...d.songs].sort((a, b) => (b.veces || 1) - (a.veces || 1)).slice(0, 3), name, days, top: moods[0]?.[0] || '', genre: gens[0]?.[0] || '', state: !d.total ? 'huevo' : days > 10 ? 'dormido' : days > 3 ? 'hambriento' : 'contento' };
   }
   EXP.stats = stats;
+  // voz de la criatura: notas cortas de un sintetizador; el tono sale de su nombre, así cada criatura suena distinta
+  let AC = null;
+  const sonidoOn = () => { try { return localStorage.getItem('lumoraCriaturaSonido') !== '0'; } catch (e) { return true; } };
+  function chirp(tipo) {
+    EXP.i.ultimoSonido = tipo; if (!sonidoOn()) return;
+    try {
+      AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume();
+      const base = 330 + (hash(EXP.st ? EXP.st.name : 'lumora') % 180), now = AC.currentTime;
+      const notas = tipo === 'salto' ? [[1, 1.5, .16]] : tipo === 'giro' ? [[1, 1.26, .08], [1.26, 1.5, .08], [1.5, 2, .12]] : tipo === 'dormir' ? [[.7, .5, .5]] : [[1, 1.19, .1], [1.19, 1.5, .14]];
+      let t0 = now;
+      for (const [a, b, dur] of notas) {
+        const o = AC.createOscillator(), g = AC.createGain(); o.type = 'triangle';
+        o.frequency.setValueAtTime(base * a, t0); o.frequency.exponentialRampToValueAtTime(base * b, t0 + dur);
+        g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(.18, t0 + .015); g.gain.exponentialRampToValueAtTime(.0001, t0 + dur + .05);
+        o.connect(g).connect(AC.destination); o.start(t0); o.stop(t0 + dur + .08); t0 += dur * .9;
+      }
+    } catch (e) {}
+  }
+  EXP.chirp = chirp;
+  // lo que dice la criatura según su estado y tu música
+  const pick = a => a[Math.floor(Math.random() * a.length)], corto = (t, n) => t.length > n ? t.slice(0, n - 1) + '…' : t;
+  function frase(st, tipo) {
+    const a = st.topArtistas[0] && st.topArtistas[0][0], c = st.topCanciones[0] && st.topCanciones[0].name;
+    if (tipo === 'caricia') return pick(['mmm, qué rico', 'más, más', 'ronroneo...', 'me haces cosquillas']);
+    if (tipo === 'salto') return pick(['¡hop!', '¡arriba!', '¡wiii!']);
+    if (st.state === 'huevo') return pick(['...', 'ponme música', 'estoy por nacer']);
+    if (st.state === 'dormido') return pick(['zzz...', 'despiértame con música']);
+    if (st.state === 'hambriento') return pick(['tengo hambre de música', 'hace días que no oigo nada']);
+    const op = [a ? 'me encanta ' + corto(a, 16) : '¡más música!', c ? '¿otra vez ' + corto(c, 14) + '?' : 'qué buen día'];
+    if (st.falta) op.push(st.falta === 1 ? 'una escucha y subo de nivel' : 'faltan ' + st.falta + ' escuchas para subir');
+    return pick(op);
+  }
+  const decir = (st, tipo) => { EXP.i.say = frase(st, tipo); EXP.i.sayHasta = Date.now() + 2600; };
+  EXP.decir = decir;
+  // qué significa el estado de la criatura y qué hacer para cambiarlo
+  const consejo = st => st.state === 'huevo' ? 'ponle música: nace con tu primera canción.'
+    : st.state === 'dormido' ? `lleva ${st.days} días sin música y se quedó dormida. pon cualquier canción y despierta.`
+    : st.state === 'hambriento' ? `hace ${st.days} días que no escuchas nada: tiene hambre. con una canción hoy se pone contenta.`
+    : 'está contenta: escuchaste música en los últimos 3 días.';
+  EXP.consejo = consejo;
   function drawCreature(K, job) {
     const s = job.st, t = job.t || 0, rr = R.rng(hash(s.name + s.genre)), cx = 800, base = 640, L = s.level;
     K.bg(3, .07); K.circ(cx, 470, 400, { f: -1 }); K.circ(cx, 470, 400, { s: 1, lw: 5 });
     K.rect(-3200, base, 8000, 400, { f: 3, ft: .28 }); K.line(-3200, base, 8000, base, 1, 5);
     const h = new Date().getHours(); if (h >= 7 && h < 19) K.circ(1130, 230, 46, { f: 2, ft: .95, s: 1, lw: 4 }); else { K.circ(1130, 230, 40, { f: -1, s: 1, lw: 4 }); K.circ(1148, 220, 34, { f: 3, ft: .5 }); }
     if (s.state === 'huevo') { const y = base - 110 + sin(t * 2) * 3; K.c.save(); K.c.translate(cx, y); K.c.rotate(sin(t * 3) * .05); K.c.beginPath(); K.c.ellipse(0, 0, 110, 140, 0, 0, TAU); K.paint({ f: -1, s: 1, lw: 7 }); K.poly([[-70, -40], [-40, -70], [-10, -35], [20, -70], [50, -40], [90, -10]], { s: 1, lw: 5 }, false); for (let i = 0; i < 6; i++) K.circ(-60 + i * 25, 30 + sin(i) * 40, 10, { f: 2, ft: .85 }); K.c.restore(); K.txt('un huevo esperando música', cx, base + 90, { font: 'hand', size: 44, w: 600, align: 'center' }); return; }
-    const size = 1 + L * .05, bob = s.state === 'dormido' ? sin(t * 1.2) * 4 : sin(t * 3.4) * (s.state === 'hambriento' ? 3 : 10), sq = 1 - bob * .004, W2 = 170 * size * (1 + bob * .004), H2 = 150 * size * sq, by = base - H2 + 6 - Math.max(0, bob) * .6, fill = MOOD_INK[s.top] % 3 + 1, hairy = rr();
+    const size = 1 + L * .05, bob = job.dance && s.state !== 'dormido' && s.state !== 'huevo' ? sin(Date.now() / 1000 * TAU * job.dance / 120) * 16 : s.state === 'dormido' ? sin(t * 1.2) * 4 : sin(t * 3.4) * (s.state === 'hambriento' ? 3 : 10), sq = 1 - bob * .004, W2 = 170 * size * (1 + bob * .004), H2 = 150 * size * sq, by = base - H2 + 6 - Math.max(0, bob) * .6 - (job.hop ? Math.sin(job.hop * Math.PI) * 130 * (job.hopK || 1) : 0), fill = MOOD_INK[s.top] % 3 + 1, hairy = rr();
     // cola
     K.c.save(); K.c.translate(cx + W2 * .85, by + H2 * .55); K.c.rotate(sin(t * 5) * .3 * (s.state === 'contento' ? 1 : .2)); K.poly([[0, 0], [70 * size, -40 * size], [90 * size, -10 * size], [10, 24]], { f: fill === 1 ? 2 : fill, ft: .8, s: 1, lw: 6 }); K.c.restore();
     // orejas según el género
@@ -166,7 +207,7 @@
     for (let i = 0; i < Math.min(10, s.artists); i++) { const a = rr() * TAU, r = .35 + rr() * .5; K.circ(cx + cos(a) * W2 * r, by + H2 * .45 + sin(a) * H2 * r * .7, 9 + rr() * 12, { f: 1, ft: .7 }); }
     // cara
     const ey = by + H2 * .32, nEyes = clamp(1 + Math.min(2, s.moods.length >= 5 ? 2 : s.moods.length >= 3 ? 1 : 0), 1, 3), blink = (t % 4) < .12 || s.state === 'dormido';
-    for (let i = 0; i < nEyes; i++) { const ox = (i - (nEyes - 1) / 2) * 62 * size; if (blink) K.line(cx + ox - 16, ey, cx + ox + 16, ey, 1, 6); else { K.circ(cx + ox, ey, 22 * size, { f: -1, s: 1, lw: 5 }); K.circ(cx + ox + sin(t) * 5, ey + 2, 10 * size, { f: 1 }); } }
+    for (let i = 0; i < nEyes; i++) { const ox = (i - (nEyes - 1) / 2) * 62 * size; if (blink) K.line(cx + ox - 16, ey, cx + ox + 16, ey, 1, 6); else { K.circ(cx + ox, ey, 22 * size, { f: -1, s: 1, lw: 5 }); K.circ(cx + ox + sin(t) * 5 * (job.lx || job.ly ? .15 : 1) + (job.lx || 0) * 11 * size, ey + 2 + (job.ly || 0) * 8 * size, 10 * size, { f: 1 }); } }
     const my = ey + 58 * size, sad = s.state === 'hambriento', open = s.state === 'contento' && Math.sin(t * 3.4) > .6;
     if (s.state === 'dormido') { K.txt('z', cx + 130, by - 10 - (t * 20) % 40, { font: 'hand', size: 50, w: 600, i: 2 }); K.txt('Z', cx + 170, by - 50 - (t * 20) % 40, { font: 'hand', size: 34, w: 600, i: 2 }); }
     K.c.beginPath(); K.c.moveTo(cx - 34 * size, my); K.c.quadraticCurveTo(cx, my + (sad ? -26 : 34) * size, cx + 34 * size, my); if (open) { K.paint({ f: 1, ft: .9, s: 1, lw: 5 }); } else K.paint({ s: 1, lw: 6 });
@@ -174,6 +215,7 @@
     // patas
     for (const sgn of [-1, 1]) { K.c.beginPath(); K.c.ellipse(cx + sgn * W2 * .5, base - 8, 44 * size, 20, 0, 0, TAU); K.paint({ f: fill === 1 ? 2 : fill, ft: .9, s: 1, lw: 6 }); }
     if (job.petting > 0) for (let i = 0; i < 4; i++) K.poly(heartPts(cx - 120 + i * 80 + sin(t * 4 + i) * 10, by - 40 - job.petting * 90 - i * 24, 3.2), { f: 2, ft: .9, s: 1, lw: 3 });
+    if (job.say) { const w = Math.min(980, 70 + job.say.length * 25), x = cx - w / 2, y = Math.max(30, by - 160 * size - 70); K.rect(x, y, w, 84, { f: -1, s: 1, lw: 5 }); K.poly([[cx - 18, y + 84], [cx, y + 112], [cx + 18, y + 84]], { f: -1, s: 1, lw: 5 }); K.txt(job.say, cx, y + 58, { font: 'hand', size: 44, w: 600, align: 'center', i: 1 }); }
     K.txt(s.name, cx, 790, { font: 'display', size: 56, w: 900, stretch: 'condensed', align: 'center' }); K.code(`NIVEL ${L} · ${s.state.toUpperCase()}`, cx, 822, { align: 'center', size: 15 });
   }
   const starPts = (x, y, r, n) => Array.from({ length: n * 2 }, (_, i) => { const a = -Math.PI / 2 + i * Math.PI / n, q = i % 2 ? r * .45 : r; return [x + cos(a) * q, y + sin(a) * q]; });
@@ -194,6 +236,8 @@
     #expWin .ex-tip { position:absolute; z-index:4; pointer-events:none; padding:6px 10px; border:3px solid var(--rk1,#212b80); background:var(--rkl,#faf3e4); box-shadow:4px 4px 0 -1px var(--rk1,#212b80); font:600 12px 'Martian Mono',monospace; letter-spacing:.04em; opacity:0; transition:opacity .12s; max-width:280px; }
     #expWin .ex-tip.on { opacity:1; } #expWin .ex-tip b { display:block; font:800 18px/1.05 'Anybody',sans-serif; font-stretch:75%; text-transform:uppercase; }
     #expWin .ex-side { position:absolute; right:14px; top:14px; bottom:14px; width:min(330px,82vw); padding:14px; overflow:auto; background:var(--rkp,#f4ead4); border:4px solid var(--rk1,#212b80); box-shadow:8px 8px 0 -1px var(--rk1,#212b80); z-index:2; transition:transform .25s; font:500 12px 'Martian Mono',monospace; text-transform:uppercase; letter-spacing:.05em; }
+    #expWin .ex-prog { height:12px; margin:2px 0 6px; border:3px solid var(--rk1,#212b80); background:var(--rkl,#faf3e4); } #expWin .ex-prog i { display:block; height:100%; background:var(--rk2,#f97a2a); transition:width .4s; }
+    #expWin .ex-side h4 { margin:10px 0 2px; font:800 15px 'Anybody',sans-serif; font-stretch:80%; text-transform:uppercase; } #expWin .ex-top { margin:0 0 4px; padding-left:20px; font:500 13px 'Martian Mono',monospace; } #expWin .ex-side .ex-top li { margin:0; padding:1px 0; border:0; background:none; box-shadow:none; cursor:default; } #expWin .ex-top span { opacity:.6; }
     #expWin .ex-side.off { transform:translateX(calc(100% + 40px)); } #expWin .ex-side h3 { margin:0 0 8px; font:800 26px/1 'Anybody',sans-serif; font-stretch:70%; } #expWin .ex-side p { text-transform:none; letter-spacing:0; font-size:12px; line-height:1.4; margin:0 0 8px; } #expWin .ex-side ul { margin:0; padding:0; }
     #expWin .ex-side li { list-style:none; margin:0 0 7px; padding:6px 8px; border:2px solid var(--rk1,#212b80); background:var(--rkl,#faf3e4); cursor:pointer; text-transform:none; letter-spacing:0; font-size:12px; } #expWin .ex-side li:hover, #expWin .ex-side li.on { background:var(--rk2,#f97a2a); color:#fff; } #expWin .ex-side li b { text-transform:uppercase; letter-spacing:.04em; }
     #expWin .ex-side input { width:100%; padding:8px; border:3px solid var(--rk1,#212b80); background:#fff; color:var(--rk1,#212b80); font:600 20px 'Caveat',cursive; margin-bottom:10px; }
@@ -214,7 +258,7 @@
   const $ = id => document.getElementById(id), TABS = ['mapa', 'atlas', 'criatura', 'coleccion'];
   const V = { k: 1, tx: 0, ty: 0, sw: 0, sh: 0 }; let aspect = 16 / 9, drag = null, anim = 0;
   const HINTS = { mapa: '<kbd>rueda</kbd> acercar · <kbd>arrastrar</kbd> moverte · <kbd>doble clic</kbd> zoom · <kbd>/</kbd> buscar · <kbd>←</kbd><kbd>→</kbd> pestañas · <kbd>p</kbd> panel · <kbd>esc</kbd> cerrar',
-    atlas: '<kbd>rueda</kbd> acercar · <kbd>arrastrar</kbd> moverte · pasa el cursor sobre un pueblito · <kbd>/</kbd> buscar · <kbd>←</kbd><kbd>→</kbd> pestañas · <kbd>esc</kbd> cerrar', criatura: 'toca a tu criatura para acariciarla · <kbd>←</kbd><kbd>→</kbd> pestañas · <kbd>esc</kbd> cerrar',
+    atlas: '<kbd>rueda</kbd> acercar · <kbd>arrastrar</kbd> moverte · pasa el cursor sobre un pueblito · <kbd>/</kbd> buscar · <kbd>←</kbd><kbd>→</kbd> pestañas · <kbd>esc</kbd> cerrar', criatura: 'toca a tu criatura: salta y habla · doble toque: supersalto · espacio: acariciar · <kbd>←</kbd><kbd>→</kbd> pestañas · <kbd>esc</kbd> cerrar',
     coleccion: 'toca una lámina para abrirla y personalizarla · <kbd>/</kbd> buscar · <kbd>←</kbd><kbd>→</kbd> pestañas · <kbd>esc</kbd> cerrar' };
   // ancho libre: con el panel abierto el lienzo se centra en el espacio que queda a su izquierda
   const avail = () => { const sd = $('exSide'), m = $('exMain'); return m.clientWidth - (sd.classList.contains('off') || win.dataset.mode === 'coleccion' ? 0 : sd.offsetWidth + 26); };
@@ -256,8 +300,10 @@
         (sel ? `<h3 style="margin-top:14px">${MOODS[sel.m]}</h3><ul>${[...sel.g].sort((a, b) => (b.veces || 1) - (a.veces || 1)).map(s => `<li data-s="${esc(s.id)}"><b>${esc(s.name)}</b><br>${esc(s.artist)} · ${s.veces || 1}×</li>`).join('')}</ul>` : '');
     }
     if (tab === 'criatura' && EXP.st) { const st = EXP.st, dias = st.days > 900 ? 'nunca' : st.days === 0 ? 'hoy' : st.days === 1 ? 'ayer' : 'hace ' + st.days + ' días';
-      return `<h3>tu criatura</h3><input id="exName" maxlength="14" value="${esc(st.name)}" aria-label="nombre de la criatura" spellcheck="false"><p>nivel <b>${st.level}</b> de 12 · ${st.state}</p><p>${st.total} escuchas · ${st.songs} canciones · ${st.artists} artistas</p><p>ánimo dominante: ${esc(MOODS[st.top] || '—')}<br>género dominante: ${esc(st.genre || '—')}<br>última música: ${dias}</p>
-        <p>crece con lo que escuchas: más nivel, más grande; antenas al 3, corona al 10. sus manchas son tus artistas, sus orejas tu género, sus colores tu ánimo.</p><button data-a="pet">acariciar</button>`; }
+      return `<h3>tu criatura</h3><input id="exName" maxlength="14" value="${esc(st.name)}" aria-label="nombre de la criatura" spellcheck="false"><p>nivel <b>${st.level}</b> de 12 · ${st.state}</p>${st.level >= 12 ? '<p>nivel máximo alcanzado</p>' : `<div class="ex-prog" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(st.avance * 100)}"><i style="width:${Math.round(st.avance * 100)}%"></i></div><p>faltan <b>${st.falta}</b> ${st.falta === 1 ? 'escucha' : 'escuchas'} para el nivel ${st.level + 1}</p>`}<p>${st.total} escuchas · ${st.songs} canciones · ${st.artists} artistas</p><p>ánimo dominante: ${esc(MOODS[st.top] || '—')}<br>género dominante: ${esc(st.genre || '—')}<br>última música: ${dias}</p>
+        ${st.topArtistas.length ? `<h4>tus artistas</h4><ol class="ex-top">${st.topArtistas.map(([a, n]) => `<li>${esc(a)} <span>${n}×</span></li>`).join('')}</ol><h4>tus canciones</h4><ol class="ex-top">${st.topCanciones.map(c => `<li>${esc(c.name)} <span>${c.veces || 1}×</span></li>`).join('')}</ol>` : ''}
+        <p class="ex-consejo"><b>${esc(consejo(st))}</b></p>
+        <p>crece con lo que escuchas: más nivel, más grande; antenas al 3, corona al 10. sus manchas son tus artistas, sus orejas tu género, sus colores tu ánimo.</p><button data-a="pet">acariciar</button> <button data-a="guardar">guardar imagen</button> <button data-a="sonido" aria-pressed="${sonidoOn()}">sonido: ${sonidoOn() ? 'sí' : 'no'}</button>`; }
     return '';
   }
   const renderSide = () => { const sd = $('exSide'); if (sd && EXP.tab !== 'coleccion') { const keep = sd.scrollTop; sd.innerHTML = sideHTML(); sd.scrollTop = keep; } };
@@ -287,8 +333,8 @@
       const d = EXP.data = await load(); EXP.pts = null; if (!keep) $('exSide').classList.remove('off'); renderSide();
       if (tab === 'mapa') { putCanvas(paint(2400, 1350, 0, drawMap, { data: d, sel: EXP.sel, t: 0 })); EXP.pts = EXP.job.pts; }
       else if (tab === 'atlas') { putCanvas(paint(2400, 1350, 2, drawAtlas, { data: d, sel: EXP.sel })); EXP.pts = EXP.job.pts; }
-      else if (tab === 'criatura') { const st = EXP.st = stats(d); EXP.pet = 0; const tick = () => { if (EXP.tab !== 'criatura' || !win.classList.contains('on')) return; EXP.t = (EXP.t || 0) + .16; EXP.pet = Math.max(0, EXP.pet - .05);
-        putCanvas(paint(720, 720, MOOD_INK[st.top] || 0, drawCreature, { st: EXP.st, t: EXP.t, petting: EXP.pet })); EXP.timer = setTimeout(tick, 140); }; tick(); }
+      else if (tab === 'criatura') { const st = EXP.st = stats(d); EXP.pet = 0; const tick = () => { if (EXP.tab !== 'criatura' || !win.classList.contains('on')) return; EXP.t = (EXP.t || 0) + .16; EXP.pet = Math.max(0, EXP.pet - .05); if (Date.now() > (EXP.i.proxima || 0)) { if (EXP.i.proxima) decir(EXP.st); EXP.i.proxima = Date.now() + 9000 + Math.random() * 8000; } if (EXP.i.hop) { EXP.i.hop += EXP.i.hopK > 1 ? .07 : .1; if (EXP.i.hop >= 1) { EXP.i.hop = 0; EXP.i.hopK = 1; } }
+        putCanvas(paint(720, 720, MOOD_INK[st.top] || 0, drawCreature, { st: EXP.st, t: EXP.t, petting: EXP.pet, lx: EXP.i.lx, ly: EXP.i.ly, hop: EXP.i.hop, hopK: EXP.i.hopK, dance: window.AUD && AUD.live && typeof IN !== 'undefined' ? Math.max(70, Math.min(180, IN.bpm || 100)) : 0, say: EXP.i.sayHasta > Date.now() ? EXP.i.say : '' })); EXP.timer = setTimeout(tick, EXP.i.hop || EXP.pet || (window.AUD && AUD.live) ? 60 : 140); }; tick(); }
       else await collectionView();
       place(); renderSide();
     } finally { EXP.busy = false; }
@@ -306,7 +352,13 @@
     if (a === 'zin') return zoomAt(avail() / 2, $('exMain').clientHeight / 2, 1.5);
     if (a === 'zout') return zoomAt(avail() / 2, $('exMain').clientHeight / 2, 1 / 1.5);
     if (a === 'zfit') { cancelAnimationFrame(anim); V.k = 1; V.tx = V.ty = 0; return place(); }
-    if (a === 'pet') { EXP.pet = 1; return; }
+    if (a === 'pet') { EXP.pet = 1; chirp('caricia'); if (EXP.st) decir(EXP.st, 'caricia'); return; }
+    if (a === 'sonido') { try { localStorage.setItem('lumoraCriaturaSonido', sonidoOn() ? '0' : '1'); } catch (e) {} renderSide(); if (sonidoOn()) chirp('caricia'); return; }
+    if (a === 'guardar') {                                  // la criatura como imagen PNG
+      const cv = $('exStage').querySelector('canvas'); if (!cv) return;
+      cv.toBlob(b => { if (!b) return; const u = URL.createObjectURL(b), l = document.createElement('a'); l.href = u; l.download = 'criatura-' + (EXP.st ? EXP.st.name : 'lumora').toLowerCase() + '.png'; document.body.append(l); l.click(); l.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000); }, 'image/png');
+      return;
+    }
     if (b?.dataset.sort) { EXP.sort = b.dataset.sort; return collectionView(); }
     if (card && a && EXP.tab === 'coleccion') {
       const id = card.dataset.id, pid = card.dataset.pid;
@@ -322,7 +374,10 @@
     if (li?.dataset.s) { const s = songOf(li.dataset.s), pt = EXP.pts?.find(p => p.id === li.dataset.s); return choose(s ? (MOODS[s.mood] ? s.mood : '') : EXP.sel, pt?.x, pt?.y); }
   });
   // arrastrar mueve el lienzo; un toque sin mover elige; la criatura se acaricia con un toque
-  $('exStage').addEventListener('pointerdown', e => { if (EXP.tab === 'criatura') { EXP.pet = 1; return; } drag = { x: e.clientX, y: e.clientY, tx: V.tx, ty: V.ty, moved: false }; $('exStage').setPointerCapture(e.pointerId); });
+  // la criatura te mira: sus pupilas siguen al cursor
+  $('exStage').addEventListener('pointermove', e => { if (EXP.tab !== 'criatura') return; const r = $('exStage').getBoundingClientRect(); EXP.i.lx = clamp(((e.clientX - r.left) / r.width - .5) * 2, -1, 1); EXP.i.ly = clamp(((e.clientY - r.top) / r.height - .5) * 2, -1, 1); });
+  $('exStage').addEventListener('pointerleave', () => { EXP.i.lx = 0; EXP.i.ly = 0; });
+  $('exStage').addEventListener('pointerdown', e => { if (EXP.tab === 'criatura') { EXP.pet = 1; if (!EXP.i.hop) EXP.i.hop = .01; chirp(EXP.st && EXP.st.state === 'dormido' ? 'dormir' : 'salto'); if (EXP.st) decir(EXP.st, 'salto'); return; } drag = { x: e.clientX, y: e.clientY, tx: V.tx, ty: V.ty, moved: false }; $('exStage').setPointerCapture(e.pointerId); });
   $('exStage').addEventListener('pointermove', e => {
     const tip = $('exTip'), st = $('exStage');
     if (drag) { const dx = e.clientX - drag.x, dy = e.clientY - drag.y; if (Math.abs(dx) + Math.abs(dy) > 5) drag.moved = true; if (drag.moved) { st.classList.add('drag'); V.tx = drag.tx + dx; V.ty = drag.ty + dy; place(); tip.classList.remove('on'); } return; }
@@ -342,7 +397,7 @@
     else { const out = $('exStage').querySelector('canvas'), [vx, vy] = toV(e, out), cell = EXP.job?.cells.find(c => Math.hypot((c.cx - vx) / 1.25, (c.cy - vy) / .85) < c.r); if (cell) return choose(cell.m, cell.cx, cell.cy); }
   };
   $('exStage').addEventListener('pointerup', finish); $('exStage').addEventListener('pointercancel', () => { drag = null; $('exStage').classList.remove('drag'); });
-  $('exStage').addEventListener('dblclick', e => { if (EXP.tab === 'criatura') return; const r = $('exMain').getBoundingClientRect(); if (V.k > 2) { cancelAnimationFrame(anim); V.k = 1; V.tx = V.ty = 0; place(); } else zoomAt(e.clientX - r.left, e.clientY - r.top, 2.2); });
+  $('exStage').addEventListener('dblclick', e => { if (EXP.tab === 'criatura') { EXP.i.hopK = 2.2; EXP.i.hop = .01; chirp('giro'); if (EXP.st) decir(EXP.st, 'salto'); return; } const r = $('exMain').getBoundingClientRect(); if (V.k > 2) { cancelAnimationFrame(anim); V.k = 1; V.tx = V.ty = 0; place(); } else zoomAt(e.clientX - r.left, e.clientY - r.top, 2.2); });
   $('exMain').addEventListener('wheel', e => { if (EXP.tab === 'criatura' || EXP.tab === 'coleccion') return; e.preventDefault(); const r = $('exMain').getBoundingClientRect(); zoomAt(e.clientX - r.left, e.clientY - r.top, Math.exp(-e.deltaY * .0018)); }, { passive: false });
   $('exQ').addEventListener('input', e => { EXP.q = e.target.value; if (EXP.tab === 'coleccion') collectionView(); else renderSide(); });
   $('exQ').addEventListener('keydown', e => { if (e.key === 'Enter') { const first = $('exSide').querySelector('li[data-c], li[data-s], li[data-m]'); if (first) first.click(); } });
@@ -361,6 +416,7 @@
     if (/^[1-4]$/.test(k)) return open(TABS[+k - 1]);
     if (k === '/') { e.preventDefault(); return $('exQ').focus(); }
     if (k === 'p' || k === 'P') return togglePanel();
+    if (k === ' ' && EXP.tab === 'criatura') { e.preventDefault(); EXP.pet = 1; if (!EXP.i.hop) EXP.i.hop = .01; chirp('caricia'); if (EXP.st) decir(EXP.st, 'caricia'); return; }
     const cx = avail() / 2, cy = $('exMain').clientHeight / 2;
     if (k === '+' || k === '=') return zoomAt(cx, cy, 1.4); if (k === '-' || k === '_') return zoomAt(cx, cy, 1 / 1.4); if (k === '0') { cancelAnimationFrame(anim); V.k = 1; V.tx = V.ty = 0; place(); }
   }, true);

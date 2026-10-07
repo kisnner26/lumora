@@ -21,6 +21,7 @@ python3 tools/mock_bridge.py   # puente simulado, sin Música ni Spotify
 ```sh
 tools/check.sh          # sintaxis y pruebas rápidas
 tools/check.sh todo     # incluye las lentas
+python3 -m unittest discover -s tests   # pruebas del puente y de las letras propias
 ```
 
 las pruebas con navegador necesitan Playwright (`npm i -D playwright && npx playwright install chromium`); sin él se omiten y se avisa cuáles.

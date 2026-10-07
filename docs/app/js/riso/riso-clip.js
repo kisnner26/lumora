@@ -61,10 +61,10 @@
     const byWords = sceneByWords(text, blockTxt, mood), recent = RC.recentScenes || (RC.recentScenes = []), cfgOn = !window.CFG || CFG.singers !== false, singers = cfgOn && R.singers ? R.singers.plan(window.ext?.st?.artist, window.ext?.st?.name) : null;
     let kind;
     if (why === 'title') kind = 'title'; else if (why === 'outro') kind = 'outro';
-    else if (li < 0) kind = objs.length && r() < .5 ? 'prop' : 'scene';
+    else if (li < 0) kind = singers && time > 5 && r() < .38 ? 'singer' : objs.length && r() < .5 ? 'prop' : 'scene';
     else if (named.length && r() < .92) kind = 'prop';                 // lo que el verso nombra (país, persona, objeto del catálogo) manda sobre la palabra gigante y las escenas
     else if (L?.big && keyWord(text, L)) kind = 'giant';
-    else if (li >= 0 && singers && prev[1] !== 'singer' && r() < (energy >= 7 ? .7 : .5) + (RC.count ? 0 : .3)) kind = 'singer';        // el artista del catálogo canta al micrófono
+    else if (li >= 0 && singers && prev[1] !== 'singer' && r() < (energy >= 7 ? .7 : .5) + (RC.count ? 0 : .3)) kind = 'singer';        // retrato del artista que figura en los créditos
     else if (byWords && !recent.slice(-2).includes(byWords) && prev[1] !== 'scene' && r() < .8) kind = 'scene';
     else {
       const w = { prop: 1.7, scene: energy >= 7 ? .7 : .5 };
@@ -314,6 +314,31 @@
     RC.songKey = skey;
     if (RC.lastKey !== key) { RC.lastKey = key; RC.recentScenes = []; RC.shot = null; RC.pending = null; RC.kindHist.length = 0; RC.sceneState = {}; RC.lastScene = ''; RC.count = 0; }
     if (st.sceneId !== 'clip') st.setScene('clip', { instant: true });
+    const grief = R.grief?.detect(ext.st?.name, ext.st?.artist, ext.st?.id);
+    if (grief && (!window.CFG || CFG.clip !== 'portada')) {
+      RC.grief = true; RC.geometry = null;
+      if (RC.mix?.on) RC.mix.finish();
+      RC.shot = null; RC.pending = null; st.cut = null;
+      const lyric = li >= 0 && IN.show !== false ? IN.lines[li] : null;
+      const text = lyric ? (IN.trMode === 'es' && IN.tr?.[li] ? IN.tr[li] : lyric.text) : '';
+      R.grief.render(x, W, H, time, { text, title: ext.st?.name, duration: ext.st?.dur || proc.dur, reduced: !!window.CFG?.reduceMotion, playing: ext.active() ? ext.st?.state === 'playing' : !paused });
+      if (RC.afterFrame) RC.afterFrame(time);
+      return;
+    }
+    if (RC.grief) R.grief?.stop();
+    RC.grief = false;
+    const geometry = R.geometry?.detect(ext.st?.name, ext.st?.artist, ext.st?.album);
+    if (geometry && (!window.CFG || CFG.clip !== 'portada')) {
+      RC.geometry = geometry;
+      if (RC.mix?.on) RC.mix.finish();
+      RC.shot = null; RC.pending = null; st.cut = null;
+      const l = li >= 0 && IN.show !== false ? IN.lines[li] : null;
+      const text = l ? (IN.trMode === 'es' && IN.tr?.[li] ? IN.tr[li] : l.text) : '';
+      R.geometry.render(x, W, H, geometry, time, { reduced: !!window.CFG?.reduceMotion, duration: ext.st?.dur || proc.dur || 0, text });
+      if (RC.afterFrame) RC.afterFrame(time);
+      return;
+    }
+    RC.geometry = null;
     if (RC.mix && RC.mix.tick(dt)) {                                               // mezcla entre canciones: las tomas normales esperan
       st.margin = 34; st.notes = false; st.lyric = true; st.speed = 1; st.auto = true; st.setDetail(window.LOWFX ? 1 : 2, true);
       st.frame(Math.max(.001, dt)); x.drawImage(st.canvas, 0, 0, W, H); return;
@@ -355,7 +380,7 @@
   RC.h = { writeLine, drawBg, fitText, trBox, scribble, keyWord, storyOf, meta, fmt, hash, secOf, lineIdx, timeNow, pad2, wrap, artCanvas, notes };
 
   // ---------- conexión con el video de siempre ----------
-  const enabled = () => !window.CFG || CFG.clip !== 'clasico';
+  const enabled = () => !window.CFG || CFG.clip !== 'clasico' || !!R.geometry?.detect(ext.st?.name, ext.st?.artist, ext.st?.album) || !!R.grief?.detect(ext.st?.name, ext.st?.artist, ext.st?.id);
   // el título clásico y el fondo viejo no llegan a pintarse: el videoclip se enciende en el mismo instante que arranca el video
   const _tc = titleCard;
   titleCard = function (title, artist) {
@@ -367,7 +392,7 @@
   procFrame = function (t, dt) {
     const on = mode === 'proc' && enabled() && st.ok;
     if (on !== RC.on) { RC.on = on; document.body.classList.toggle('riso-clip', on); if (!on) { RC.shot = null; RC.lastKey = ''; if (st.sceneId === 'clip') st.sceneId = null; } else lyr.innerHTML = ''; }
-    if (!on) return _pf(t, dt);
+    if (!on) { R.grief?.stop(); return _pf(t, dt); }
     const real = dt || .016; if (!ext.active() && !paused) T += real;
     if (st.w !== innerWidth || st.h !== innerHeight) st.resize(innerWidth, innerHeight);
     try { frame(paused ? 0 : real); } catch (e) { if (!RC.err) { RC.err = 1; console.warn('videoclip riso:', e.message, e.stack); } }
