@@ -81,6 +81,7 @@
       kind = r() * (w.prop + w.scene) < w.prop ? 'prop' : 'scene';
     }
     if (narrative?.kind && narrative.kind !== 'auto') kind = narrative.kind;
+    if (R.pov && !L?.big && kind !== 'title' && kind !== 'outro' && text && R.pov.ids.some(id => R.pov.rx[id].test(text)) && r() < .5) kind = 'scene';        // la letra pide mirar con los ojos de quien canta
     if (kind === 'singer' && !singers) kind = 'tableau';
     if (narrative?.manual && narrative.kind === 'auto') kind = 'tableau';
     if (force) kind = force;
@@ -113,6 +114,7 @@
       if (!byWords && !plan?.scene && !narrative?.action && li >= 0 && RC.lastScene === id && r() < .6) { const alt = R.order.filter(x => x !== id); id = alt[(r() * alt.length) | 0]; }
       if (R.world?.enabled && !plan?.scene && !byWords && !narrative?.action && r() < .28) { shot.worldPlace = id; id = 'universo'; }   // el mundo procedural es una escena más del repertorio, no la única   // el mundo hereda el lugar que pedía la letra o el ánimo
       const gd = R.gd?.detect(ext.st?.name, ext.st?.artist, ext.st?.album); if (gd && !byWords && r() < .5) { R.gd.level = gd; id = R.gd.scene(gd, r); }
+      const pv = R.pov ? R.pov.pick(text, mood, r, plan?.scene ? 0 : .2) : null; if (pv && R.scenes[pv]) id = pv;        // lo que dice el verso manda sobre el plan; el ánimo solo cuando el plan no fija escena
       shot.scene = id; RC.lastScene = id; recent.push(id); if (recent.length > 6) recent.shift(); shot.inks = R.scenes[id].inks;
       if (r() < .45) shot.inks = inkList[(sec + 1) % inkList.length];
     }
