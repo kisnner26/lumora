@@ -52,8 +52,8 @@
   }
   function makeShot(li, sec, time, why, force) {
     const plan = SEM.plans[sec] || null, text = li >= 0 ? IN.lines[li].text : '', L = text ? storyOf(text) : null, seed = hash(ext.key() + '|' + li + '|' + sec + '|' + (li < 0 ? Math.floor(time / 4) : 0) + (RC.salt || ''));
-    const narrative = li >= 0 ? R.narrative?.plan(IN.lines)[li] : null;
-    const r = rngS(seed), mood = plan?.mood || narrative?.mood || 'sereno', energy = plan?.energy ?? 5, inkList = MOOD_INKS[mood] || [0, 1, 2];
+    const narrative = li >= 0 ? (R.film ? R.film.plan(IN.lines, IN.cuts, SEM.plans, proc.dur).beats[li] : R.narrative?.plan(IN.lines)[li]) : null;
+    const r = rngS(seed), mood = plan?.mood || narrative?.mood || 'sereno', energy = narrative?.section?.role === 'climax' ? Math.max(8, plan?.energy ?? 5) : narrative?.section?.role === 'bridge' ? Math.min(4, plan?.energy ?? 5) : plan?.energy ?? 5, inkList = MOOD_INKS[mood] || [0, 1, 2];
     const shot = { kind: 'prop', li, sec, t0: timeNow(), k0: st.t, seed, plan, mood, energy, inks: inkList[(sec + (plan?.color === 'oscuro' ? 1 : 0)) % inkList.length], bg: 'paper', layout: 0, why };
     const own = typeof LEX !== 'undefined' && text ? LEX.filter(([, re]) => re.test(text)).map(q => q[0]) : [];
     const named = (R.people && text ? R.people.detect(text, 3) : []), rr0 = R.rng(seed ^ 0x9e37);
@@ -73,6 +73,9 @@
       if (prev[1] === 'prop') w.prop = .9; if (prev[1] === 'scene') w.scene = .15; if (prev[0] === 'giant') w.prop += .3;
       kind = r() * (w.prop + w.scene) < w.prop ? 'prop' : 'scene';
     }
+    if (narrative?.kind && narrative.kind !== 'auto') kind = narrative.kind;
+    if (kind === 'singer' && !singers) kind = 'tableau';
+    if (narrative?.manual && narrative.kind === 'auto') kind = 'tableau';
     if (force) kind = force;
     shot.narrative = narrative;
     shot.kind = kind; RC.kindHist.push(kind); if (RC.kindHist.length > 6) RC.kindHist.shift();
@@ -80,7 +83,7 @@
     if (kind === 'tableau') {
       const motif = narrative.motif, info = R.catalog?.info[motif];
       const allowed = !info || !window.CFG?.catOn || CFG.catOn[info.cat] !== false;
-      const focal = (L?.objects || []).map(id => PROP_OF[id] || id).find(hasProp) || named.find(hasProp) || (motif && hasProp(motif) && allowed ? motif : objs[0]);
+      const focal = (narrative.manual && narrative.motif ? narrative.motif : null) || (L?.objects || []).map(id => PROP_OF[id] || id).find(hasProp) || named.find(hasProp) || (motif && hasProp(motif) && allowed ? motif : objs[0]);
       shot.props = focal ? [{ id: focal, ph: 0, rot: 0 }] : [];
       shot.inks = inkList[narrative.visualChapter % inkList.length];
       shot.bg = 'paper'; shot.flip = !!(hash(ext.key()) % 2); shot.layout = 0;
@@ -229,7 +232,7 @@
       drawBg(s, kt);
       const draw = clamp(kt / 1.1), cxp = pcx(s), cy = 450;
       const sc = s.props.length > 1 ? 1.05 : 1.35;
-      if (s.kind === 'tableau') R.narrative.draw(K, s, kt); else if (s.kind === 'singer') R.singers.draw(s, kt, time, age, dur); else s.props.forEach((p, i) => { const off = i === 0 ? [0, 0] : [(i === 1 ? -1 : 1) * (s.flip ? -1 : 1) * 250, (i === 1 ? 1 : -1) * 130], k = clamp((kt - i * .35) / 1.1);
+      if (s.kind === 'tableau') R.narrative.draw(K, s, Math.max(0, time - (s.narrative?.t ?? IN.lines[s.li]?.t ?? s.t0))); else if (s.kind === 'singer') R.singers.draw(s, kt, time, age, dur); else s.props.forEach((p, i) => { const off = i === 0 ? [0, 0] : [(i === 1 ? -1 : 1) * (s.flip ? -1 : 1) * 250, (i === 1 ? 1 : -1) * 130], k = clamp((kt - i * .35) / 1.1);
         R.props.drawProp(K, p.id, cxp + off[0], cy + off[1], sc * (i === 0 ? 1 : .55), easeOut(k), { seed: s.seed + i * 7, ph: p.ph, rot: p.rot }); });
       if (s.props.length > 1 || s.bg === 'paper') K.tape(cxp - 190, cy - 240, 120, 38, -.5);
       K.screen(() => {
@@ -296,6 +299,7 @@
   // ---------- cámara de cada toma ----------
   function shotCam(cam, kt, a) {
     const s = RC.shot; if (!s) return;
+    if (s.kind === 'tableau' && R.film) { cam.x = 0; cam.y = 0; cam.z = 1; cam.r = 0; return; }
     if (s.kind === 'scene') { const sc = R.scenes[s.scene]; if (sc.cam) return sc.cam(cam, kt + 3, a, RC.sceneState[s.scene]); }
     if (s.kind === 'giant') { cam.x = 0; cam.y = 0; cam.z = 1.16 - easeOut(clamp(kt / 1.1)) * .14; cam.r = 0; return; }
     const d = s.seed % 2 ? 1 : -1;
@@ -369,7 +373,7 @@
       else if (cur.kind === 'title' && (IN.preparing ? false : ((time > 4.5 || li >= 0) && st.t - cur.k0 > 1.8))) why = 'next';
       else if (cur.kind !== 'title' && cur.kind !== 'outro') {
         if (sec !== cur.sec) why = 'sec';
-        else if (li !== cur.li && (li >= 0 || age > 2.5) && (age > 3.6 || cur.kind === 'giant' || (li >= 0 && cur.li < 0))) why = 'line';
+        else if (li !== cur.li && (li >= 0 || age > 2.5) && (age > 3.6 || cur.kind === 'tableau' || cur.kind === 'giant' || (li >= 0 && cur.li < 0))) why = 'line';
         else if (age > 9) why = 'age';
       }
     }

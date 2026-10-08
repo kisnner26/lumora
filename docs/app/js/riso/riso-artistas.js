@@ -74,8 +74,25 @@
   add('residente', 'residente|rene perez|rené pérez', { skin: .25, hair: 'buzz', beard: true, tattoos: true, outfit: 'shirt', clothes: 1 });
   add('mora', 'mora', { skin: .25, hair: 'short', glasses: true, beard: true, outfit: 'jacket', clothes: 3 });
   add('tame_impala', 'tame impala|kevin parker', { hair: 'long', beard: true, outfit: 'shirt', clothes: 3 });
+  add('john_lennon', 'john lennon', { hair: 'long', glasses: true, beard: true, outfit: 'suit', clothes: -1, instrument: 'guitar' });
+  add('paul_mccartney', 'paul mccartney', { hair: 'mop', outfit: 'suit', clothes: 1, instrument: 'bass' });
+  add('george_harrison', 'george harrison', { hair: 'long', beard: true, outfit: 'suit', clothes: 3, instrument: 'guitar' });
+  add('ringo_starr', 'ringo starr', { hair: 'mop', moustache: true, outfit: 'suit', clothes: 2, instrument: 'drums' });
+  add('brian_may', 'brian may', { hair: 'waves', outfit: 'shirt', clothes: -1, instrument: 'guitar' });
+  add('roger_taylor', 'roger taylor', { hair: 'long', hairInk: 3, outfit: 'shirt', clothes: 1, instrument: 'drums' });
+  add('john_deacon', 'john deacon', { hair: 'wavesShort', outfit: 'shirt', clothes: 3, instrument: 'bass' });
+  add('dave_grohl', 'dave grohl', { hair: 'long', beard: true, outfit: 'shirt', clothes: 1, instrument: 'drums' });
+  add('krist_novoselic', 'krist novoselic', { hair: 'long', outfit: 'shirt', clothes: 3, instrument: 'bass', build: .9 });
+  for (const id of ['kurt_cobain', 'jimi_hendrix', 'ed_sheeran', 'hozier', 'gustavo_cerati', 'juanes', 'alex_turner']) profiles[id].instrument = 'guitar';
+  profiles.josh_dun.instrument = 'drums'; profiles.tyler_joseph.instrument = 'ukulele';
+  profiles.fito_paez.instrument = 'keys'; profiles.chris_martin.instrument = 'keys';
   // proporciones de ilustración, no medidas biométricas. cada perfil comparte todos sus aliases.
   const faces = {
+    john_lennon: [1.02, 1.06, .92, 1, 1.04, .85], paul_mccartney: [.95, 1.04, .81, 1.08, .95, 1.06],
+    george_harrison: [.85, 1.16, .82, 1, 1.15, .82], ringo_starr: [.94, 1.08, .94, .95, 1.35, .84],
+    brian_may: [.86, 1.14, .84, 1.04, 1.13, .90], roger_taylor: [1.03, .98, 1.03, 1.04, .97, 1.05],
+    john_deacon: [.90, 1.07, .90, .97, 1.03, .85], dave_grohl: [1.02, 1.08, 1.12, .95, 1.02, 1.08],
+    krist_novoselic: [.87, 1.18, .96, 1, 1.18, .92],
     tyler_joseph: [ .88, 1.10, .82, .88, 1.16, .84 ], josh_dun: [1.06, .94, 1.10, 1.02, .88, 1.08],
     taylor_swift: [.86, 1.10, .75, 1.06, .88, 1.15], billie_eilish: [1.10, .98, .90, 1.12, .80, 1.15],
     ariana_grande: [.82, .97, .72, 1.08, .78, 1.12], lana_del_rey: [1.02, 1.08, .90, 1.03, .98, 1.28],
@@ -92,7 +109,7 @@
   for (const p of Object.values(profiles)) {
     const [width, height, jaw, eyes, nose, lips] = faces[p.id] || [1, 1, 1, 1, 1, 1];
     p.face = { width, height, jaw, eyes, nose, lips };
-    p.build = ['snoop_dogg', 'hozier', 'taylor_swift'].includes(p.id) ? .90 : ['adele', 'drake'].includes(p.id) ? 1.10 : 1;
+    p.build = p.build || (['snoop_dogg', 'hozier', 'taylor_swift'].includes(p.id) ? .90 : ['adele', 'drake'].includes(p.id) ? 1.10 : 1);
   }
   const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ø/g, 'o').replace(/\s+/g, ' ').trim();
   const aliases = new Map(Object.values(profiles).flatMap(p => p.names.map(n => [norm(n), p.id])));
@@ -105,6 +122,9 @@
         if (/trench/i.test(album)) return { ...known, hat: null, outfit: 'coat', clothes: 3, tape: true };
         if (/scaled and icy/i.test(album)) return { ...known, hat: null, hair: 'messy', hairInk: 3, clothes: 2, tape: false };
       }
+      if (['john_lennon', 'paul_mccartney', 'george_harrison', 'ringo_starr'].includes(known.id) && /please please me|with the beatles|hard day|help!|rubber soul/i.test(album)) return { ...known, hair: 'mop', beard: false, moustache: false, glasses: false, clothes: 1, tie: true };
+      if (known.id === 'freddie_mercury' && /queen ii|sheer heart attack|night at the opera|day at the races/i.test(album)) return { ...known, hair: 'long', moustache: false, outfit: 'shirt', clothes: -1 };
+      if (known.id === 'josh_dun' && /trench/i.test(album)) return { ...known, hairInk: 3, tape: true, clothes: 3 };
       if (known.id === 'billie_eilish' && /hit me hard and soft|happier than ever/i.test(album)) return { ...known, splitHair: false };
       return known;
     }
@@ -112,9 +132,10 @@
       const h = hash(name); return { id: null, skin: .15, hair: ['short', 'mop', 'messy'][h % 3], hairInk: 1, outfit: ['jacket', 'shirt', 'hoodie'][h % 3], clothes: 2 + h % 2 }; },
     draw(K, name, id, x, ground, scale, motion = {}) {
       const p = this.profile(name, id, motion.album), c = K.c, t = window.CFG?.reduceMotion ? 0 : motion.time || 0, active = !!motion.active;
+      const instrument = motion.instrument || p.instrument;
       const bob = Math.sin(t * 2.2) * (active ? 3 : 1), open = motion.open || 0;
       c.save(); c.translate(x, ground); c.scale(scale * (p.build || 1), scale); c.rotate(Math.sin(t * 1.6) * (active ? .018 : .007));
-      const path = (d, f, tone = 1, lw = 4, ink = 1) => { let q = paths.get(d); if (!q) { q = new Path2D(d); paths.set(d, q); } if (f !== undefined) { c.fillStyle = f === -1 ? K.PAPER : K.ink(f, tone); c.fill(q); } c.strokeStyle = K.ink(ink); c.lineWidth = lw; c.lineJoin = 'round'; c.lineCap = 'round'; c.stroke(q); };
+      const path = (d, f, tone = 1, lw = 4, ink = 1) => { let q = paths.get(d); if (!q) { q = new Path2D(d); if (paths.size < 2048) paths.set(d, q); } if (f !== undefined) { c.fillStyle = f === -1 ? K.PAPER : K.ink(f, tone); c.fill(q); } c.strokeStyle = K.ink(ink); c.lineWidth = lw; c.lineJoin = 'round'; c.lineCap = 'round'; c.stroke(q); };
       const circle = (x, y, r, f, ft = 1) => K.circ(x, y, r, { f, ft, s: 1, lw: 4 });
       const skin = d => { path(d, -1); if (p.skin) path(d, 3, p.skin); };
       K.ell(0, 5, 83, 12, 0, { f: 1, ft: .25 });
@@ -144,12 +165,19 @@
       if (p.chain || p.necklace) path('M-25 -329 Q0 -263 25 -329', undefined, 1, p.chain ? 7 : 3, 3);
       if (p.chain) path('M0 -282 L-7 -271 L0 -261 L7 -271 Z', 3);
       // manos y brazos: el micrófono sube durante el verso de esta voz.
+      const handY = active ? -323 : -236;
+      if (!instrument) {
       path('M-51 -326 Q-77 -297 -75 -249 L-61 -209', undefined, 1, 22, p.clothes === -1 ? 3 : p.clothes);
       skin('M-70 -220 Q-84 -208 -72 -194 Q-56 -186 -53 -205 L-56 -218 Z');
-      const handY = active ? -323 : -236;
       path(`M51 -326 Q83 -273 67 -252 L25 ${handY + 12}`, undefined, 1, 23, p.clothes === -1 ? 3 : p.clothes);
       skin(`M18 ${handY - 8} Q3 ${handY - 2} 15 ${handY + 15} Q34 ${handY + 24} 37 ${handY + 5} L31 ${handY - 8} Z`);
       if (p.glove) path(`M18 ${handY - 8} Q3 ${handY - 2} 15 ${handY + 15} Q34 ${handY + 24} 37 ${handY + 5} L31 ${handY - 8} Z`, -1);
+      } else {
+        const ly = instrument === 'keys' ? -184 : instrument === 'drums' ? -220 : -235;
+        const ry = instrument === 'keys' ? -184 : instrument === 'drums' ? -220 : -306;
+        path(`M-51 -326 Q-78 -270 -28 ${ly} M51 -326 Q76 -270 30 ${ry}`, undefined, 1, 21, p.clothes === -1 ? 3 : p.clothes);
+        circle(-28, ly, 11, -1); circle(30, ry, 11, -1);
+      }
       if (p.tattoos) { path('M-73 -260 L-60 -251 L-73 -239 M61 -284 L73 -277 L65 -263', undefined, 1, 3); }
       const face = p.face || { width: 1, height: 1, jaw: 1, eyes: 1, nose: 1, lips: 1 };
       c.save(); c.translate(0, -390); c.scale(face.width, face.height); c.translate(0, 390);
@@ -184,7 +212,26 @@
       if (p.hat === 'beanie') { path('M-45 -415 Q-48 -465 0 -468 Q49 -465 45 -415 Z', 2); K.rect(-46, -425, 92, 18, { f: 2, s: 1, lw: 3 }); }
       if (p.helmet) { path('M-45 -402 Q-46 -452 0 -454 Q47 -450 45 -401 L35 -348 H-35 Z', 3, .8, 5); path('M-37 -407 H37 L31 -376 H-31 Z', 1); K.line(-24, -397, 25, -397, -1, 4); }
       c.restore();
-      K.line(25, handY + 7, 35, handY - 23, 1, 9); circle(36, handY - 28, 11, 2);
+      if (instrument === 'guitar' || instrument === 'bass' || instrument === 'ukulele') {
+        const k = instrument === 'ukulele' ? .66 : 1;
+        c.save(); c.translate(-10, -244); c.scale(k, k); c.rotate(-.3);
+        path('M-8 -20 C-24 -55 -65 -47 -52 -12 C-89 15 -62 63 -27 44 C7 69 35 37 15 12 C37 -18 15 -42 -8 -20 Z', instrument === 'bass' ? 1 : 3, .85, 5);
+        path('M-8 -15 L57 -112 L69 -104 L5 -7 Z', 2, .8, 4); circle(-13, 9, 12, 1);
+        path('M-18 31 L61 -109 M-13 33 L65 -107', undefined, 1, 1.5, 1);
+        path(`M35 -35 L${-5 + Math.sin(t * 12) * (active ? 8 : 0)} 15`, undefined, 1, 10, p.clothes);
+        c.restore();
+      } else if (instrument === 'drums') {
+        for (const sd of [-1, 1]) { path(`M${sd * 70} -168 L${sd * 90} -24 M${sd * 90 - 20} -24 H${sd * 90 + 20}`, undefined, 1, 4); K.ell(sd * 77, -170, 48, 9, sd * .1, { f: 3, s: 1, lw: 3 }); }
+        circle(0, -80, 57, 2); circle(0, -80, 43, -1);
+        K.ell(-45, -150, 35, 21, -.1, { f: 3, s: 1, lw: 4 }); K.ell(40, -150, 35, 21, .1, { f: 3, s: 1, lw: 4 });
+        const hit = Math.sin(t * 12) * (active ? 18 : 0);
+        path(`M-55 -230 L-23 ${-176 + hit} M52 -230 L25 ${-176 - hit}`, undefined, 1, 9, p.clothes);
+        path(`M-23 ${-176 + hit} L-2 ${-147 + hit} M25 ${-176 - hit} L6 ${-147 - hit}`, undefined, 1, 4, 3);
+      } else if (instrument === 'keys') {
+        path('M-100 -195 H100 V-158 H-100 Z', -1, 1, 5);
+        for (let i = -4; i <= 4; i++) K.line(i * 20, -195, i * 20, -158, 1, 2);
+        path('M-80 -158 L70 -16 M80 -158 L-70 -16', undefined, 1, 6);
+      } else { K.line(25, handY + 7, 35, handY - 23, 1, 9); circle(36, handY - 28, 11, 2); }
       c.restore();
     }
   };
