@@ -9,6 +9,7 @@
 
 ## sin publicar
 
+- geometry dash: se elimina el visualizador propio en neón; las canciones de los 22 niveles principales usan el videoclip de siempre y suman cuatro tomas exclusivas en el estilo de lumora (cubo que salta, nave, onda y cambio de gravedad).
 - experiencia de audio: ambientes acústicos (sala, fiesta, catedral, espacio binaural), eco al tempo y reverberación sobre un archivo local, una entrada loopback o el audio del Mac (tap de Core Audio, sin driver extra); el audio original se silencia mientras se procesa.
 - universos procedurales: cada canción tiene un mundo por semilla (ciudad, bosque, costa, desierto, órbita, interior) que se regenera sin límite; lo usan el videoclip, la carátula (fondo nuevo, con pestaña de sonido) y una pestaña nueva en explorar.
 - la criatura es interactiva: sus ojos siguen al cursor, salta y suena al tocarla (la voz depende de su nombre), habla en un globo, baila al ritmo de lo que suena, hace un supersalto con doble toque y se puede silenciar; barra espaciadora para acariciarla.

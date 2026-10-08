@@ -44,7 +44,7 @@ no sé si Música y Spotify informan de la canción nueva al empezar o al termin
 ## artistas y geometry dash
 - 56 perfiles vectoriales con peinados, caras, ropa y accesorios propios. the weeknd conserva su figura escénica completa. los artistas fuera del catálogo reciben un avatar estable; su parecido real requiere añadir un perfil.
 - las colaboraciones muestran hasta tres voces. el turno del micrófono sigue el orden de los versos, no detecta quién canta. se apaga en ajustes > contenido > «artistas cantando».
-- las 22 canciones principales de geometry dash, desde stereo madness hasta dash, activan un recorrido original con cubos, naves, bola, ovni, wave, robot, spider, swing y portales. se reconoce título y autor, o contexto explícito del juego, para evitar títulos homónimos. acepta fingerbang y el título oficial de mdk como alias.
-- el recorrido depende del reloj de la canción: funciona con instrumentales, pausa y búsqueda; respeta movimiento reducido y la portada fija. no reproduce los mapas originales.
-- verificado con tools/test_artistas_geometry.mjs, tools/test_geometry_clip.mjs y tools/test_cantantes.mjs. falta revisar las variantes de créditos que entregan bibliotecas reales.
+- las 22 canciones principales de geometry dash, desde stereo madness hasta dash, se ven como cualquier otra en el videoclip de siempre. de vez en cuando entra una toma exclusiva con las mismas tintas y el mismo motor: cubo que salta, nave en el túnel, onda y cambio de gravedad, según los modos del nivel. se reconoce título y autor, o contexto explícito del juego, para evitar títulos homónimos. acepta fingerbang y el título oficial de mdk como alias.
+- las tomas exclusivas solo salen en esas canciones y respetan la portada fija; no reproducen los mapas originales.
+- verificado con tools/test_artistas_geometry.mjs y tools/test_cantantes.mjs. falta revisar las variantes de créditos que entregan bibliotecas reales.
 - referencia de títulos y autores: https://gddocs.omgrod.me/reference/songs/
