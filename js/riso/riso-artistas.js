@@ -121,7 +121,7 @@
     const k1 = [ax + Math.cos(a + b) * l1, ay + Math.sin(a + b) * l1], k2 = [ax + Math.cos(a - b) * l1, ay + Math.sin(a - b) * l1], mid = (ax + ax + dx) / 2;
     const k = (k1[0] - mid) * side >= (k2[0] - mid) * side ? k1 : k2; return [k[0], k[1], ax + Math.cos(a) * d, ay + Math.sin(a) * d];
   };
-  const solve = (act, t, beatT, active, mic) => {
+  const solve = (act, t, beatT, active, mic, hug = 0) => {
     const s = Math.sin, c = Math.cos, PI = Math.PI;
     const o = { fL: [-24 + s(t * .9) * 5, 0], fR: [24 + s(t * .9) * 5, 0], hL: [-58 + s(t * 1.2) * 7, -196 + s(t * 1.8) * 4], hR: [58 + s(t * 1.2 + 1) * 7, -196 + s(t * 1.8 + .6) * 4], dy: Math.abs(s(t * 1.8)) * 3, tilt: s(t * .9) * .022, nod: s(t * 1.3) * .025, mic: false };
     if (act === 'walk' || act === 'run') {
@@ -137,6 +137,9 @@
       else if (bar === 2) { o.dy = bb * 30; const g = 14 + 46 * (1 - bb); o.hL = [-g, -292]; o.hR = [g, -292]; o.fL = [-22, 0]; o.fR = [22, 0]; o.nod = b * .07; }
       else { o.dy = bb * 18; o.hR = [158, -432 + hb * 16]; o.hL = [-70, -214]; o.fL = [-26 - 10 * Math.max(0, b), -Math.max(0, b) * 26]; o.fR = [26, 0]; o.tilt = hb * .09; }
       o.nod = o.nod || b * .06;
+    } else if (act === 'hug') {
+      const sg = Math.sign(hug) || 1, h = Math.abs(hug); o.hR = sg > 0 ? [h * .66, -304] : [h * .3 * sg, -272]; o.hL = sg > 0 ? [h * .3 * sg, -272] : [-h * .66, -304]; o.hR = sg > 0 ? [h * .66, -304] : [-h * .3, -272];
+      o.hL = sg > 0 ? [h * .3, -272] : [-h * .66, -304]; o.tilt = sg * .08 + s(t * 1.3) * .015; o.nod = sg * .05; o.dy = 6 + s(t * 1.6) * 2;
     } else if (act === 'wave') { o.hR = [104 + s(t * 9) * 16, -440 + s(t * 9 + 1) * 8]; o.tilt = s(t * 1.4) * .02; }
     else if (active || act === 'sing') {
       o.mic = true; o.hR = [24, -318 + s(t * 6) * 3]; o.hL = [-96 + s(t * 1.3) * 34, -262 + s(t * 1.7) * 34]; o.tilt = s(t * 1.1) * .03; o.dy = Math.abs(s(t * 2.2)) * 4;
@@ -166,7 +169,7 @@
       const act = motion.act || null, back = !!motion.back, beatT = t * (motion.bpm || 110) / 60 * Math.PI;
       const walking = act === 'walk' || act === 'run', dancing = act === 'dance' || act === 'jump';
       const hop = act === 'jump' ? Math.abs(Math.sin(beatT)) * 46 : 0, sway = 0;
-      const R0 = solve(act, t, beatT, active, true), reduce = !!window.CFG?.reduceMotion; let micAt = null;
+      const R0 = solve(act, t, beatT, active, true, motion.hug || 0), reduce = !!window.CFG?.reduceMotion; let micAt = null;
       const bob = Math.sin(t * 2.2) * (active ? 3 : 1), open = motion.open || 0;
       c.save(); c.translate(x, ground - hop); c.scale(scale * (p.build || 1), scale); c.rotate(Math.sin(t * 1.6) * (active ? .018 : .007) + sway);
       const path = (d, f, tone = 1, lw = 4, ink = 1) => { let q = paths.get(d); if (!q) { q = new Path2D(d); if (paths.size < 2048) paths.set(d, q); } if (f !== undefined) { c.fillStyle = f === -1 ? K.PAPER : K.ink(f, tone); c.fill(q); } c.strokeStyle = K.ink(ink); c.lineWidth = lw; c.lineJoin = 'round'; c.lineCap = 'round'; c.stroke(q); };

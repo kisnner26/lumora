@@ -7,10 +7,14 @@
     const cx = shot.flip ? 470 : 1130, ground = 710, c = K.c, now = (b.t ?? 0) + elapsed;
     // lo que dice la letra: lugar, clima, hora y qué hace quien canta
     const A = R.atmos; if (A && typeof IN !== 'undefined') A.plan(IN.lines);
-    const at = (A && A.at(b.li)) || {}, action = b.action === 'hold' ? null : b.action, openDoor = action === 'open' || action === 'return' || b.motif === 'puerta_entreabierta';
-    const act = action ? null : at.act || ((b.li || 0) % 3 === 1 ? 'walk' : null), bpm = Math.max(70, Math.min(180, (typeof IN !== 'undefined' && IN.bpm) || 110)), ph = now * bpm / 60;
-    const FALL = ['ciudad', 'costa', 'bosque', 'desierto', 'espacio'], fallback = FALL[(R.world ? R.world.hash((typeof ext !== 'undefined' ? ext.key() : 'lumora') + '|' + (b.visualChapter || 0)) : 0) % FALL.length];
-    const place = openDoor ? 'cuarto' : at.place || (b.place !== 'cuarto' ? b.place : fallback);
+    const STY = R.story, film = R.film.result, E0 = typeof ext !== 'undefined' ? ext : null;
+    if (STY && film && typeof IN !== 'undefined') STY.plan(IN.lines, film, typeof SEM !== 'undefined' ? SEM.plans : [], (E0 && E0.st.dur) || 0, E0 ? E0.key() : '');
+    const sv = (STY && STY.at(b.li)) || null, walkIn = !!(STY && STY.data && STY.data.forced.some(w => now >= w.a && now < w.b));
+    const at = { ...((A && A.at(b.li)) || {}), ...(sv ? { place: sv.place, time: sv.time, weather: sv.weather } : {}) };
+    const action = b.action === 'hold' ? null : b.action, openDoor = action === 'open' || action === 'return' || b.motif === 'puerta_entreabierta';
+    const act = action ? null : walkIn ? 'walk' : sv ? sv.act : at.act || ((b.li || 0) % 3 === 1 ? 'walk' : null), bpm = Math.max(70, Math.min(180, (typeof IN !== 'undefined' && IN.bpm) || 110)), ph = now * bpm / 60;
+    const FALL = ['ciudad', 'costa', 'bosque', 'desierto', 'espacio'], fallback = FALL[(R.world ? R.world.hash((E0 ? E0.key() : 'lumora') + '|' + (b.visualChapter || 0)) : 0) % FALL.length];
+    const place = openDoor ? 'cuarto' : sv ? sv.place : at.place || (b.place !== 'cuarto' ? b.place : fallback);
     const pose = { ...pose0 }, bob = act === 'dance' ? Math.abs(Math.sin(ph * Math.PI)) * 34 : act === 'run' ? Math.abs(Math.sin(now * 9)) * 16 : act === 'walk' && !reduced ? Math.abs(Math.sin(now * 6.5)) * 5 : (reduced || action ? 0 : Math.sin(now * 1.6) * 3);
     if (!reduced) {
       if (act === 'dance') { pose.handY = -250 - Math.sin(ph * Math.PI) * 34; pose.handX = 34 + Math.sin(ph * Math.PI * .5) * 30; pose.head = Math.sin(ph * Math.PI * .5) * .18; pose.gait = Math.sin(ph * Math.PI) * 10; }
@@ -22,14 +26,16 @@
     if (act === 'sing') { pose.handY = -218; pose.handX = 14; pose.head = -.06 + (reduced ? 0 : Math.sin(ph * Math.PI * .5) * .05); }
     const gap = b.cast === 2 || ['give', 'reach'].includes(action) ? 120 : 0, left = cx - gap + pose.x, right = cx + gap;
     // cámara: el plano se adapta a lo que pasa y respira con el ritmo
-    const camBeat = act && ['medium', 'wide'].includes(b.camera) ? { ...b, camera: { cry: 'close', sing: 'close', sleep: 'close', drive: 'wide', run: 'wide', dance: 'medium' }[act] } : b;
+    const grammar = sv && !b.manual ? { establishing: 'wide', medium: 'medium', close: 'close', wide: 'wide', push: 'medium', pull: 'wide' }[sv.shot] : null;
+    const camBeat = grammar ? { ...b, camera: grammar } : act && ['medium', 'wide'].includes(b.camera) ? { ...b, camera: { cry: 'close', sing: 'close', sleep: 'close', drive: 'wide', run: 'wide', dance: 'medium' }[act] } : b;
     const camera = this.camera(camBeat, elapsed, cx, reduced), beat = reduced ? 0 : (typeof IN !== 'undefined' && IN.beat) || 0;
-    const dolly = reduced ? 0 : (pose.p - .5) * .2 * ((b.li || 0) % 2 ? 1 : -1), sway = reduced ? 0 : Math.sin(now * .7) * 12 + Math.sin(now * 1.9) * 4, lift = reduced ? 0 : Math.cos(now * .6) * 8;
+    const dollyK = sv && !b.manual ? { establishing: .14, push: .16, pull: -.2 }[sv.shot] : undefined;
+    const dolly = reduced ? 0 : dollyK !== undefined ? dollyK * pose.p : (pose.p - .5) * .2 * ((b.li || 0) % 2 ? 1 : -1), sway = reduced ? 0 : Math.sin(now * .7) * 12 + Math.sin(now * 1.9) * 4, lift = reduced ? 0 : Math.cos(now * .6) * 8;
     const roll = reduced ? 0 : Math.sin(now * .35) * .012 * (.6 + (b.section?.energy || 5) / 10), punch = beat * .045;
     // ---------- fondo a pantalla completa: el mundo del lugar, el cielo y el clima ----------
-    const scroll = reduced ? 0 : { walk: 150, run: 420, drive: 520 }[act] * now || 0, drift = 0;
-    A?.backdrop(K, { place, at, now, beat, ground, cx, view: { x: (camera.x - cx) * .45 + sway * .4, y: (camera.y - 460) * .45 + lift * .4, drift, scroll, dolly, punch, roll } });
-    if (A && (act === 'dance' || (at.act === 'dance' && !action)) && place !== 'espacio') A.crowd(K, now, beat, 1, ground + 20);
+    const vw = STY && STY.data ? STY.view(now) : null, scroll = reduced ? 0 : vw ? vw.scroll : ({ walk: 150, run: 420, drive: 520 }[act] * now || 0), drift = 0;
+    A?.backdrop(K, { place, at, now, beat, ground, cx, view: { x: (camera.x - cx) * .45 + sway * .4, y: (camera.y - 460) * .45 + lift * .4, drift, scroll, seam: reduced ? null : vw?.seam, dolly, punch, roll } });
+    if (A && act === 'dance' && place !== 'espacio') A.crowd(K, now, beat, 1, ground + 20);
     // ---------- los actores, con su propia cámara ----------
     c.save(); c.translate(cx, 450); c.rotate(roll); c.scale((camera.reverse ? -1 : 1) * camera.z * 1.1 * (1 + dolly + punch), camera.z * 1.1 * (1 + dolly + punch)); c.translate(-camera.x - sway, -camera.y - lift);
     // puerta articulada: el ancho visible del panel cambia con la apertura.
@@ -68,8 +74,13 @@
     const cast = !action && !hideActors && !empty ? F._cast : null, star = cast && cast[(b.li || 0) % cast.length];
     if (star) {
       const figAct = act === 'cry' || ((b.li || 0) % 4 === 3 && !act) ? 'look' : act === 'sleep' ? null : act === 'sing' || !act ? 'sing' : act;
-      const sc = 1.0 * (figAct === 'look' ? .9 : 1), place2 = at.place;
-      R.artistFigures.draw(K, star.name, star.id, left, ground, sc, { time: now + star.h % 7, bpm, act: figAct === 'look' ? null : figAct, back: figAct === 'look', active: figAct === 'sing' && !reduced, open: figAct === 'sing' ? Math.abs(Math.sin(now * 7)) * .8 : 0, instrument: star.instrument, album: typeof ext !== 'undefined' ? ext.st.album || '' : '' });
+      const sc = 1.0 * (figAct === 'look' ? .9 : 1), pst = sv && sv.partner !== 'absent' && !hideActors ? sv.partner : null, dirP = cx < 800 ? 1 : -1;
+      const gapP = pst ? { near: 240, with: 215, embrace: 130, apart: 380 }[pst] || 230 : 0, hugDx = pst === 'embrace' && figAct === 'hug' ? dirP * gapP / sc : 0;
+      if (pst) {                                                                          // el otro: llega, camina al lado, se abraza o se queda lejos, de espaldas
+        const pAct = pst === 'with' ? figAct : pst === 'embrace' ? (figAct === 'hug' ? 'hug' : null) : pst === 'near' && (figAct === 'walk' || figAct === 'dance') ? figAct : null;
+        R.artistFigures.draw(K, 'ella', null, left + dirP * gapP, ground, sc * .93, { time: now + 3.3, bpm, act: pAct === 'look' ? null : pAct, back: pst === 'apart' || (pst === 'with' && figAct === 'look'), hug: -hugDx * sc / (sc * .93), active: false, album: '' });
+      }
+      R.artistFigures.draw(K, star.name, star.id, left, ground, sc, { time: now + star.h % 7, bpm, hug: hugDx, act: figAct === 'look' ? null : figAct, back: figAct === 'look', active: figAct === 'sing' && !reduced, open: figAct === 'sing' ? Math.abs(Math.sin(now * 7)) * .8 : 0, instrument: star.instrument, album: typeof ext !== 'undefined' ? ext.st.album || '' : '' });
       if (cast.length > 1 && star.band) cast.filter(m => m !== star).slice(0, 2).forEach((m, i) => R.artistFigures.draw(K, m.name, m.id, left + (i ? 200 : -200), ground, sc * .86, { time: now + m.h % 7, bpm, act: figAct === 'look' ? null : figAct, instrument: m.instrument, active: false, album: typeof ext !== 'undefined' ? ext.st.album || '' : '' }));
     } else {
       if (!empty && !hideActors && !(action === 'board' && pose.p > .86)) actor(left, false);

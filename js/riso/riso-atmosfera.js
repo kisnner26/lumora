@@ -66,12 +66,15 @@
       if (!interior) this.sky(K, at.time, now, beat, 520);
       K.line(-300, ground, 1900, ground, 1, 5);
       if (R.world?.enabled) {
-        const prof = R.world.profile(place), sc = view.scroll || 0;
-        if (!sc || interior) R.world.draw(K, prof, now, { cx: interior ? cx : 800, ground });
-        else {                                                  // el mundo corre en mosaico espejado (los bordes coinciden): el paisaje pasa de verdad
-          const n0 = Math.floor(sc / 1300);
-          for (let n = n0 - 1; n <= n0 + 2; n++) { const X = 800 + n * 1300 - sc; if (X < -700 || X > 2300) continue; c.save(); c.translate(X, 0); c.scale(n % 2 ? -1 : 1, 1); c.translate(-X, 0); R.world.draw(K, prof, now, { cx: X, ground }); c.restore(); }
-        }
+        const sc = view.scroll || 0;
+        const tiles = prof => { const n0 = Math.floor(sc / 1300); for (let n = n0 - 1; n <= n0 + 2; n++) { const X = 800 + n * 1300 - sc; if (X < -700 || X > 2300) continue; c.save(); c.translate(X, 0); c.scale(n % 2 ? -1 : 1, 1); c.translate(-X, 0); R.world.draw(K, prof, now, { cx: X, ground }); c.restore(); } };
+        if (interior || !sc) R.world.draw(K, R.world.profile(place), now, { cx: interior ? cx : 800, ground });
+        else if (view.seam) {                                 // el cruce entre dos lugares: lo viejo queda atrás, lo nuevo entra por la derecha
+          const xs = 800 + view.seam.u - sc;
+          c.save(); c.beginPath(); c.rect(-4000, -4000, xs + 4000, 9000); c.clip(); tiles(R.world.profile(view.seam.from)); c.restore();
+          c.save(); c.beginPath(); c.rect(xs, -4000, 9000, 9000); c.clip(); tiles(R.world.profile(view.seam.to)); c.restore();
+          K.line(xs, 40, xs, ground, 1, 7, .85); K.line(xs + 14, 90, xs + 14, ground, 2, 3, .6);
+        } else tiles(R.world.profile(place));
       }
       if (interior) this.sky(K, at.time, now, beat, 520);
       this.weather(K, at.weather, now, beat, ground);
