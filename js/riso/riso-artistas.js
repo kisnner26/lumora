@@ -153,7 +153,7 @@
   const BOOLS = ['beard', 'moustache', 'sideburns', 'glasses', 'earrings', 'eyeliner', 'lipstick', 'headband', 'fringe', 'chain', 'necklace', 'tie', 'glove', 'tattoos'];
   const num = (v, a, b, d) => typeof v === 'number' && isFinite(v) ? Math.max(a, Math.min(b, v)) : d;
   const clean = l => { if (!l || !l.known) return { known: false }; const f = l.face || {}, o = { known: true, skin: num(l.skin, .08, .6, .15), hair: LK.hair.includes(l.hair) ? l.hair : 'short', hairInk: [1, 2, 3].includes(l.hairInk) ? l.hairInk : 1, outfit: LK.outfit.includes(l.outfit) ? l.outfit : 'shirt', clothes: [-1, 1, 2, 3].includes(l.clothes) ? l.clothes : 1, hat: LK.hat.includes(l.hat) ? l.hat : null, instrument: LK.instrument.includes(l.instrument) ? l.instrument : null, face: Object.fromEntries(['width', 'height', 'jaw', 'eyes', 'nose', 'lips'].map(k => [k, num(f[k], .86, 1.14, 1)])) }; for (const k of BOOLS) o[k] = !!l[k]; return o; };
-  const pending = new Set(), retry = new Map();
+  const pending = new Set(), retry = new Map(), poseState = new Map();
   const api = R.artistFigures = { profiles, custom,
     request(name) {
       const key = norm(name); if (!key || custom[key] || pending.has(key) || (retry.get(key) || 0) > Date.now() || typeof fetch !== 'function') return; pending.add(key);
@@ -183,7 +183,10 @@
       const act = motion.act || null, back = !!motion.back, beatT = t * (motion.bpm || 110) / 60 * Math.PI;
       const walking = act === 'walk' || act === 'run', dancing = act === 'dance' || act === 'jump';
       const hop = act === 'jump' ? Math.abs(Math.sin(beatT)) * 46 : 0, sway = 0;
-      const R0 = solve(act, t, beatT, active, true, motion.hug || 0), reduce = !!window.CFG?.reduceMotion; let micAt = null;
+      const reduce = !!window.CFG?.reduceMotion; let R0 = solve(act, t, beatT, active, true, motion.hug || 0), micAt = null;
+      { const key = motion.key || name, prev = poseState.get(key), dtp = prev ? t - prev.t : 1e9;    // al cambiar de acción, las articulaciones se funden en vez de saltar
+        if (prev && dtp > 0 && dtp < .5 && !reduce) { const k = 1 - Math.exp(-dtp * 8), mx = (a, b) => a + (b - a) * k, mv = (a, b) => [mx(a[0], b[0]), mx(a[1], b[1])]; R0 = { ...R0, fL: mv(prev.o.fL, R0.fL), fR: mv(prev.o.fR, R0.fR), hL: mv(prev.o.hL, R0.hL), hR: mv(prev.o.hR, R0.hR), dy: mx(prev.o.dy, R0.dy), tilt: mx(prev.o.tilt, R0.tilt), nod: mx(prev.o.nod, R0.nod) }; }
+        if (poseState.size > 40) poseState.clear(); poseState.set(key, { t, o: R0 }); }
       const bob = Math.sin(t * 2.2) * (active ? 3 : 1), open = motion.open || 0;
       c.save(); c.translate(x, ground - hop); c.scale(scale * (p.build || 1), scale); c.rotate(Math.sin(t * 1.6) * (active ? .018 : .007) + sway);
       const path = (d, f, tone = 1, lw = 4, ink = 1) => { let q = paths.get(d); if (!q) { q = new Path2D(d); if (paths.size < 2048) paths.set(d, q); } if (f !== undefined) { c.fillStyle = f === -1 ? K.PAPER : K.ink(f, tone); c.fill(q); } c.strokeStyle = K.ink(ink); c.lineWidth = lw; c.lineJoin = 'round'; c.lineCap = 'round'; c.stroke(q); };

@@ -12,7 +12,8 @@
     const sv = (STY && STY.at(b.li)) || null, walkIn = !!(STY && STY.data && STY.data.forced.some(w => now >= w.a && now < w.b));
     const at = { ...((A && A.at(b.li)) || {}), ...(sv ? { place: sv.place, time: sv.time, weather: sv.weather } : {}) };
     const action = b.action === 'hold' ? null : b.action, openDoor = action === 'open' || action === 'return' || b.motif === 'puerta_entreabierta';
-    const act = action ? null : walkIn ? 'walk' : sv ? sv.act : at.act || ((b.li || 0) % 3 === 1 ? 'walk' : null), bpm = Math.max(70, Math.min(180, (typeof IN !== 'undefined' && IN.bpm) || 110)), ph = now * bpm / 60;
+    const objectAction = ['open', 'give', 'board', 'tear', 'wilt'].includes(action);
+    const act = objectAction ? null : walkIn ? 'walk' : sv ? sv.act : action ? null : at.act || ((b.li || 0) % 3 === 1 ? 'walk' : null), bpm = Math.max(70, Math.min(180, (typeof IN !== 'undefined' && IN.bpm) || 110)), ph = now * bpm / 60;
     const FALL = ['ciudad', 'costa', 'bosque', 'desierto', 'espacio'], fallback = FALL[(R.world ? R.world.hash((E0 ? E0.key() : 'lumora') + '|' + (b.visualChapter || 0)) : 0) % FALL.length];
     const place = openDoor ? 'cuarto' : sv ? sv.place : at.place || (b.place !== 'cuarto' ? b.place : fallback);
     const pose = { ...pose0 }, bob = act === 'dance' ? Math.abs(Math.sin(ph * Math.PI)) * 34 : act === 'run' ? Math.abs(Math.sin(now * 9)) * 16 : act === 'walk' && !reduced ? Math.abs(Math.sin(now * 6.5)) * 5 : (reduced || action ? 0 : Math.sin(now * 1.6) * 3);
@@ -28,7 +29,12 @@
     // cámara: el plano se adapta a lo que pasa y respira con el ritmo
     const grammar = sv && !b.manual ? { establishing: 'wide', medium: 'medium', close: 'close', wide: 'wide', push: 'medium', pull: 'wide' }[sv.shot] : null;
     const camBeat = grammar ? { ...b, camera: grammar } : act && ['medium', 'wide'].includes(b.camera) ? { ...b, camera: { cry: 'close', sing: 'close', sleep: 'close', drive: 'wide', run: 'wide', dance: 'medium' }[act] } : b;
-    const camera = this.camera(camBeat, elapsed, cx, reduced), beat = reduced ? 0 : (typeof IN !== 'undefined' && IN.beat) || 0;
+    const camera0 = this.camera(camBeat, elapsed, cx, reduced);
+    // la cámara no salta entre versos: persigue su objetivo con suavidad (si se busca otro segundo, se coloca de golpe)
+    const dtc = F._camT === undefined ? 1e9 : now - F._camT; F._camT = now;
+    if (!F._cam || dtc < 0 || dtc > .7 || reduced) F._cam = { x: camera0.x, y: camera0.y, z: camera0.z };
+    else { const k = 1 - Math.exp(-dtc * 2.4); F._cam.x += (camera0.x - F._cam.x) * k; F._cam.y += (camera0.y - F._cam.y) * k; F._cam.z += (camera0.z - F._cam.z) * k; }
+    const camera = shot.filmMode ? { ...camera0, x: F._cam.x, y: F._cam.y, z: F._cam.z } : camera0, beat = reduced ? 0 : (typeof IN !== 'undefined' && IN.beat) || 0;
     const dollyK = sv && !b.manual ? { establishing: .14, push: .16, pull: -.2 }[sv.shot] : undefined;
     const dolly = reduced ? 0 : dollyK !== undefined ? dollyK * pose.p : (pose.p - .5) * .2 * ((b.li || 0) % 2 ? 1 : -1), sway = reduced ? 0 : Math.sin(now * .7) * 12 + Math.sin(now * 1.9) * 4, lift = reduced ? 0 : Math.cos(now * .6) * 8;
     const roll = reduced ? 0 : Math.sin(now * .35) * .012 * (.6 + (b.section?.energy || 5) / 10), punch = beat * .045;
@@ -71,13 +77,15 @@
     // si la canción tiene artista con perfil, él o ella es quien actúa; las escenas con objetos (puerta, taxi, carta…) siguen con los muñecos
     const SGm = R.singers, cfgOn = !window.CFG || CFG.singers !== false, ck = typeof ext !== 'undefined' ? ext.key() : '';
     if (F._castKey !== ck) { F._castKey = ck; F._cast = cfgOn && SGm ? SGm.plan(ext.st.artist, ext.st.name) : null; for (const m of F._cast || []) if (!m.id) R.artistFigures.request(m.name); }
-    const cast = !action && !hideActors && !empty ? F._cast : null, star = cast && cast[(b.li || 0) % cast.length];
+    const cast = !objectAction && !hideActors && !empty ? F._cast : null, star = cast && cast[(b.li || 0) % cast.length];
     if (star) {
       const figAct = act === 'cry' || ((b.li || 0) % 4 === 3 && !act) ? 'look' : act === 'sleep' ? null : act === 'sing' || !act ? 'sing' : act;
       const sc = 1.0 * (figAct === 'look' ? .9 : 1), pst = sv && sv.partner !== 'absent' && !hideActors ? sv.partner : null, dirP = cx < 800 ? 1 : -1;
-      const gapP = pst ? { near: 240, with: 215, embrace: 130, apart: 380 }[pst] || 230 : 0, hugDx = pst === 'embrace' && figAct === 'hug' ? dirP * gapP / sc : 0;
-      if (pst) {                                                                          // el otro: llega, camina al lado, se abraza o se queda lejos, de espaldas
-        const pAct = pst === 'with' ? figAct : pst === 'embrace' ? (figAct === 'hug' ? 'hug' : null) : pst === 'near' && (figAct === 'walk' || figAct === 'dance') ? figAct : null;
+      const targetGap = pst ? { near: 240, with: 215, embrace: 130, apart: 380 }[pst] || 230 : 1100, dtp = F._pgT === undefined ? 1e9 : now - F._pgT; F._pgT = now;
+      if (F._pg === undefined || dtp < 0 || dtp > .7 || reduced) F._pg = targetGap; else F._pg += (targetGap - F._pg) * (1 - Math.exp(-dtp * 1.6));
+      const gapP = F._pg, hugDx = pst === 'embrace' && figAct === 'hug' && Math.abs(gapP - targetGap) < 25 ? dirP * gapP / sc : 0, arriving = Math.abs(gapP - targetGap) > 12;
+      if (gapP < 1000 && (pst || arriving)) {                                                                          // el otro: llega, camina al lado, se abraza o se queda lejos, de espaldas
+        const pAct = arriving ? 'walk' : pst === 'with' ? figAct : pst === 'embrace' ? (figAct === 'hug' ? 'hug' : null) : pst === 'near' && (figAct === 'walk' || figAct === 'dance') ? figAct : null;
         R.artistFigures.draw(K, 'ella', null, left + dirP * gapP, ground, sc * .93, { time: now + 3.3, bpm, act: pAct === 'look' ? null : pAct, partner: true, back: pst === 'apart' || (pst === 'with' && figAct === 'look'), hug: -hugDx * sc / (sc * .93), active: false, album: '' });
       }
       R.artistFigures.draw(K, star.name, star.id, left, ground, sc, { time: now + star.h % 7, bpm, hug: hugDx, act: figAct === 'look' ? null : figAct, back: figAct === 'look', active: figAct === 'sing' && !reduced, open: figAct === 'sing' ? Math.abs(Math.sin(now * 7)) * .8 : 0, instrument: star.instrument, album: typeof ext !== 'undefined' ? ext.st.album || '' : '' });
@@ -114,7 +122,7 @@
     } else if (act === 'sleep') {
       for (let i = 0; i < 3; i++) { const q = reduced ? .4 : (now * .35 + i * .33) % 1; K.txt('z', left + 40 + i * 22, ground - 270 - q * 150, { font: 'display', size: 34 - i * 6, w: 800, i: 3 }); }
     }
-    const id = shot.props?.[0]?.id || b.motif;
+    const id = (shot.filmMode ? null : shot.props?.[0]?.id) || b.motif;
     if (action === 'board' || id === 'taxi') {
       const tx = cx + 140;
       K.poly([[tx - 150, ground - 115], [tx - 75, ground - 115], [tx - 35, ground - 180], [tx + 85, ground - 180], [tx + 125, ground - 115], [tx + 185, ground - 105], [tx + 185, ground - 25], [tx - 150, ground - 25]], { f: 2, ft: .85, s: 1, lw: 6 });

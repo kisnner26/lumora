@@ -50,9 +50,13 @@
     for (const [id, rx] of Object.entries(R.SCENE_RX || {})) { if (!R.scenes[id]) continue; if (id === 'ella' && !['romantico', 'feliz', 'euforico', 'sereno', 'nostalgico'].includes(mood)) continue; const g = new RegExp(rx.source, 'gi'); const n = (text.match(g) || []).length * 2 + (block ? Math.min(2, (block.match(g) || []).length) * .5 : 0); if (n > bs) { bs = n; best = id; } }
     return bs >= 1.5 || (bs >= 1 && !text) ? best : null;
   }
+  // modo película: una toma continua por sección, con el mundo, los personajes y la cámara vivos; la letra va encima y no corta la acción
+  const filmOn = () => !!(R.story && R.film && R.world?.enabled && (!window.CFG || CFG.film !== false));
+  const beatAt = time => { const b = R.film.plan(IN.lines, IN.cuts, SEM.plans, proc.dur).beats, lt = time + .2 + (IN.off || 0); let out = null; for (const x of b) { if (!x || !IN.lines[x.li]) continue; if (IN.lines[x.li].t <= lt) out = x; else break; } return out || b.find(Boolean) || null; };
   function makeShot(li, sec, time, why, force) {
     const plan = SEM.plans[sec] || null, text = li >= 0 ? IN.lines[li].text : '', L = text ? storyOf(text) : null, seed = hash(ext.key() + '|' + li + '|' + sec + '|' + (li < 0 ? Math.floor(time / 4) : 0) + (RC.salt || '') + '|' + (R.world?.settings().seed || ''));
-    const narrative = li >= 0 ? (R.film ? R.film.plan(IN.lines, IN.cuts, SEM.plans, proc.dur).beats[li] : R.narrative?.plan(IN.lines)[li]) : null;
+    const film = filmOn() && why !== 'title' && why !== 'outro' && !force;
+    const narrative = film ? beatAt(time) : li >= 0 ? (R.film ? R.film.plan(IN.lines, IN.cuts, SEM.plans, proc.dur).beats[li] : R.narrative?.plan(IN.lines)[li]) : null;
     const r = rngS(seed), mood = plan?.mood || narrative?.mood || 'sereno', energy = narrative?.section?.role === 'climax' ? Math.max(8, plan?.energy ?? 5) : narrative?.section?.role === 'bridge' ? Math.min(4, plan?.energy ?? 5) : plan?.energy ?? 5, inkList = MOOD_INKS[mood] || [0, 1, 2];
     const shot = { kind: 'prop', li, sec, t0: timeNow(), k0: st.t, seed, plan, mood, energy, inks: inkList[(sec + (plan?.color === 'oscuro' ? 1 : 0)) % inkList.length], bg: 'paper', layout: 0, why };
     const own = typeof LEX !== 'undefined' && text ? LEX.filter(([, re]) => re.test(text)).map(q => q[0]) : [];
@@ -77,6 +81,7 @@
     if (kind === 'singer' && !singers) kind = 'tableau';
     if (narrative?.manual && narrative.kind === 'auto') kind = 'tableau';
     if (force) kind = force;
+    if (film && narrative && kind !== 'title' && kind !== 'outro') { kind = 'tableau'; shot.filmMode = true; }
     shot.narrative = narrative;
     shot.kind = kind; RC.kindHist.push(kind); if (RC.kindHist.length > 6) RC.kindHist.shift();
     shot.cut = energy >= 7 ? ['h', 'spin', 'v'][(r() * 3) | 0] : energy <= 3 ? ['zin', 'zout'][(r() * 2) | 0] : ['h', 'v', 'zin', 'zout'][(r() * 4) | 0];
@@ -109,6 +114,7 @@
       if (r() < .45) shot.inks = inkList[(sec + 1) % inkList.length];
     }
     if (kind === 'giant') { shot.word = (keyWord(text, L) || (text.split(/\s+/).map(w => w.replace(/[^\p{L}\p{N}'’-]/gu, '')).sort((a, b) => b.length - a.length)[0] || '')).toUpperCase(); shot.bg = r() < .5 ? 'burst' : 'flood'; shot.cut = 'zin'; }
+    if (shot.filmMode) { shot.flip = (hash(ext.key()) & 1) === 1; shot.layout = 0; shot.bg = 'paper'; shot.cut = 'zin'; }
     if (kind === 'title' || kind === 'outro') { shot.cut = 'zout'; shot.inks = 0; }
     shot.notes = pickNotes(r, kind);
     return shot;
@@ -362,7 +368,8 @@
       if (dur && time > dur - 6 && cur.kind !== 'outro') why = 'outro';
       else if (cur.kind === 'title' && (IN.preparing ? false : ((time > 4.5 || li >= 0) && st.t - cur.k0 > 1.8))) why = 'next';
       else if (cur.kind !== 'title' && cur.kind !== 'outro') {
-        if (sec !== cur.sec) why = 'sec';
+        if (cur.filmMode) { const b = beatAt(time); if (b) { cur.narrative = b; cur.li = b.li; } if (sec !== cur.sec) why = 'sec'; }
+        else if (sec !== cur.sec) why = 'sec';
         else if (li !== cur.li && (li >= 0 || age > 2.5) && (age > 3.6 || cur.kind === 'tableau' || cur.kind === 'giant' || (li >= 0 && cur.li < 0))) why = 'line';
         else if (age > 9) why = 'age';
       }
@@ -372,6 +379,10 @@
       if (why === 'outro') window.dispatchEvent(new CustomEvent('riso:outro'));
       if (poster && next.kind === 'title') next.notes = ['code', 'circuit'];
       if (!cur) { RC.shot = next; RC.count = 1; }
+      else if (next.filmMode && cur.filmMode) {
+        const sd = R.story.data, a = sd?.secs[cur.sec]?.place, b2 = sd?.secs[next.sec]?.place, interior = a === 'cuarto' || b2 === 'cuarto';
+        if (interior && a !== b2) { RC.pending = next; st.cutTo(() => { RC.shot = next; RC.pending = null; RC.count++; }, 'zin'); } else { RC.shot = next; RC.count++; }
+      }
       else { if (why === 'sec' && R.fx) { const k = R.fx.pickCut(next, cur); if (k) next.cut = k; } RC.pending = next; st.cutTo(() => { RC.shot = next; RC.pending = null; RC.count++; }, next.cut); }
     }
     if (RC.shot) keepShotText(RC.shot, time);

@@ -49,7 +49,9 @@
         const role = sec.sec.role, first = lines.findIndex(l => l.t >= sec.sec.start) === li || beats.filter(x => x && lines[x.li].t >= sec.sec.start && lines[x.li].t < sec.sec.end)[0]?.li === li;
         const last_ = beats.filter(x => x && lines[x.li].t >= sec.sec.start && lines[x.li].t < sec.sec.end).at(-1)?.li === li;
         const roleAct = { intro: 'walk', verse: li % 2 ? 'walk' : 'sing', chorus: sec.energy >= 6 ? 'dance' : 'sing', bridge: 'look', climax: 'dance', outro: 'walk' }[role] || 'sing';
-        const act = row.act === 'cry' ? 'look' : row.act === 'sleep' ? null : row.act || roleAct;
+        const NACT = { walk: 'walk', leave: 'walk', return: 'walk', remember: 'look', grow: 'sing', wait: null }, na = b.action && b.action !== 'hold' ? b.action : null;
+        const nact = na === 'reach' ? (partner === 'embrace' || partner === 'with' || partner === 'near' ? 'hug' : 'wave') : na && Object.hasOwn(NACT, na) ? NACT[na] : undefined;
+        const act = ['open', 'give', 'board', 'tear', 'wilt'].includes(na) ? null : nact !== undefined ? nact : row.act === 'cry' ? 'look' : row.act === 'sleep' ? null : row.act || roleAct;
         const hugNow = HUG.test(text) && partner === 'embrace', embrace = partner === 'embrace' && sec.place !== 'espacio';
         const shot = li === last ? 'pull' : first && (sec.k === 0 || secs[sec.k - 1]?.place !== sec.place) ? 'establishing' : embrace ? 'close' : role === 'climax' ? (li % 2 ? 'close' : 'wide') : last_ && role !== 'outro' ? 'push' : role === 'chorus' && li % 2 ? 'close' : 'medium';
         per[li] = { k: sec.k, place: sec.place, time: sec.time, weather: row.weather || sec.weather, act: hugNow && sec.place !== 'espacio' ? 'hug' : act, partner: seenYou || partner !== 'absent' ? partner : 'absent', shot, role, first, energy: sec.energy };
@@ -87,4 +89,5 @@
     let lo = 0, hi = segs.length - 1; while (lo < hi) { const m = (lo + hi + 1) >> 1; if (segs[m].t0 <= t) lo = m; else hi = m - 1; }
     const s = segs[lo]; return s.acc + s.v * (Math.min(t, s.t1) - s.t0) + (t > s.t1 ? 0 : 0);
   }
+  if (window.SETUI) SETUI.addRow('contenido', ['film', 'Película continua', 'sw', null, 'una sola toma por escena: el mundo, los personajes y la cámara siguen vivos entre versos y solo cambian de lugar caminando; apágala para volver al montaje de planos sueltos'], true);
 })();
