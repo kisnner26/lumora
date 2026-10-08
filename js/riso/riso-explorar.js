@@ -133,6 +133,26 @@
     if (!d.songs.length) K.postit(500, 420, 560, 100, -.02, ['todavía no hay canciones en tu historial:', 'cada una que suene será un pueblito'], { size: 28, fill: 3, ft: .5, font: 'hand' });
   }
 
+  // ---------- universos: el mundo procedural de cada canción ----------
+  const MOOD_PLACE = { euforico: 'ciudad', feliz: 'costa', romantico: 'cuarto', sereno: 'bosque', nostalgico: 'costa', melancolico: 'cuarto', triste: 'desierto', oscuro: 'espacio', rabioso: 'ciudad', desafiante: 'desierto' };
+  const uKey = s => s ? (s.name || 'lumora') + '|' + (s.artist || '') : undefined;
+  const uSong = d => songOf(EXP.sel) || [...d.songs].sort((a, b) => (b.veces || 1) - (a.veces || 1))[0] || null;
+  function drawUniverso(K, job) {
+    const W = R.world, s = job.song, key = uKey(s), set = W.settings(key), prof = W.profile(MOOD_PLACE[s?.mood] || 'costa', key, set);
+    K.bg(3, .05); W.draw(K, prof, job.t, { cx: 800, ground: 735, detail: K.d || 2 });
+    K.rect(24, 24, 1552, 852, { s: 1, lw: 6 }); K.rect(38, 38, 1524, 824, { s: 1, lw: 2, st: .7 });
+    K.rect(70, 48, 760, 84, { f: -1, s: 1, lw: 4 }); K.txt((s ? s.name : 'LUMORA').toUpperCase().slice(0, 26), 90, 100, { font: 'display', size: 44, w: 900, stretch: 'condensed' });
+    K.code(`${(s?.artist || 'SIN ARTISTA').toUpperCase().slice(0, 28)} · ${W.biomes[set.biome === 'auto' ? prof.biome : set.biome].toUpperCase()} · SEMILLA ${set.seed.slice(0, 10).toUpperCase()}`, 92, 122, { size: 14 });
+  }
+  function universosSide() {
+    const d = EXP.data, W = R.world, q = norm(EXP.q || ''), s = uSong(d), key = uKey(s), set = W.settings(key);
+    const songs = [...d.songs].filter(x => !q || norm(x.name + ' ' + x.artist).includes(q)).sort((a, b) => (b.veces || 1) - (a.veces || 1)).slice(0, 60);
+    return `<h3>universos</h3><p>cada canción habita un lugar generado a partir de su semilla. el mismo tema siempre vuelve a su mundo; si quieres otro, lo regeneras sin límite.</p>
+      <button data-a="unext">otro universo</button> <button data-a="uhome">el original</button>
+      <h4>paisaje</h4><ul>${Object.entries(W.biomes).map(([id, n]) => `<li data-b="${id}" class="${set.biome === id ? 'on' : ''}">${esc(n)}</li>`).join('')}</ul>
+      <h4>tus canciones</h4><ul>${songs.map(x => `<li data-u="${esc(x.id)}" class="${s && s.id === x.id ? 'on' : ''}"><b>${esc(x.name)}</b><br>${esc(x.artist || '')}</li>`).join('') || '<li>todavía no hay canciones: se usa el mundo de lumora</li>'}</ul>`;
+  }
+
   // ---------- criatura ----------
   const SYL = ['mo', 'lu', 'pi', 'ko', 'ta', 'ne', 'bu', 'fi', 'zu', 'ra', 'mi', 'do'];
   const autoName = d => { let h = hash((d.songs[0]?.name || 'lumora') + (d.songs[0]?.artist || '')); return (SYL[h % 12] + SYL[(h >>> 4) % 12] + (h % 3 === 0 ? SYL[(h >>> 8) % 12] : '')).replace(/^./, c => c.toUpperCase()); };
@@ -251,14 +271,15 @@
     #expWin .ex-hint { position:relative; z-index:3; padding:8px 16px; border-top:4px solid var(--rk1,#212b80); background:var(--rkp,#f4ead4); font:500 11px 'Martian Mono',monospace; letter-spacing:.08em; text-transform:uppercase; opacity:.9; } #expWin kbd { padding:1px 6px; border:2px solid var(--rk1,#212b80); background:var(--rkl,#faf3e4); font:inherit; }`;
   document.head.appendChild(css);
   const win = document.createElement('div'); win.id = 'expWin'; win.setAttribute('role', 'dialog'); win.setAttribute('aria-label', 'explorar'); document.body.appendChild(win);
-  win.innerHTML = `<div class="ex-bar"><div class="ex-tabs"><button data-t="mapa">mapa</button><button data-t="atlas">atlas</button><button data-t="criatura">criatura</button><button data-t="coleccion">colección</button></div>
+  win.innerHTML = `<div class="ex-bar"><div class="ex-tabs"><button data-t="mapa">mapa</button><button data-t="atlas">atlas</button><button data-t="universos">universos</button><button data-t="criatura">criatura</button><button data-t="coleccion">colección</button></div>
     <input id="exQ" type="search" placeholder="buscar ( / )" aria-label="buscar" spellcheck="false" autocomplete="off"><span class="sp"></span><button data-a="side" title="mostrar u ocultar el panel (p)">panel</button><button data-a="x">cerrar · esc</button></div>
     <div class="ex-main" id="exMain"><div class="ex-stage" id="exStage"></div><div class="ex-col" id="exCol"></div><div class="ex-zoom"><button data-a="zin" aria-label="acercar">+</button><button data-a="zout" aria-label="alejar">−</button><button data-a="zfit">ajustar</button></div>
       <div class="ex-tip" id="exTip"></div><aside class="ex-side" id="exSide"></aside></div><div class="ex-hint" id="exHint"></div>`;
-  const $ = id => document.getElementById(id), TABS = ['mapa', 'atlas', 'criatura', 'coleccion'];
+  const $ = id => document.getElementById(id), TABS = ['mapa', 'atlas', 'universos', 'criatura', 'coleccion'];
   const V = { k: 1, tx: 0, ty: 0, sw: 0, sh: 0 }; let aspect = 16 / 9, drag = null, anim = 0;
   const HINTS = { mapa: '<kbd>rueda</kbd> acercar · <kbd>arrastrar</kbd> moverte · <kbd>doble clic</kbd> zoom · <kbd>/</kbd> buscar · <kbd>←</kbd><kbd>→</kbd> pestañas · <kbd>p</kbd> panel · <kbd>esc</kbd> cerrar',
     atlas: '<kbd>rueda</kbd> acercar · <kbd>arrastrar</kbd> moverte · pasa el cursor sobre un pueblito · <kbd>/</kbd> buscar · <kbd>←</kbd><kbd>→</kbd> pestañas · <kbd>esc</kbd> cerrar', criatura: 'toca a tu criatura: salta y habla · doble toque: supersalto · espacio: acariciar · <kbd>←</kbd><kbd>→</kbd> pestañas · <kbd>esc</kbd> cerrar',
+    universos: 'elige una canción: cada una tiene su mundo · <kbd>otro universo</kbd> lo regenera sin fin y la semilla lo conserva · <kbd>←</kbd><kbd>→</kbd> pestañas · <kbd>esc</kbd> cerrar',
     coleccion: 'toca una lámina para abrirla y personalizarla · <kbd>/</kbd> buscar · <kbd>←</kbd><kbd>→</kbd> pestañas · <kbd>esc</kbd> cerrar' };
   // ancho libre: con el panel abierto el lienzo se centra en el espacio que queda a su izquierda
   const avail = () => { const sd = $('exSide'), m = $('exMain'); return m.clientWidth - (sd.classList.contains('off') || win.dataset.mode === 'coleccion' ? 0 : sd.offsetWidth + 26); };
@@ -299,6 +320,7 @@
         `<ul>${cells.map(c => `<li data-m="${esc(c.m)}" class="${EXP.sel === c.m ? 'on' : ''}"><b>${MOODS[c.m]}</b> · ${c.g.length} canciones · ${c.plays} escuchas</li>`).join('')}</ul>`) +
         (sel ? `<h3 style="margin-top:14px">${MOODS[sel.m]}</h3><ul>${[...sel.g].sort((a, b) => (b.veces || 1) - (a.veces || 1)).map(s => `<li data-s="${esc(s.id)}"><b>${esc(s.name)}</b><br>${esc(s.artist)} · ${s.veces || 1}×</li>`).join('')}</ul>` : '');
     }
+    if (tab === 'universos') return universosSide();
     if (tab === 'criatura' && EXP.st) { const st = EXP.st, dias = st.days > 900 ? 'nunca' : st.days === 0 ? 'hoy' : st.days === 1 ? 'ayer' : 'hace ' + st.days + ' días';
       return `<h3>tu criatura</h3><input id="exName" maxlength="14" value="${esc(st.name)}" aria-label="nombre de la criatura" spellcheck="false"><p>nivel <b>${st.level}</b> de 12 · ${st.state}</p>${st.level >= 12 ? '<p>nivel máximo alcanzado</p>' : `<div class="ex-prog" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(st.avance * 100)}"><i style="width:${Math.round(st.avance * 100)}%"></i></div><p>faltan <b>${st.falta}</b> ${st.falta === 1 ? 'escucha' : 'escuchas'} para el nivel ${st.level + 1}</p>`}<p>${st.total} escuchas · ${st.songs} canciones · ${st.artists} artistas</p><p>ánimo dominante: ${esc(MOODS[st.top] || '—')}<br>género dominante: ${esc(st.genre || '—')}<br>última música: ${dias}</p>
         ${st.topArtistas.length ? `<h4>tus artistas</h4><ol class="ex-top">${st.topArtistas.map(([a, n]) => `<li>${esc(a)} <span>${n}×</span></li>`).join('')}</ol><h4>tus canciones</h4><ol class="ex-top">${st.topCanciones.map(c => `<li>${esc(c.name)} <span>${c.veces || 1}×</span></li>`).join('')}</ol>` : ''}
@@ -333,6 +355,7 @@
       const d = EXP.data = await load(); EXP.pts = null; if (!keep) $('exSide').classList.remove('off'); renderSide();
       if (tab === 'mapa') { putCanvas(paint(2400, 1350, 0, drawMap, { data: d, sel: EXP.sel, t: 0 })); EXP.pts = EXP.job.pts; }
       else if (tab === 'atlas') { putCanvas(paint(2400, 1350, 2, drawAtlas, { data: d, sel: EXP.sel })); EXP.pts = EXP.job.pts; }
+      else if (tab === 'universos') { const song = uSong(d); EXP.sel = song ? song.id : null; renderSide(); putCanvas(paint(2400, 1350, 0, drawUniverso, { data: d, song, t: 3 })); EXP.pts = null; }
       else if (tab === 'criatura') { const st = EXP.st = stats(d); EXP.pet = 0; const tick = () => { if (EXP.tab !== 'criatura' || !win.classList.contains('on')) return; EXP.t = (EXP.t || 0) + .16; EXP.pet = Math.max(0, EXP.pet - .05); if (Date.now() > (EXP.i.proxima || 0)) { if (EXP.i.proxima) decir(EXP.st); EXP.i.proxima = Date.now() + 9000 + Math.random() * 8000; } if (EXP.i.hop) { EXP.i.hop += EXP.i.hopK > 1 ? .07 : .1; if (EXP.i.hop >= 1) { EXP.i.hop = 0; EXP.i.hopK = 1; } }
         putCanvas(paint(720, 720, MOOD_INK[st.top] || 0, drawCreature, { st: EXP.st, t: EXP.t, petting: EXP.pet, lx: EXP.i.lx, ly: EXP.i.ly, hop: EXP.i.hop, hopK: EXP.i.hopK, dance: window.AUD && AUD.live && typeof IN !== 'undefined' ? Math.max(70, Math.min(180, IN.bpm || 100)) : 0, say: EXP.i.sayHasta > Date.now() ? EXP.i.say : '' })); EXP.timer = setTimeout(tick, EXP.i.hop || EXP.pet || (window.AUD && AUD.live) ? 60 : 140); }; tick(); }
       else await collectionView();
@@ -352,6 +375,9 @@
     if (a === 'zin') return zoomAt(avail() / 2, $('exMain').clientHeight / 2, 1.5);
     if (a === 'zout') return zoomAt(avail() / 2, $('exMain').clientHeight / 2, 1 / 1.5);
     if (a === 'zfit') { cancelAnimationFrame(anim); V.k = 1; V.tx = V.ty = 0; return place(); }
+    if (a === 'unext' || a === 'uhome') { const key = uKey(uSong(EXP.data)); if (a === 'unext') R.world.next(key); else R.world.set({ seed: 'original' }, key); return open('universos', true); }
+    if (li?.dataset.b) { R.world.set({ biome: li.dataset.b }, uKey(uSong(EXP.data))); return open('universos', true); }
+    if (li?.dataset.u) return choose(li.dataset.u);
     if (a === 'pet') { EXP.pet = 1; chirp('caricia'); if (EXP.st) decir(EXP.st, 'caricia'); return; }
     if (a === 'sonido') { try { localStorage.setItem('lumoraCriaturaSonido', sonidoOn() ? '0' : '1'); } catch (e) {} renderSide(); if (sonidoOn()) chirp('caricia'); return; }
     if (a === 'guardar') {                                  // la criatura como imagen PNG
