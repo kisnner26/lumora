@@ -27,16 +27,9 @@
     const dolly = reduced ? 0 : (pose.p - .5) * .1 * ((b.li || 0) % 2 ? 1 : -1), sway = reduced ? 0 : Math.sin(now * .7) * 12 + Math.sin(now * 1.9) * 4, lift = reduced ? 0 : Math.cos(now * .6) * 8;
     const roll = reduced ? 0 : Math.sin(now * .35) * .012 * (.6 + (b.section?.energy || 5) / 10), punch = beat * .022;
     // ---------- fondo a pantalla completa: el mundo del lugar, el cielo y el clima ----------
-    c.save();
-    const interior = place === 'cuarto', wz = interior ? 1 : 1.32, bx = interior ? cx : 800, par = .45;
-    c.translate(800, ground); c.scale(wz * (1 + dolly * .5 + punch * .6), wz * (1 + dolly * .5 + punch * .6)); c.rotate(roll * .6); const drift = reduced ? 0 : act === 'walk' ? Math.sin(now * .22) * 150 : act === 'run' ? Math.sin(now * .5) * 260 : 0;
-    c.translate(-800 - (camera.x - cx) * par - sway * .4 - drift, -ground - (camera.y - 460) * par - lift * .4);
-    if (!interior) A?.sky(K, at.time, now, beat, 520);
-    K.line(-300, ground, 1900, ground, 1, 5);
-    if (R.world?.enabled) R.world.draw(K, R.world.profile(place), now, { cx: bx, ground });
-    if (interior) A?.sky(K, at.time, now, beat, 520);
-    A?.weather(K, at.weather || (act === 'cry' && !interior ? null : null), now, beat, ground);
-    c.restore();
+    const drift = reduced ? 0 : act === 'walk' ? Math.sin(now * .22) * 150 : act === 'run' ? Math.sin(now * .5) * 260 : 0;
+    A?.backdrop(K, { place, at, now, beat, ground, cx, view: { x: (camera.x - cx) * .45 + sway * .4, y: (camera.y - 460) * .45 + lift * .4, drift, dolly, punch, roll } });
+    if (A && (act === 'dance' || (at.act === 'dance' && !action)) && place !== 'espacio') A.crowd(K, now, beat, 1, ground + 20);
     // ---------- los actores, con su propia cámara ----------
     c.save(); c.translate(cx, 450); c.rotate(roll); c.scale((camera.reverse ? -1 : 1) * camera.z * 1.1 * (1 + dolly + punch), camera.z * 1.1 * (1 + dolly + punch)); c.translate(-camera.x - sway, -camera.y - lift);
     // puerta articulada: el ancho visible del panel cambia con la apertura.
@@ -69,8 +62,19 @@
     };
     const empty = b.place === 'cuarto' && (action === 'leave' ? pose.p >= .98 : state.empty >= .99);
     const hideActors = act === 'drive';
-    if (!empty && !hideActors && !(action === 'board' && pose.p > .86)) actor(left, false);
-    if (!empty && !hideActors && (gap || (act === 'dance' && at.place !== 'espacio'))) actor(gap ? right : left + 190, true);
+    // si la canción tiene artista con perfil, él o ella es quien actúa; las escenas con objetos (puerta, taxi, carta…) siguen con los muñecos
+    const SGm = R.singers, cfgOn = !window.CFG || CFG.singers !== false, ck = typeof ext !== 'undefined' ? ext.key() : '';
+    if (F._castKey !== ck) { F._castKey = ck; F._cast = cfgOn && SGm ? SGm.plan(ext.st.artist, ext.st.name) : null; }
+    const cast = !action && !hideActors && !empty ? F._cast : null, star = cast && cast[(b.li || 0) % cast.length];
+    if (star) {
+      const figAct = act === 'cry' || ((b.li || 0) % 4 === 3 && !act) ? 'look' : act === 'sleep' ? null : act === 'sing' || !act ? 'sing' : act;
+      const sc = .78 * (figAct === 'look' ? .9 : 1), place2 = at.place;
+      R.artistFigures.draw(K, star.name, star.id, left, ground, sc, { time: now + star.h % 7, bpm, act: figAct === 'look' ? null : figAct, back: figAct === 'look', active: figAct === 'sing' && !reduced, open: figAct === 'sing' ? Math.abs(Math.sin(now * 7)) * .8 : 0, instrument: star.instrument, album: typeof ext !== 'undefined' ? ext.st.album || '' : '' });
+      if (cast.length > 1 && star.band) cast.filter(m => m !== star).slice(0, 2).forEach((m, i) => R.artistFigures.draw(K, m.name, m.id, left + (i ? 200 : -200), ground, sc * .86, { time: now + m.h % 7, bpm, act: figAct === 'look' ? null : figAct, instrument: m.instrument, active: false, album: typeof ext !== 'undefined' ? ext.st.album || '' : '' }));
+    } else {
+      if (!empty && !hideActors && !(action === 'board' && pose.p > .86)) actor(left, false);
+      if (!empty && !hideActors && (gap || (act === 'dance' && at.place !== 'espacio'))) actor(gap ? right : left + 190, true);
+    }
     // lo que hace quien canta, dibujado encima
     const note = (x, y, k = 1, i = 2) => { K.ell(x, y, 9 * k, 6.5 * k, -.4, { f: i, ft: .95, s: 1, lw: 2 }); K.line(x + 8 * k, y - 2 * k, x + 8 * k, y - 34 * k, 1, 3); K.path(cc => { cc.moveTo(x + 8 * k, y - 34 * k); cc.quadraticCurveTo(x + 24 * k, y - 28 * k, x + 20 * k, y - 14 * k); }, { s: 1, lw: 3 }); };
     if (act === 'drive') {
@@ -86,10 +90,10 @@
       K.glow(2, 240, ground - 62, 130 + beat * 40, .7); K.circ(214, ground - 62, 9, { f: -1, s: 1, lw: 3 });
       for (let i = 0; i < 5; i++) K.line(-210 - i * 36 - ((now * 600) % 36), ground - 40 - i * 13, -290 - i * 52, ground - 40 - i * 13, 1, 3, .5);
       c.restore();
-    } else if (act === 'cry') {
+    } else if (act === 'cry' && !star) {
       for (let i = 0; i < 3; i++) { const q = reduced ? .5 : (now * 1.3 + i * .37) % 1, hx = left + 4 + (i % 2) * 14, hy = ground - 222 + q * 180; K.path(cc => { cc.moveTo(hx, hy - 12); cc.quadraticCurveTo(hx + 7, hy + 2, hx, hy + 6); cc.quadraticCurveTo(hx - 7, hy + 2, hx, hy - 12); }, { f: 3, ft: .9 - q * .5, s: 1, lw: 2 }); }
     } else if (act === 'sing') {
-      K.line(left + 18, ground - 214, left + 36, ground - 232, 1, 4); K.circ(left + 42, ground - 238, 11, { f: 1, s: 1, lw: 3 });
+      if (!star) { K.line(left + 18, ground - 214, left + 36, ground - 232, 1, 4); K.circ(left + 42, ground - 238, 11, { f: 1, s: 1, lw: 3 }); }
       for (let i = 0; i < 4; i++) { const q = reduced ? .4 : (now * .5 + i * .26) % 1; note(left + 60 + i * 34 + Math.sin(now + i) * 14, ground - 250 - q * 260, .9 - q * .3, i % 2 ? 2 : 3); }
     } else if (act === 'dance') {
       for (let i = 0; i < 18; i++) { const q = reduced ? .5 : (now * .45 + i * .071) % 1, x = left - 360 + ((i * 163) % 760), y = ground - 520 + q * 600; K.rect(x, y, 10, 5, { f: i % 3 + 1, ft: .9, s: 1, lw: 1.5 }); }

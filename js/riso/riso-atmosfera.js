@@ -59,6 +59,28 @@
         for (let i = 0; i < 16; i++) { const an = i / 16 * Math.PI * 2 + (calm ? 0 : t * .05); K.line(800 + Math.cos(an) * 96, sy + Math.sin(an) * 96, 800 + Math.cos(an) * (150 + (i % 2) * 50), sy + Math.sin(an) * (150 + (i % 2) * 50), 2, 3, .4); }
       } else if (time === 'dia') K.glow(2, 1300, 150, 360, .45);
     },
+    // el escenario completo: cielo, mundo del lugar y clima, anclado al suelo. «view» mueve la cámara del fondo (paralaje)
+    backdrop(K, { place, at = {}, now, beat = 0, ground = 710, cx = 800, view = {} }) {
+      const c = K.c, interior = place === 'cuarto', wz = (interior ? 1 : 1.32) * (1 + (view.dolly || 0) * .5 + (view.punch || 0) * .6);
+      c.save(); c.translate(800, ground); c.scale(wz, wz); c.rotate((view.roll || 0) * .6); c.translate(-800 - (view.x || 0) - (view.drift || 0), -ground - (view.y || 0));
+      if (!interior) this.sky(K, at.time, now, beat, 520);
+      K.line(-300, ground, 1900, ground, 1, 5);
+      if (R.world?.enabled) R.world.draw(K, R.world.profile(place), now, { cx: interior ? cx : 800, ground });
+      if (interior) this.sky(K, at.time, now, beat, 520);
+      this.weather(K, at.weather, now, beat, ground);
+      c.restore();
+    },
+    // público visto de espaldas al pie del cuadro; levanta los brazos con el pulso
+    crowd(K, now, beat, amp = 1, ground = 760) {
+      const calm = !!window.CFG?.reduceMotion;
+      for (let row = 0; row < 2; row++) for (let i = -1; i < 14; i++) {
+        const x = i * 122 + (row ? 60 : 0) + ((i * 37 + row * 11) % 17), k = row ? .78 : 1, ph = i * .9 + row * 1.7, jump = calm ? 0 : Math.abs(Math.sin(now * 4 * .9 + ph)) * 16 * amp + beat * 10 * amp, y = ground + (row ? 104 : 150) - jump;
+        const arm = !calm && (i + row) % 3 === 0 ? 1 : 0, tone = row ? .62 : .86;
+        K.ell(x, y + 70 * k, 52 * k, 60 * k, 0, { f: 1, ft: tone, s: 1, lw: 3 });
+        if (arm) { K.line(x - 30 * k, y + 20 * k, x - 52 * k, y - 62 * k - jump * .4, 1, 12 * k); K.circ(x - 52 * k, y - 70 * k - jump * .4, 9 * k, { f: -1, s: 1, lw: 2.5 }); }
+        K.circ(x, y, 28 * k, { f: (i + row) % 2 ? 2 : 1, ft: tone, s: 1, lw: 3 });
+      }
+    },
     // clima: partículas deterministas a pantalla completa
     weather(K, type, t, a, ground = 710) {
       if (!type) return; const calm = !!window.CFG?.reduceMotion, tt = calm ? 0 : t;
