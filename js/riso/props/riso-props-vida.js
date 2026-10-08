@@ -220,7 +220,7 @@
   B('aplauso', 'APLAUSO', /\b(aplausos?|aplaudir|applause|clap|clapping|ovaci[oó]n|standing ovation|bravo|palmas|palmear|clap your hands)\b/i, [
     { p: 'M-30 150 C-90 100 -100 20 -80 -30 L-60 -40 L-60 -100 C-60 -120 -30 -120 -30 -100 L-30 -110 C-30 -130 0 -130 0 -110 L0 -100 C0 -120 30 -120 30 -100 V30 C30 90 10 130 -30 150 Z', f: -1, s: 9, m: 'wag', a: .04, o: [0, 150], v: 3 }, { p: 'M30 150 C90 100 100 20 80 -30 L60 -40 L60 -100 C60 -120 30 -120 30 -100 V30', f: 1, ft: .3, s: 9 },
     { p: 'M-130 -100 L-160 -130 M-140 -50 L-190 -60 M130 -100 L160 -130 M140 -50 L190 -60 M0 -170 V-140', s: 6, m: 'pulse', a: .3, v: 4, o: [0, -60] },
-  ], { moods: ['euforico', 'feliz'] });
+  ], { moods: ['euforico', 'feliz'], g: { s: .92 } });
   B('hueso', 'HUESO', /\b(hueso|hueso roto|broken bone|fractura|fracture|bone|hueso duro|hard bone|esqueleto de dinosaurio)\b/i, [
     { p: 'M-140 -60 C-190 -100 -190 -20 -150 -20 C-170 20 -110 20 -100 -20 L100 60 C110 20 170 20 150 60 C190 100 190 20 140 20 C140 -20 90 -20 100 20 L-100 -60 Z', f: -1, s: 10 },
   ], { moods: ['oscuro'] });
