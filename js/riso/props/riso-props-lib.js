@@ -82,7 +82,7 @@
     return (d, P) => {
       for (const sh of shapes) {
         let lists;
-        if (sh.p) lists = parse(sh.p); else if (sh.c) lists = [ell(sh.c[0], sh.c[1], sh.c[2], sh.c[2], 0, sh.c[2] < 20 ? 12 : 26)]; else if (sh.e) lists = [ell(sh.e[0], sh.e[1], sh.e[2], sh.e[3], sh.e[4] || 0, 26)];
+        if (sh.p) lists = parse(sh.p); else if (sh.c) lists = [ell(sh.c[0], sh.c[1], sh.c[2], sh.c[2], 0, sh.steps || Math.max(12, Math.min(26, Math.ceil(sh.c[2] * .6))))]; else if (sh.e) lists = [ell(sh.e[0], sh.e[1], sh.e[2], sh.e[3], sh.e[4] || 0, 26)];
         else if (sh.l) lists = [[[sh.l[0], sh.l[1]], [(sh.l[0] + sh.l[2]) / 2, (sh.l[1] + sh.l[3]) / 2], [sh.l[2], sh.l[3]]]]; else if (sh.pts) lists = [sh.pts]; else continue;
         for (const pts0 of lists) {
           let pts = motion(sh, P, pts0); if (gt) pts = pts.map(gt);
