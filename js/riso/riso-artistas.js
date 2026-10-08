@@ -114,6 +114,36 @@
   const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ø/g, 'o').replace(/\s+/g, ' ').trim();
   const aliases = new Map(Object.values(profiles).flatMap(p => p.names.map(n => [norm(n), p.id])));
   const hash = s => { let h = 2166136261; for (const c of norm(s)) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return h >>> 0; };
+  // ---------- esqueleto: piernas y brazos de dos huesos con cinemática inversa, ciclos de caminar, correr y bailar ----------
+  const ik = (ax, ay, tx, ty, l1, l2, side) => {                      // devuelve el codo/rodilla (hacia afuera) y el extremo alcanzado
+    let dx = tx - ax, dy = ty - ay, d = Math.hypot(dx, dy) || 1; d = Math.max(Math.abs(l1 - l2) + .5, Math.min(d, l1 + l2 - .5));
+    const a = Math.atan2(dy, dx), b = Math.acos(Math.max(-1, Math.min(1, (l1 * l1 + d * d - l2 * l2) / (2 * l1 * d))));
+    const k1 = [ax + Math.cos(a + b) * l1, ay + Math.sin(a + b) * l1], k2 = [ax + Math.cos(a - b) * l1, ay + Math.sin(a - b) * l1], mid = (ax + ax + dx) / 2;
+    const k = (k1[0] - mid) * side >= (k2[0] - mid) * side ? k1 : k2; return [k[0], k[1], ax + Math.cos(a) * d, ay + Math.sin(a) * d];
+  };
+  const solve = (act, t, beatT, active, mic) => {
+    const s = Math.sin, c = Math.cos, PI = Math.PI;
+    const o = { fL: [-24 + s(t * .9) * 5, 0], fR: [24 + s(t * .9) * 5, 0], hL: [-58 + s(t * 1.2) * 7, -196 + s(t * 1.8) * 4], hR: [58 + s(t * 1.2 + 1) * 7, -196 + s(t * 1.8 + .6) * 4], dy: Math.abs(s(t * 1.8)) * 3, tilt: s(t * .9) * .022, nod: s(t * 1.3) * .025, mic: false };
+    if (act === 'walk' || act === 'run') {
+      const run = act === 'run', ph = t * (run ? 9 : 5.5), st = run ? 62 : 38, lf = run ? 42 : 20;
+      o.fL = [-24 + s(ph) * st, -Math.max(0, c(ph)) * lf]; o.fR = [24 + s(ph + PI) * st, -Math.max(0, c(ph + PI)) * lf];
+      o.hL = [-62 - s(ph + PI) * st * .95, -214 - Math.abs(s(ph)) * (run ? 40 : 6)]; o.hR = [62 - s(ph) * st * .95, -214 - Math.abs(s(ph)) * (run ? 40 : 6)];
+      o.dy = Math.abs(c(ph)) * (run ? 16 : 7); o.tilt = run ? .1 : .025; o.nod = s(ph * 2) * .03;
+    } else if (act === 'dance' || act === 'jump') {
+      const b = s(beatT), bb = Math.abs(b), bar = Math.floor(beatT / (PI * 4)) % 4, hb = s(beatT * .5);
+      if (act === 'jump') { const air = Math.max(0, s(beatT)); o.fL = [-22, -air * 30]; o.fR = [22, -air * 30]; o.hL = [-92, -420 - air * 30]; o.hR = [92, -420 - air * 30]; o.dy = (1 - air) * 22; o.nod = -.05; }
+      else if (bar === 0) { o.dy = bb * 22; o.fL = [-24 - 12 * Math.max(0, b), -Math.max(0, b) * 32]; o.fR = [24 + 12 * Math.max(0, -b), -Math.max(0, -b) * 32]; o.hL = [-80, -262 - b * 62]; o.hR = [80, -262 + b * 62]; o.tilt = hb * .05; }
+      else if (bar === 1) { o.dy = bb * 14; o.fL = [-36, 0]; o.fR = [36, 0]; o.hL = [-96, -450 - hb * 18]; o.hR = [96, -450 + hb * 18]; o.tilt = hb * .1; }
+      else if (bar === 2) { o.dy = bb * 30; const g = 14 + 46 * (1 - bb); o.hL = [-g, -292]; o.hR = [g, -292]; o.fL = [-22, 0]; o.fR = [22, 0]; o.nod = b * .07; }
+      else { o.dy = bb * 18; o.hR = [158, -432 + hb * 16]; o.hL = [-70, -214]; o.fL = [-26 - 10 * Math.max(0, b), -Math.max(0, b) * 26]; o.fR = [26, 0]; o.tilt = hb * .09; }
+      o.nod = o.nod || b * .06;
+    } else if (act === 'wave') { o.hR = [104 + s(t * 9) * 16, -440 + s(t * 9 + 1) * 8]; o.tilt = s(t * 1.4) * .02; }
+    else if (active || act === 'sing') {
+      o.mic = true; o.hR = [24, -318 + s(t * 6) * 3]; o.hL = [-96 + s(t * 1.3) * 34, -262 + s(t * 1.7) * 34]; o.tilt = s(t * 1.1) * .03; o.dy = Math.abs(s(t * 2.2)) * 4;
+      o.fL = [-26 + s(t * 1.1) * 6, 0]; o.fR = [26 + s(t * 1.1) * 6, 0]; o.nod = s(t * 2.4) * .03;
+    }
+    return o;
+  };
   const api = R.artistFigures = { profiles, idOf: name => aliases.get(norm(name)) || null,
     profile(name, id, album = '') { const known = profiles[id || this.idOf(name)]; if (known) {
       // el vestuario sigue eras explícitas del álbum, sin contaminar el perfil base.
@@ -135,19 +165,21 @@
       const instrument = motion.instrument || p.instrument;
       const act = motion.act || null, back = !!motion.back, beatT = t * (motion.bpm || 110) / 60 * Math.PI;
       const walking = act === 'walk' || act === 'run', dancing = act === 'dance' || act === 'jump';
-      const swing = walking ? Math.sin(t * (act === 'run' ? 9 : 5.5)) * (act === 'run' ? .5 : .34) : 0;
-      const hop = dancing ? Math.abs(Math.sin(beatT)) * (act === 'jump' ? 46 : 26) : walking ? Math.abs(Math.sin(t * (act === 'run' ? 9 : 5.5))) * 8 : 0;
-      const la = dancing ? .55 + .45 * Math.sin(beatT) : act === 'wave' ? .9 : 0, sway = dancing ? Math.sin(beatT * .5) * .07 : walking ? Math.sin(t * 5.5) * .02 : 0;
+      const hop = act === 'jump' ? Math.abs(Math.sin(beatT)) * 46 : 0, sway = 0;
+      const R0 = solve(act, t, beatT, active, true), reduce = !!window.CFG?.reduceMotion; let micAt = null;
       const bob = Math.sin(t * 2.2) * (active ? 3 : 1), open = motion.open || 0;
       c.save(); c.translate(x, ground - hop); c.scale(scale * (p.build || 1), scale); c.rotate(Math.sin(t * 1.6) * (active ? .018 : .007) + sway);
       const path = (d, f, tone = 1, lw = 4, ink = 1) => { let q = paths.get(d); if (!q) { q = new Path2D(d); if (paths.size < 2048) paths.set(d, q); } if (f !== undefined) { c.fillStyle = f === -1 ? K.PAPER : K.ink(f, tone); c.fill(q); } c.strokeStyle = K.ink(ink); c.lineWidth = lw; c.lineJoin = 'round'; c.lineCap = 'round'; c.stroke(q); };
       const circle = (x, y, r, f, ft = 1) => K.circ(x, y, r, { f, ft, s: 1, lw: 4 });
       const skin = d => { path(d, -1); if (p.skin) path(d, 3, p.skin); };
       K.ell(0, 5, 83, 12, 0, { f: 1, ft: .25 });
-      for (const sd of [-1, 1]) { c.save(); c.translate(sd * 18, -185); c.rotate(sd * swing); c.translate(-sd * 18, 185);
-        path(sd < 0 ? 'M-36 -185 L-33 -16 H-6 L0 -176 Z' : 'M0 -176 L10 -16 H36 L38 -185 Z', 1, .85, 6);
-        path(sd < 0 ? 'M-35 -22 H-5 L-1 0 H-52 L-49 -10 Z' : 'M10 -22 H36 L53 -6 V0 H9 Z', 1); c.restore(); }
-      c.translate(0, bob);
+      for (const sd of [-1, 1]) {
+        const hip = [sd * 18, -185 + R0.dy], f = sd < 0 ? R0.fL : R0.fR, [kx, ky, fx, fy] = ik(hip[0], hip[1], f[0], f[1], 96, 96, sd);
+        K.line(hip[0], hip[1], kx, ky, 1, 40, 1); K.line(kx, ky, fx, fy, 1, 36, 1);
+        K.line(hip[0], hip[1], kx, ky, 1, 31, .78); K.line(kx, ky, fx, fy, 1, 27, .78);
+        K.ell(fx + sd * 9, fy - 7, 27, 12, sd * -.05, { f: 1, s: 1, lw: 5 });
+      }
+      c.translate(0, bob + R0.dy); c.translate(0, -185); c.rotate(reduce ? 0 : R0.tilt); c.translate(0, 185);
       if (['long', 'waves', 'ponytail', 'braids', 'dreads', 'mullet', 'bob'].includes(p.hair)) {
         if (p.hair === 'bob') path('M-43 -423 Q-70 -410 -60 -335 L-25 -335 L-25 -413 Z M25 -413 L25 -335 H60 Q70 -410 43 -423 Z', p.hairInk);
         else path('M-41 -421 Q-79 -402 -62 -299 L-70 -252 L-29 -267 L-22 -410 Z M25 -413 Q76 -412 63 -320 L73 -265 L27 -270 Z', p.hairInk, .95);
@@ -170,14 +202,16 @@
       if (p.tape) { K.rect(31, -315, 17, 61, { f: 2 }); K.rect(-42, -201, 24, 11, { f: 2 }); }
       if (p.chain || p.necklace) path('M-25 -329 Q0 -263 25 -329', undefined, 1, p.chain ? 7 : 3, 3);
       if (p.chain) path('M0 -282 L-7 -271 L0 -261 L7 -271 Z', 3);
-      // manos y brazos: el micrófono sube durante el verso de esta voz.
-      const handY = active || dancing ? -323 - (dancing ? Math.sin(beatT + 1.6) * 16 : 0) : act === 'wave' ? -236 : -236;
+      // manos y brazos: dos huesos con codo; el micrófono sube durante el verso de esta voz.
+      const handY = active ? -323 : -236;
       if (!instrument) {
-      path(`M-51 -326 Q${-77 - 20 * la} ${-297 - 60 * la} ${-61 - 36 * la} ${-209 - 207 * la}`, undefined, 1, 22, p.clothes === -1 ? 3 : p.clothes);
-      c.save(); c.translate(-36 * la, -207 * la + (act === 'wave' ? Math.sin(t * 9) * 8 : 0)); skin('M-70 -220 Q-84 -208 -72 -194 Q-56 -186 -53 -205 L-56 -218 Z'); c.restore();
-      path(`M51 -326 Q83 -273 67 -252 L25 ${handY + 12}`, undefined, 1, 23, p.clothes === -1 ? 3 : p.clothes);
-      skin(`M18 ${handY - 8} Q3 ${handY - 2} 15 ${handY + 15} Q34 ${handY + 24} 37 ${handY + 5} L31 ${handY - 8} Z`);
-      if (p.glove) path(`M18 ${handY - 8} Q3 ${handY - 2} 15 ${handY + 15} Q34 ${handY + 24} 37 ${handY + 5} L31 ${handY - 8} Z`, -1);
+        const ink = p.clothes === -1 ? 3 : p.clothes, ph = back ? { ...R0, hL: [-66, -206], hR: [66, -206], mic: false } : R0;
+        const handsAt = back ? [[-62, -206], [62, -206]] : [ph.hL, ph.hR];
+        const sleeve = (sx, sy, tx, ty, side) => { const [ex, ey, hx, hy] = ik(sx, sy, tx, ty, 74, 72, side); K.line(sx, sy, ex, ey, 1, 27, 1); K.line(ex, ey, hx, hy, 1, 25, 1); K.line(sx, sy, ex, ey, ink, 22, .95); K.line(ex, ey, hx, hy, ink, 20, .95); return [hx, hy]; };
+        const lh = sleeve(-51, -326, handsAt[0][0], handsAt[0][1], -1), rh = sleeve(51, -326, handsAt[1][0], handsAt[1][1], 1);
+        const hand = (hx, hy) => skin(`M${hx - 13} ${hy} a13 14 0 1 0 26 0 a13 14 0 1 0 -26 0 Z`);
+        hand(lh[0], lh[1]); hand(rh[0], rh[1]); if (p.glove) { for (const h of [lh, rh]) path(`M${h[0] - 13} ${h[1]} a13 14 0 1 0 26 0 a13 14 0 1 0 -26 0 Z`, -1); }
+        micAt = rh;
       } else {
         const ly = instrument === 'keys' ? -184 : instrument === 'drums' ? -220 : -235;
         const ry = instrument === 'keys' ? -184 : instrument === 'drums' ? -220 : -306;
@@ -186,7 +220,7 @@
       }
       if (p.tattoos) { path('M-73 -260 L-60 -251 L-73 -239 M61 -284 L73 -277 L65 -263', undefined, 1, 3); }
       const face = p.face || { width: 1, height: 1, jaw: 1, eyes: 1, nose: 1, lips: 1 };
-      c.save(); c.translate(0, -390); c.scale(face.width, face.height); c.translate(0, 390);
+      c.save(); c.translate(0, -340); c.rotate(reduce ? 0 : R0.nod); c.translate(0, 340); c.translate(0, -390); c.scale(face.width, face.height); c.translate(0, 390);
       const headPath = `M-43 -405 Q-47 -356 ${-22 * face.jaw} -344 Q0 ${-344 + 12 * face.jaw} ${22 * face.jaw} -344 Q47 -356 43 -405 Q32 -440 0 -438 Q-32 -440 -43 -405 Z`;
       skin(headPath);
       // nariz, ojos, labios y detalles que distinguen cada silueta.
@@ -239,7 +273,7 @@
         path('M-100 -195 H100 V-158 H-100 Z', -1, 1, 5);
         for (let i = -4; i <= 4; i++) K.line(i * 20, -195, i * 20, -158, 1, 2);
         path('M-80 -158 L70 -16 M80 -158 L-70 -16', undefined, 1, 6);
-      } else { K.line(25, handY + 7, 35, handY - 23, 1, 9); circle(36, handY - 28, 11, 2); }
+      } else { const m = micAt || [26, handY + 8]; K.line(m[0] - 1, m[1] - 1, m[0] + 9, m[1] - 31, 1, 9); circle(m[0] + 10, m[1] - 36, 11, 2); }
       c.restore();
     }
   };
