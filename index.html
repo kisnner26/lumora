@@ -854,6 +854,7 @@ function scene8(p, t) {
 let actx = null, analyser = null, fftBuf = null, energy = 0, micOn = false;
 const bands = new Float32Array(24);
 function initAudio() {
+  if (window.LMAUDIO) { LMAUDIO.attachElement(audio).then(g => { actx=LMAUDIO.ctx; analyser=g.analyser; fftBuf=new Uint8Array(analyser.frequencyBinCount); micOn=false; }).catch(() => {}); return; }
   if (!audio.src || (actx && !micOn && analyser)) return;
   try {
     actx = actx || new (window.AudioContext || window.webkitAudioContext)();
@@ -2036,6 +2037,7 @@ requestAnimationFrame(frame);
 <script src="js/app/hud.js"></script>
 <script src="js/modos/cover.js"></script>
 <script src="js/riso/riso-store.js"></script>
+<script src="js/audio/experience.js"></script>
 <script src="js/riso/riso.js"></script>
 <script src="js/riso/escenas/riso-scenes.js"></script>
 <script src="js/riso/escenas/riso-scenes2.js"></script>
@@ -2067,6 +2069,7 @@ requestAnimationFrame(frame);
 <script src="js/riso/riso-grief.js"></script>
 <script src="js/riso/riso-relato.js"></script>
 <script src="js/riso/riso-cine.js"></script>
+<script src="js/riso/riso-universo.js"></script>
 <script src="js/riso/riso-cine-dibujo.js"></script>
 <script src="js/riso/riso-clip.js"></script>
 <script src="js/riso/riso-cine-editor.js"></script>
@@ -2079,5 +2082,6 @@ requestAnimationFrame(frame);
 <script src="js/riso/riso-xr.js"></script>
 <script src="js/riso/riso-menu.js"></script>
 <script src="js/riso/riso-theme.js"></script>
+<script src="js/app/experience-ui.js"></script>
 </body>
 </html>
