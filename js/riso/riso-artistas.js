@@ -59,17 +59,61 @@
   add('gerard_way', 'my chemical romance|gerard way', { hair: 'long', outfit: 'military', clothes: 1, eyeliner: true });
   add('hayley_williams', 'paramore|hayley williams', { hair: 'long', hairInk: 2, fringe: true, outfit: 'shirt', clothes: -1 });
   add('daft_punk', 'daft punk', { helmet: true, outfit: 'suit', clothes: 1 });
+  add('josh_dun', 'josh dun', { hair: 'messy', hairInk: 2, outfit: 'shirt', clothes: 1, tattoos: true });
+  add('sia', 'sia', { hair: 'bob', fringe: true, splitHair: true, outfit: 'dress', clothes: 1 });
+  add('aurora', 'aurora|aurora aksnes', { hair: 'bob', fringe: true, hairInk: 3, outfit: 'dress', clothes: -1 });
+  add('hozier', 'hozier|andrew hozier byrne', { hair: 'waves', beard: true, outfit: 'coat', clothes: 1 });
+  add('florence_welch', 'florence + the machine|florence and the machine|florence welch', { hair: 'waves', hairInk: 2, outfit: 'dress', clothes: 3 });
+  add('alex_turner', 'arctic monkeys|alex turner', { hair: 'slick', outfit: 'suit', clothes: 1 });
+  add('thom_yorke', 'radiohead|thom yorke', { hair: 'messy', beard: true, outfit: 'shirt', clothes: 1 });
+  add('robert_smith', 'the cure|robert smith', { hair: 'messy', outfit: 'coat', clothes: 1, eyeliner: true, lipstick: true });
+  add('gustavo_cerati', 'soda stereo|gustavo cerati|cerati', { hair: 'curls', outfit: 'jacket', clothes: 1 });
+  add('fito_paez', 'fito paez|fito páez', { hair: 'curls', glasses: true, outfit: 'jacket', clothes: 3 });
+  add('mon_laferte', 'mon laferte', { hair: 'waves', fringe: true, flower: true, eyeliner: true, outfit: 'dress', clothes: 2 });
+  add('natalia_lafourcade', 'natalia lafourcade', { hair: 'bob', fringe: true, outfit: 'dress', clothes: 3 });
+  add('residente', 'residente|rene perez|rené pérez', { skin: .25, hair: 'buzz', beard: true, tattoos: true, outfit: 'shirt', clothes: 1 });
+  add('mora', 'mora', { skin: .25, hair: 'short', glasses: true, beard: true, outfit: 'jacket', clothes: 3 });
+  add('tame_impala', 'tame impala|kevin parker', { hair: 'long', beard: true, outfit: 'shirt', clothes: 3 });
+  // proporciones de ilustración, no medidas biométricas. cada perfil comparte todos sus aliases.
+  const faces = {
+    tyler_joseph: [ .88, 1.10, .82, .88, 1.16, .84 ], josh_dun: [1.06, .94, 1.10, 1.02, .88, 1.08],
+    taylor_swift: [.86, 1.10, .75, 1.06, .88, 1.15], billie_eilish: [1.10, .98, .90, 1.12, .80, 1.15],
+    ariana_grande: [.82, .97, .72, 1.08, .78, 1.12], lana_del_rey: [1.02, 1.08, .90, 1.03, .98, 1.28],
+    shakira: [.97, .95, .83, 1.12, .87, 1.15], michael_jackson: [.88, 1.08, .76, .95, .78, .92],
+    freddie_mercury: [.98, 1.08, 1.10, .86, 1.12, 1.04], david_bowie: [.82, 1.13, .76, 1.07, 1.10, .85],
+    bad_bunny: [1.08, .98, 1.12, .92, .98, 1.05], drake: [1.08, 1.08, 1.16, .93, 1.04, 1.04],
+    ed_sheeran: [1.12, .94, 1.04, .94, .92, .90], snoop_dogg: [.83, 1.19, .78, .94, 1.13, .95],
+    adele: [1.14, .98, 1.04, 1.08, .92, 1.15], hozier: [.90, 1.18, .96, .95, 1.16, .92],
+    olivia_rodrigo: [.87, 1.04, .80, 1.10, .86, 1.08], dua_lipa: [.92, 1.10, 1.04, 1.12, .99, 1.18],
+    bruno_mars: [1.02, .93, 1.00, .96, .89, 1.07], eminem: [.95, 1.06, 1.07, .90, 1.03, .85],
+    kurt_cobain: [.93, 1.08, .91, 1.02, 1.04, .91], aurora: [.85, 1.02, .78, 1.16, .82, .87],
+    thom_yorke: [.90, 1.10, .82, .94, 1.12, .84], gustavo_cerati: [.96, 1.13, .93, 1.04, 1.15, .98],
+  };
+  for (const p of Object.values(profiles)) {
+    const [width, height, jaw, eyes, nose, lips] = faces[p.id] || [1, 1, 1, 1, 1, 1];
+    p.face = { width, height, jaw, eyes, nose, lips };
+    p.build = ['snoop_dogg', 'hozier', 'taylor_swift'].includes(p.id) ? .90 : ['adele', 'drake'].includes(p.id) ? 1.10 : 1;
+  }
   const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ø/g, 'o').replace(/\s+/g, ' ').trim();
   const aliases = new Map(Object.values(profiles).flatMap(p => p.names.map(n => [norm(n), p.id])));
   const hash = s => { let h = 2166136261; for (const c of norm(s)) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return h >>> 0; };
   const api = R.artistFigures = { profiles, idOf: name => aliases.get(norm(name)) || null,
-    profile(name, id) { const known = profiles[id || this.idOf(name)]; if (known) return known;
+    profile(name, id, album = '') { const known = profiles[id || this.idOf(name)]; if (known) {
+      // el vestuario sigue eras explícitas del álbum, sin contaminar el perfil base.
+      if (known.id === 'tyler_joseph') {
+        if (/clancy|blurryface/i.test(album)) return { ...known, hat: null, hair: 'short', clothes: 1, tape: true };
+        if (/trench/i.test(album)) return { ...known, hat: null, outfit: 'coat', clothes: 3, tape: true };
+        if (/scaled and icy/i.test(album)) return { ...known, hat: null, hair: 'messy', hairInk: 3, clothes: 2, tape: false };
+      }
+      if (known.id === 'billie_eilish' && /hit me hard and soft|happier than ever/i.test(album)) return { ...known, splitHair: false };
+      return known;
+    }
       // un nombre desconocido no aporta información sobre su aspecto real.
       const h = hash(name); return { id: null, skin: .15, hair: ['short', 'mop', 'messy'][h % 3], hairInk: 1, outfit: ['jacket', 'shirt', 'hoodie'][h % 3], clothes: 2 + h % 2 }; },
     draw(K, name, id, x, ground, scale, motion = {}) {
-      const p = this.profile(name, id), c = K.c, t = motion.time || 0, active = !!motion.active;
+      const p = this.profile(name, id, motion.album), c = K.c, t = window.CFG?.reduceMotion ? 0 : motion.time || 0, active = !!motion.active;
       const bob = Math.sin(t * 2.2) * (active ? 3 : 1), open = motion.open || 0;
-      c.save(); c.translate(x, ground); c.scale(scale, scale); c.rotate(Math.sin(t * 1.6) * (active ? .018 : .007));
+      c.save(); c.translate(x, ground); c.scale(scale * (p.build || 1), scale); c.rotate(Math.sin(t * 1.6) * (active ? .018 : .007));
       const path = (d, f, tone = 1, lw = 4, ink = 1) => { let q = paths.get(d); if (!q) { q = new Path2D(d); paths.set(d, q); } if (f !== undefined) { c.fillStyle = f === -1 ? K.PAPER : K.ink(f, tone); c.fill(q); } c.strokeStyle = K.ink(ink); c.lineWidth = lw; c.lineJoin = 'round'; c.lineCap = 'round'; c.stroke(q); };
       const circle = (x, y, r, f, ft = 1) => K.circ(x, y, r, { f, ft, s: 1, lw: 4 });
       const skin = d => { path(d, -1); if (p.skin) path(d, 3, p.skin); };
@@ -77,8 +121,9 @@
       path('M-36 -185 L-33 -16 H-6 L0 -176 L10 -16 H36 L38 -185 Z', 1, .85, 6);
       path('M-35 -22 H-5 L-1 0 H-52 L-49 -10 Z M10 -22 H36 L53 -6 V0 H9 Z', 1);
       c.translate(0, bob);
-      if (['long', 'waves', 'ponytail', 'braids', 'dreads', 'mullet'].includes(p.hair)) {
-        path('M-41 -421 Q-79 -402 -62 -299 L-70 -252 L-29 -267 L-22 -410 Z M25 -413 Q76 -412 63 -320 L73 -265 L27 -270 Z', p.hairInk, .95);
+      if (['long', 'waves', 'ponytail', 'braids', 'dreads', 'mullet', 'bob'].includes(p.hair)) {
+        if (p.hair === 'bob') path('M-43 -423 Q-70 -410 -60 -335 L-25 -335 L-25 -413 Z M25 -413 L25 -335 H60 Q70 -410 43 -423 Z', p.hairInk);
+        else path('M-41 -421 Q-79 -402 -62 -299 L-70 -252 L-29 -267 L-22 -410 Z M25 -413 Q76 -412 63 -320 L73 -265 L27 -270 Z', p.hairInk, .95);
         if (p.hair === 'waves') for (const side of [-1, 1]) for (let i = 0; i < 5; i++) circle(side * (53 + Math.sin(i * 2) * 8), -390 + i * 25, 17, p.hairInk);
         if (p.hair === 'ponytail') path('M39 -424 Q99 -432 90 -346 L64 -288 L60 -368 Z', p.hairInk);
         if (p.hair === 'braids' || p.hair === 'dreads') for (let i = 0; i < 8; i++) path(`M${-58 + i * 16} -407 Q${-74 + i * 20} -338 ${-64 + i * 18} -276`, undefined, 1, p.hair === 'dreads' ? 9 : 5);
@@ -106,11 +151,15 @@
       skin(`M18 ${handY - 8} Q3 ${handY - 2} 15 ${handY + 15} Q34 ${handY + 24} 37 ${handY + 5} L31 ${handY - 8} Z`);
       if (p.glove) path(`M18 ${handY - 8} Q3 ${handY - 2} 15 ${handY + 15} Q34 ${handY + 24} 37 ${handY + 5} L31 ${handY - 8} Z`, -1);
       if (p.tattoos) { path('M-73 -260 L-60 -251 L-73 -239 M61 -284 L73 -277 L65 -263', undefined, 1, 3); }
-      skin('M-43 -405 Q-47 -356 -22 -344 Q0 -332 22 -344 Q47 -356 43 -405 Q32 -440 0 -438 Q-32 -440 -43 -405 Z');
+      const face = p.face || { width: 1, height: 1, jaw: 1, eyes: 1, nose: 1, lips: 1 };
+      c.save(); c.translate(0, -390); c.scale(face.width, face.height); c.translate(0, 390);
+      skin(`M-43 -405 Q-47 -356 ${-22 * face.jaw} -344 Q0 ${-344 + 12 * face.jaw} ${22 * face.jaw} -344 Q47 -356 43 -405 Q32 -440 0 -438 Q-32 -440 -43 -405 Z`);
       // nariz, ojos, labios y detalles que distinguen cada silueta.
-      path('M2 -391 L-4 -370 L5 -369', undefined, 1, 3);
+      path(`M2 -391 L${-4 * face.nose} ${-391 + 21 * face.nose} L5 ${-390 + 21 * face.nose}`, undefined, 1, 3);
+      c.save(); c.scale(face.eyes, 1);
       path('M-28 -390 Q-18 -396 -10 -390 M11 -390 Q21 -396 30 -390', undefined, 1, p.eyeliner ? 5 : 3);
-      K.ell(0, -353, 10 + open * 4, 2 + open * 8, 0, { f: p.lipstick ? 2 : 1, s: 1, lw: 2 });
+      c.restore();
+      K.ell(0, -353, 10 * face.lips + open * 4, 2 + open * 8, 0, { f: p.lipstick ? 2 : 1, s: 1, lw: 2 });
       if (p.eyeliner) path('M-30 -390 L-38 -396 M30 -390 L38 -396', undefined, 1, 3);
       if (p.beard) path('M-39 -371 L-29 -345 Q0 -321 29 -345 L39 -371 L21 -359 L10 -365 H-10 L-21 -359 Z', 1, .85, 3);
       if (p.moustache || p.beard) path('M-16 -361 Q-7 -370 0 -364 Q8 -370 16 -361', undefined, 1, 6);
@@ -134,6 +183,7 @@
       if (p.hat === 'cap') { path('M-45 -413 Q-48 -464 0 -465 Q49 -461 46 -413 Z', p.clothes); path('M-46 -419 H43 L78 -406 H-46 Z', p.clothes); }
       if (p.hat === 'beanie') { path('M-45 -415 Q-48 -465 0 -468 Q49 -465 45 -415 Z', 2); K.rect(-46, -425, 92, 18, { f: 2, s: 1, lw: 3 }); }
       if (p.helmet) { path('M-45 -402 Q-46 -452 0 -454 Q47 -450 45 -401 L35 -348 H-35 Z', 3, .8, 5); path('M-37 -407 H37 L31 -376 H-31 Z', 1); K.line(-24, -397, 25, -397, -1, 4); }
+      c.restore();
       K.line(25, handY + 7, 35, handY - 23, 1, 9); circle(36, handY - 28, 11, 2);
       c.restore();
     }
