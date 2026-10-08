@@ -3,6 +3,11 @@
   const R = window.RISO; if (!R) return;
   const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[’]/g, "'").replace(/[^a-z0-9' ]/g, ' ').replace(/\s+/g, ' ').trim();
   const actions = [
+    ['open', /\b(open the door|open a door|abro la puerta|abre la puerta|abrir la puerta)\b/],
+    ['give', /\b(give you (?:a|the) letter|hand you (?:a|the) letter|entrego (?:una|la) carta|entregar (?:una|la) carta|te doy (?:una|la) carta)\b/],
+    ['board', /\b(board (?:the|a) taxi|get in (?:the|a) taxi|into (?:the|a) cab|subo al taxi|subir al taxi|tomo un taxi)\b/],
+    ['tear', /\b(tear (?:the|a) photo|torn photograph|rompo (?:la|una) foto|romper (?:la|una) foto|foto rota)\b/],
+    ['wilt', /\b(flowers? (?:wilts?|withers?)|wilted flowers?|flor se marchita|flores marchitas)\b/],
     ['leave', /\b(goodbye|farewell|leaving|left you|walk away|adios|me fui|te fuiste|me voy|marcharme|partir)\b/],
     ['return', /\b(come back|coming home|back home|return|regres[oa]|regresar|volv[ie]|vuelve|volver a casa)\b/],
     ['wait', /\b(wait|waiting|esper[oa]|esperando|esperarte|esperandote)\b/],
@@ -17,14 +22,14 @@
     ['bosque', /\b(forest|trees|river|garden|bosque|arbol|rio|jardin|flowers|flores)\b/],
     ['espacio', /\b(stars|moon|galaxy|sky|estrellas|luna|galaxia|cielo)\b/],
   ];
-  const symbol = { leave: 'maleta_viaje', return: 'puerta_entreabierta', wait: 'banco_vacio', reach: 'hilo_rojo', walk: 'road', remember: 'foto_rota', grow: 'semilla_brote' };
+  const symbol = { open: 'puerta_entreabierta', give: 'carta_abierta', board: 'taxi', tear: 'foto_rota', wilt: 'flowers', leave: 'maleta_viaje', return: 'puerta_entreabierta', wait: 'banco_vacio', reach: 'hilo_rojo', walk: 'road', remember: 'foto_rota', grow: 'semilla_brote' };
   const moods = { leave: 'melancolico', return: 'sereno', wait: 'nostalgico', reach: 'romantico', remember: 'nostalgico', grow: 'feliz' };
   const N = R.narrative = { compile(lines) {
     let place = 'cuarto', motif = null, action = null, mood = 'sereno', chapter = 0, cast = 1;
     const repeats = new Map(), frames = [];
     return lines.map((line, li) => {
       const text = norm(line.text); if (!text) return null;
-      const neg = /\b(?:don't|dont|never|no|nunca|not)\s+(?:ever\s+)?(?:leave|go|return|come back|wait|remember|volver|vuelvas|regreses|esperes|olvides|te vayas)\b/.test(text);
+      const neg = /\b(?:don't|dont|never|no|nunca|not)\s+(?:ever\s+)?(?:open|give|tear|leave|go|return|come back|wait|remember|abras|abro|rompas|entregues|volver|vuelvas|regreses|esperes|olvides|te vayas)\b/.test(text);
       if (neg) action = null;
       const event = neg ? null : actions.find(([, rx]) => rx.test(text))?.[0];
       const location = places.find(([, rx]) => rx.test(text))?.[0];
@@ -49,6 +54,7 @@
     if (key !== this.key) { this.beats = this.compile(lines); this.key = key; }
     return this.beats || [];
   }, draw(K, shot, elapsed) {
+    if (shot.narrative?.state && R.film?.draw) return R.film.draw(K, shot, elapsed);
     const beat = shot.narrative, reduced = !!window.CFG?.reduceMotion;
     const p = reduced ? 1 : R.easeOut(R.clamp(elapsed / 2.4)), cx = shot.flip ? 470 : 1130, ground = 700;
     const action = beat.action === 'hold' ? beat.carry : beat.action;
