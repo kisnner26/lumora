@@ -121,21 +121,21 @@
     const k1 = [ax + Math.cos(a + b) * l1, ay + Math.sin(a + b) * l1], k2 = [ax + Math.cos(a - b) * l1, ay + Math.sin(a - b) * l1], mid = (ax + ax + dx) / 2;
     const k = (k1[0] - mid) * side >= (k2[0] - mid) * side ? k1 : k2; return [k[0], k[1], ax + Math.cos(a) * d, ay + Math.sin(a) * d];
   };
-  const solve = (act, t, beatT, active, mic, hug = 0) => {
-    const s = Math.sin, c = Math.cos, PI = Math.PI;
+  const solve = (act, t, beatT, active, mic, hug = 0, en = .5, hit = 0) => {
+    const s = Math.sin, c = Math.cos, PI = Math.PI, amp = .5 + en * .95;                // la música manda: en un pasaje suave el cuerpo se contiene, en uno fuerte se abre
     const o = { fL: [-24 + s(t * .9) * 5, 0], fR: [24 + s(t * .9) * 5, 0], hL: [-58 + s(t * 1.2) * 7, -196 + s(t * 1.8) * 4], hR: [58 + s(t * 1.2 + 1) * 7, -196 + s(t * 1.8 + .6) * 4], dy: Math.abs(s(t * 1.8)) * 3, tilt: s(t * .9) * .022, nod: s(t * 1.3) * .025, mic: false };
     if (act === 'walk' || act === 'run') {
-      const run = act === 'run', ph = t * (run ? 9 : 5.5), st = run ? 62 : 38, lf = run ? 42 : 20;
+      const run = act === 'run', ph = t * (run ? 9 : 5.5) + s(t * .7) * .25, st = (run ? 62 : 38) * (.8 + en * .4), lf = (run ? 42 : 20) * (.85 + en * .3);
       o.fL = [-24 + s(ph) * st, -Math.max(0, c(ph)) * lf]; o.fR = [24 + s(ph + PI) * st, -Math.max(0, c(ph + PI)) * lf];
       o.hL = [-62 - s(ph + PI) * st * .95, -214 - Math.abs(s(ph)) * (run ? 40 : 6)]; o.hR = [62 - s(ph) * st * .95, -214 - Math.abs(s(ph)) * (run ? 40 : 6)];
       o.dy = Math.abs(c(ph)) * (run ? 16 : 7); o.tilt = run ? .1 : .025; o.nod = s(ph * 2) * .03;
     } else if (act === 'dance' || act === 'jump') {
-      const b = s(beatT), bb = Math.abs(b), bar = Math.floor(beatT / (PI * 4)) % 4, hb = s(beatT * .5);
+      const b = s(beatT) + .22 * s(beatT * 1.73 + 1.3), bb = Math.min(1, Math.abs(b)), bar = Math.floor(beatT / (PI * 4)) % 4, hb = s(beatT * .5) + .15 * s(beatT * .83);
       if (act === 'jump') { const air = Math.max(0, s(beatT)); o.fL = [-22, -air * 30]; o.fR = [22, -air * 30]; o.hL = [-92, -420 - air * 30]; o.hR = [92, -420 - air * 30]; o.dy = (1 - air) * 22; o.nod = -.05; }
-      else if (bar === 0) { o.dy = bb * 22; o.fL = [-24 - 12 * Math.max(0, b), -Math.max(0, b) * 32]; o.fR = [24 + 12 * Math.max(0, -b), -Math.max(0, -b) * 32]; o.hL = [-80, -262 - b * 62]; o.hR = [80, -262 + b * 62]; o.tilt = hb * .05; }
-      else if (bar === 1) { o.dy = bb * 14; o.fL = [-36, 0]; o.fR = [36, 0]; o.hL = [-96, -450 - hb * 18]; o.hR = [96, -450 + hb * 18]; o.tilt = hb * .1; }
-      else if (bar === 2) { o.dy = bb * 30; const g = 14 + 46 * (1 - bb); o.hL = [-g, -292]; o.hR = [g, -292]; o.fL = [-22, 0]; o.fR = [22, 0]; o.nod = b * .07; }
-      else { o.dy = bb * 18; o.hR = [158, -432 + hb * 16]; o.hL = [-70, -214]; o.fL = [-26 - 10 * Math.max(0, b), -Math.max(0, b) * 26]; o.fR = [26, 0]; o.tilt = hb * .09; }
+      else if (bar === 0) { o.dy = bb * 22 * amp + hit * 8; o.fL = [-24 - 12 * Math.max(0, b), -Math.max(0, b) * 32]; o.fR = [24 + 12 * Math.max(0, -b), -Math.max(0, -b) * 32]; o.hL = [-80, -262 - b * 62 * amp]; o.hR = [80, -262 + b * 62 * amp]; o.tilt = hb * .05; }
+      else if (bar === 1) { o.dy = bb * 14 * amp + hit * 7; o.fL = [-36, 0]; o.fR = [36, 0]; o.hL = [-96, -450 - hb * 18]; o.hR = [96, -450 + hb * 18]; o.tilt = hb * .1; }
+      else if (bar === 2) { o.dy = bb * 30 * amp + hit * 8; const g = 14 + 46 * (1 - bb); o.hL = [-g, -292]; o.hR = [g, -292]; o.fL = [-22, 0]; o.fR = [22, 0]; o.nod = b * .07; }
+      else { o.dy = bb * 18 * amp + hit * 6; o.hR = [158, -432 + hb * 16]; o.hL = [-70, -214]; o.fL = [-26 - 10 * Math.max(0, b), -Math.max(0, b) * 26]; o.fR = [26, 0]; o.tilt = hb * .09; }
       o.nod = o.nod || b * .06;
     } else if (act === 'hug') {
       const sg = Math.sign(hug) || 1, h = Math.abs(hug); o.hR = sg > 0 ? [h * .66, -304] : [h * .3 * sg, -272]; o.hL = sg > 0 ? [h * .3 * sg, -272] : [-h * .66, -304]; o.hR = sg > 0 ? [h * .66, -304] : [-h * .3, -272];
@@ -183,7 +183,7 @@
       const act = motion.act || null, back = !!motion.back, beatT = t * (motion.bpm || 110) / 60 * Math.PI;
       const walking = act === 'walk' || act === 'run', dancing = act === 'dance' || act === 'jump';
       const hop = act === 'jump' ? Math.abs(Math.sin(beatT)) * 46 : 0, sway = 0;
-      const reduce = !!window.CFG?.reduceMotion; let R0 = solve(act, t, beatT, active, true, motion.hug || 0), micAt = null;
+      const reduce = !!window.CFG?.reduceMotion; const en = motion.energy ?? .5, look = motion.look || 0; let R0 = solve(act, t, beatT, active, true, motion.hug || 0, en, motion.hit || 0), micAt = null;
       { const key = motion.key || name, prev = poseState.get(key), dtp = prev ? t - prev.t : 1e9;    // al cambiar de acción, las articulaciones se funden en vez de saltar
         if (prev && dtp > 0 && dtp < .5 && !reduce) { const k = 1 - Math.exp(-dtp * 8), mx = (a, b) => a + (b - a) * k, mv = (a, b) => [mx(a[0], b[0]), mx(a[1], b[1])]; R0 = { ...R0, fL: mv(prev.o.fL, R0.fL), fR: mv(prev.o.fR, R0.fR), hL: mv(prev.o.hL, R0.hL), hR: mv(prev.o.hR, R0.hR), dy: mx(prev.o.dy, R0.dy), tilt: mx(prev.o.tilt, R0.tilt), nod: mx(prev.o.nod, R0.nod) }; }
         if (poseState.size > 40) poseState.clear(); poseState.set(key, { t, o: R0 }); }
@@ -200,6 +200,7 @@
         K.ell(fx + sd * 9, fy - 7, 27, 12, sd * -.05, { f: 1, s: 1, lw: 5 });
       }
       c.translate(0, bob + R0.dy); c.translate(0, -185); c.rotate(reduce ? 0 : R0.tilt); c.translate(0, 185);
+      if (!reduce) { c.translate(0, -185); c.scale(1 + Math.sin(t * 1.7) * .009 * (1 + en), 1 + Math.sin(t * 1.7) * .012 * (1 + en)); c.translate(0, 185); }
       if (['long', 'waves', 'ponytail', 'braids', 'dreads', 'mullet', 'bob'].includes(p.hair)) {
         if (p.hair === 'bob') path('M-43 -423 Q-70 -410 -60 -335 L-25 -335 L-25 -413 Z M25 -413 L25 -335 H60 Q70 -410 43 -423 Z', p.hairInk);
         else path('M-41 -421 Q-79 -402 -62 -299 L-70 -252 L-29 -267 L-22 -410 Z M25 -413 Q76 -412 63 -320 L73 -265 L27 -270 Z', p.hairInk, .95);
@@ -240,13 +241,14 @@
       }
       if (p.tattoos) { path('M-73 -260 L-60 -251 L-73 -239 M61 -284 L73 -277 L65 -263', undefined, 1, 3); }
       const face = p.face || { width: 1, height: 1, jaw: 1, eyes: 1, nose: 1, lips: 1 };
-      c.save(); c.translate(0, -340); c.rotate(reduce ? 0 : R0.nod); c.translate(0, 340); c.translate(0, -390); c.scale(face.width, face.height); c.translate(0, 390);
+      c.save(); c.translate(0, -340); c.rotate(reduce ? 0 : R0.nod); if (!reduce) c.transform(1, 0, Math.sin(t * 2.1 + .5) * .03 * (1 + (walking || dancing ? 1.6 : 0) + en) + R0.tilt * .5, 1, 0, 0); c.translate(look * 7, 340); c.translate(0, -390); c.scale(face.width, face.height); c.translate(0, 390);
       const headPath = `M-43 -405 Q-47 -356 ${-22 * face.jaw} -344 Q0 ${-344 + 12 * face.jaw} ${22 * face.jaw} -344 Q47 -356 43 -405 Q32 -440 0 -438 Q-32 -440 -43 -405 Z`;
       skin(headPath);
       // nariz, ojos, labios y detalles que distinguen cada silueta.
       path(`M2 -391 L${-4 * face.nose} ${-391 + 21 * face.nose} L5 ${-390 + 21 * face.nose}`, undefined, 1, 3);
       c.save(); c.scale(face.eyes, 1);
       path('M-28 -390 Q-18 -396 -10 -390 M11 -390 Q21 -396 30 -390', undefined, 1, p.eyeliner ? 5 : 3);
+      if (!back) { const blink = !reduce && ((t * .8 + hash(name) % 7) % 3.4) < .12; if (blink) path('M-27 -388 L-11 -388 M12 -388 L29 -388', undefined, 1, 3); else { K.circ(-19 + look * 4, -386.5, 3.6, { f: 1 }); K.circ(21 + look * 4, -386.5, 3.6, { f: 1 }); } }
       c.restore();
       K.ell(0, -353, 10 * face.lips + open * 4, 2 + open * 8, 0, { f: p.lipstick ? 2 : 1, s: 1, lw: 2 });
       if (p.eyeliner) path('M-30 -390 L-38 -396 M30 -390 L38 -396', undefined, 1, 3);

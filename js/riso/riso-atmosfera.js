@@ -77,8 +77,48 @@
         } else tiles(R.world.profile(place));
       }
       if (interior) this.sky(K, at.time, now, beat, 520);
+      if (!interior && R.world?.enabled) this.life(K, place, at.time, now, ground, view.scroll || 0, R.world.profile(place));
       this.weather(K, at.weather, now, beat, ground);
       c.restore();
+    },
+    // vida propia del lugar: tráfico y peatones lejanos, barcos y gaviotas, luciérnagas, un rodadero en el desierto; deterministas y a la velocidad del paisaje
+    life(K, place, time, now, ground, sc = 0, prof = {}) {
+      const calm = !!window.CFG?.reduceMotion, t = calm ? 0 : now, night = time === 'noche' || time === 'atardecer', c = K.c;
+      const lane = (i, speed, off, span = 2200) => ((((i * 421 + off + speed * t) - sc * .35) % span) + span) % span - 300;
+      if (place === 'ciudad') {
+        for (let i = 0; i < 5; i++) {                                                  // coches por la calzada, en los dos sentidos
+          const dir = i % 2 ? -1 : 1, x = dir > 0 ? lane(i, 140 + i * 17, 0) : 1900 - lane(i, 120 + i * 13, 600), y = ground + 22 + (i % 2) * 22, w = 62 + (i % 3) * 8;
+          c.save(); c.translate(x, y); c.scale(dir, 1);
+          K.poly([[-w / 2, 0], [-w / 2, -16], [-w / 4, -17], [-w / 7, -30], [w / 4, -30], [w / 3, -17], [w / 2, -14], [w / 2, 0]], { f: [2, 3, 1][i % 3], ft: .85, s: 1, lw: 3 });
+          K.circ(-w / 3, 0, 8, { f: 1, s: 1, lw: 3 }); K.circ(w / 3, 0, 8, { f: 1, s: 1, lw: 3 }); if (night) K.glow(2, w / 2 + 6, -9, 38, .6);
+          c.restore();
+        }
+        for (let i = 0; i < 6; i++) {                                                  // peatones diminutos en la acera
+          const dir = i % 2 ? -1 : 1, x = dir > 0 ? lane(i + 7, 30 + (i % 3) * 7, 100) : 1900 - lane(i + 7, 28 + (i % 3) * 6, 300), y = ground - 44, ph = t * 4.2 + i, h = 30 + (i % 3) * 4;
+          K.circ(x, y - h, 4.5, { f: -1, s: 1, lw: 2 }); K.line(x, y - h + 5, x, y - 12, [1, 2, 3][i % 3], 5);
+          K.line(x, y - 12, x + Math.sin(ph) * 6, y, 1, 3); K.line(x, y - 12, x - Math.sin(ph) * 6, y, 1, 3);
+        }
+      } else if (place === 'costa') {
+        const hz = prof.horizon || 600;
+        for (let i = 0; i < 2; i++) {                                                  // barcos que cruzan el horizonte, con cabeceo
+          const x = lane(i + 3, 18 + i * 9, i * 700, 2600), y = hz - 6 + Math.sin(t * .9 + i) * 3, k = i ? .8 : 1;
+          K.poly([[x - 26 * k, y], [x + 28 * k, y], [x + 18 * k, y + 9 * k], [x - 18 * k, y + 9 * k]], { f: 1, ft: .9, s: 1, lw: 3 }); K.line(x, y, x, y - 34 * k, 1, 3);
+          K.poly([[x + 2 * k, y - 32 * k], [x + 2 * k, y - 4 * k], [x + 24 * k, y - 4 * k]], { f: -1, s: 1, lw: 2.5 });
+        }
+        for (let i = 0; i < 4; i++) {                                                  // gaviotas
+          const x = lane(i + 11, 52 + i * 11, i * 300, 2000), y = 150 + i * 46 + Math.sin(t * .7 + i * 2) * 18, w = Math.sin(t * 6 + i) * 6;
+          K.line(x - 14, y - w, x, y, 1, 3); K.line(x, y, x + 14, y - w, 1, 3);
+        }
+      } else if (place === 'bosque') {
+        if (night) for (let i = 0; i < 18; i++) { const x = (i * 197) % 1500 + Math.sin(t * .5 + i) * 40 - sc * .2, y = 300 + (i * 61) % 360 + Math.cos(t * .6 + i * 1.7) * 30, on = .5 + .5 * Math.sin(t * 1.8 + i * 2.2); K.glow(2, x, y, 26 + on * 16, .6); K.circ(x, y, 2 + on * 1.5, { f: 2 }); }
+        for (let i = 0; i < 7; i++) { const ph = (t * .09 + i * .143) % 1, x = (i * 233) % 1500 + Math.sin(t + i) * 50 - ph * 200 - sc * .3, y = 80 + ph * (ground - 100); K.ell(x, y, 11, 5, t * 2 + i, { f: i % 2 ? 2 : 3, ft: .8, s: 1, lw: 2 }); }
+      } else if (place === 'desierto') {
+        const x = lane(2, 85, 0, 2400), y = ground + 24 - Math.abs(Math.sin(t * 3.4)) * 22, r = 20;      // rodadero que va dando saltos
+        c.save(); c.translate(x, y - r); c.rotate(t * 5); K.circ(0, 0, r, { s: 1, lw: 3, st: .9 }); for (let k = 0; k < 6; k++) K.line(0, 0, Math.cos(k * 1.047) * r, Math.sin(k * 1.047) * r, 1, 2, .8); c.restore();
+        for (let i = 0; i < 3; i++) { const a = t * .3 + i * 2.1, x2 = 520 + i * 260 + Math.cos(a) * 140, y2 = 130 + i * 36 + Math.sin(a) * 28; K.line(x2 - 16, y2 - 4, x2, y2, 1, 3); K.line(x2, y2, x2 + 16, y2 - 4, 1, 3); }
+      } else if (place === 'espacio') {
+        const ph = (t * .12) % 1; if (ph < .35) { const x = 1700 - ph * 3.2 * 1400, y = 80 + ph * 3.2 * 280; K.line(x, y, x + 120, y - 60, 3, 5, .9); K.line(x + 40, y - 20, x + 200, y - 100, -1, 2, .5); }
+      }
     },
     // público visto de espaldas al pie del cuadro; levanta los brazos con el pulso
     crowd(K, now, beat, amp = 1, ground = 760) {
