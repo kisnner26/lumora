@@ -298,6 +298,9 @@ def fetch_wiki(q, lang):
 
 # ---------- oído: niveles del audio del sistema (tools/oido, ScreenCaptureKit) ----------
 OIDO_BIN = os.path.join(TOOLS, 'oido')
+TOMADOR_BIN = os.path.join(TOOLS, 'tomador')
+TOMADOR = {'proc': None}
+TOMADOR_LOCK = threading.Lock()
 AUDIO = {'clients': [], 'error': '', 'running': False}
 AUDIO_LOCK = threading.Lock()
 
@@ -714,6 +717,40 @@ class Handler(SimpleHTTPRequestHandler):
             finally:
                 with AUDIO_LOCK:
                     AUDIO['clients'].remove(q)
+            return
+        if path == '/pcm':                                      # audio del sistema (tap de Core Audio) para que la página lo procese
+            if not os.path.exists(TOMADOR_BIN):
+                return self.send_json({'error': 'esta versión no incluye el tomador de audio'}, 501)
+            solo = parse_qs(urlparse(self.path).query).get('solo', [''])[0]
+            cmd = [TOMADOR_BIN] + (['--solo', solo] if re.fullmatch(r'[a-zA-Z0-9._-]{1,40}', solo) else [])
+            with TOMADOR_LOCK:
+                old = TOMADOR['proc']
+                if old and old.poll() is None:
+                    old.terminate()
+                    try: old.wait(2)
+                    except Exception: old.kill()
+                pr = TOMADOR['proc'] = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            first = pr.stdout.read(4)
+            if len(first) < 4:
+                err = (pr.stderr.read() or b'').decode(errors='replace').strip()
+                return self.send_json({'error': err or 'el tomador no arrancó', 'permiso': pr.wait() == 3}, 503)
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/octet-stream')
+            self.send_header('Cache-Control', 'no-store')
+            self.end_headers()
+            try:
+                self.wfile.write(first)
+                while True:
+                    chunk = pr.stdout.read1(65536)
+                    if not chunk:
+                        break
+                    self.wfile.write(chunk)
+                    self.wfile.flush()
+            except (BrokenPipeError, ConnectionResetError, OSError):
+                pass
+            finally:
+                if pr.poll() is None:
+                    pr.terminate()
             return
         if path == '/lights':
             if parse_qs(urlparse(self.path).query).get('scan'):
