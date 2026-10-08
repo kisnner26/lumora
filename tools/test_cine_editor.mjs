@@ -22,5 +22,9 @@ try{
  assert.equal(await p.evaluate(()=>Object.keys(RISO.film.edits.lines).length),0);
  await p.reload();await p.waitForFunction('window.RISO?.film');
  const persisted=await p.evaluate(()=>RISOSTORE.get('misc','versions|cine qa|twenty one pilots'));assert.equal(persisted[0].project.cinema.lines[1].camera,'close');
+ await p.goto(BASE+'/index.html?web=1&menu=0');await p.waitForFunction('window.RISO?.film');
+ const web=await p.evaluate(async()=>{await fetch('/autor',{method:'POST',body:JSON.stringify({key:'qa web',project:{cinema:{lines:{1:{camera:'detail'}},sections:{}},blocks:[]}})});return fetch('/autor?key=qa%20web').then(r=>r.json());});assert.equal(web.cinema.lines[1].camera,'detail');
+ await p.reload();await p.waitForFunction('window.RISO?.film');assert.equal(await p.evaluate(()=>fetch('/autor?key=qa%20web').then(r=>r.json()).then(v=>v.cinema.lines[1].camera)),'detail');
+ await p.evaluate(()=>fetch('/autor',{method:'POST',body:JSON.stringify({key:'qa web',delete:true})}));
  assert.deepEqual(errores,[]);console.log('ok: editor, miniaturas, dirección, versiones, restauración, aislamiento por canción y persistencia');
 }finally{await b.close();srv.stop();}
