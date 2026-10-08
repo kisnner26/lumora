@@ -89,7 +89,7 @@
     // si la canción tiene artista con perfil, él o ella es quien actúa; las escenas con objetos (puerta, taxi, carta…) siguen con los muñecos
     const SGm = R.singers, cfgOn = !window.CFG || CFG.singers !== false, ck = typeof ext !== 'undefined' ? ext.key() : '';
     if (F._castKey !== ck) { F._castKey = ck; F._cast = cfgOn && SGm ? SGm.plan(ext.st.artist, ext.st.name) : null; for (const m of F._cast || []) if (!m.id) R.artistFigures.request(m.name); }
-    const cast = !hideActors && !empty && !(action === 'board' && pose.p > .86) ? F._cast : null, star = cast && (shot.filmMode || cast.length === 1 ? cast[0] : cast[(b.li || 0) % cast.length]);   // en una colaboración, cada verso lo canta uno de los créditos
+    const castAll = !hideActors && !empty && !(action === 'board' && pose.p > .86) ? F._cast : null, cast = castAll && (window.CFG?.faces === false ? castAll : castAll.filter(m => R.artistFigures.hasFace(m.name))), star = cast && cast.length ? (shot.filmMode || cast.length === 1 ? cast[0] : cast[(b.li || 0) % cast.length]) : null;   // en una colaboración, cada verso lo canta uno de los créditos
     if (star) {
       c.save(); c.globalAlpha = starAlpha;
       const figAct = objectAction ? ({ board: 'walk', give: 'wave' }[action] || null) : act === 'cry' || ((b.li || 0) % 4 === 3 && !act) ? 'look' : act === 'sleep' ? null : act === 'sing' || !act ? 'sing' : act;

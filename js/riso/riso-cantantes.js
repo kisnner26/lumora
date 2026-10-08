@@ -29,7 +29,7 @@
 
   // ---------- dibujo ----------
   SG.draw = (s, kt, time, age, dur) => {
-    const list = s.singers || [], n = list.length; if (!n) return;
+    const list = (s.singers || []).filter(sg => window.CFG?.faces === false || R.artistFigures.hasFace(sg.name)), n = list.length; if (!n) return;
     const v = K.v, cx = s.flip ? 470 : 1130, xs = n === 1 ? [cx] : n === 2 ? [cx - 185, cx + 185] : n === 3 ? [cx - 230, cx, cx + 230] : [cx - 270, cx - 90, cx + 90, cx + 270], k = n === 1 ? 1.12 : n === 2 ? .90 : n === 3 ? .68 : .53, ground = 760;
     const p = easeOut(clamp(kt / .6)), act = s.text ? (s.text.li >= 0 ? s.text.li : 0) % n : -1, line = s.text && age >= 0 && age < dur;
     // escenario: el mundo del lugar de la letra, con público si la canción es de fiesta; el artista actúa según lo que dice y la energía

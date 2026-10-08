@@ -345,17 +345,64 @@ def _fotos_candidatas(name, solo_wiki=False):
                     if k not in vistas:
                         vistas.add(k); out.append(('wiki', u))
                 break
-    if not solo_wiki:
-        d = get_json('https://api.deezer.com/search/artist?limit=3&q=' + urllib.parse.quote(name)) or {}
-        for a in d.get('data') or []:
-            if a.get('picture_xl') and _mismo_nombre(name, a.get('name', '')):
-                out.append(('deezer', a['picture_xl']))
-                break
+    # Wikimedia Commons: fotos libres donde el archivo nombra al artista (sirve cuando no hay artículo con foto)
+    nn = _norm_nombre(name)
+    c = get_json('https://commons.wikimedia.org/w/api.php?action=query&format=json&generator=search&gsrnamespace=6&gsrlimit=12&prop=imageinfo&iiprop=url|size|mime&iiurlwidth=960&gsrsearch=' + urllib.parse.quote('"' + name + '"')) or {}
+    n = 0
+    for pg in sorted((c.get('query') or {}).get('pages', {}).values(), key=lambda x: x.get('index', 99)):
+        ii = (pg.get('imageinfo') or [{}])[0]
+        if nn and nn in _norm_nombre(pg.get('title', '')) and ii.get('mime') in ('image/jpeg', 'image/png') and (ii.get('width') or 0) >= 400 and ii.get('thumburl') and n < 4:
+            out.append(('wiki', ii['thumburl'])); n += 1
+    if solo_wiki:
+        return out
+    # TheAudioDB: miniatura y fanarts oficiales del artista (clave pública gratuita)
+    t = get_json('https://www.theaudiodb.com/api/v1/json/2/search.php?s=' + urllib.parse.quote(name)) or {}
+    for a in (t.get('artists') or [])[:1]:
+        if _mismo_nombre(name, a.get('strArtist', '')):
+            for k in ('strArtistThumb', 'strArtistFanart', 'strArtistFanart2', 'strArtistFanart3'):
+                if a.get(k):
+                    out.append(('audiodb', a[k]))
+    d = get_json('https://api.deezer.com/search/artist?limit=3&q=' + urllib.parse.quote(name)) or {}
+    for a in d.get('data') or []:
+        if a.get('picture_xl') and _mismo_nombre(name, a.get('name', '')):
+            out.append(('deezer', a['picture_xl']))
+            break
+    out.extend(_web_imagenes(name))
     return out
+
+
+STOCK = re.compile(r'alamy|shutterstock|gettyimages|istockphoto|depositphotos|dreamstime|123rf|adobestock|stock\.adobe|pond5|alamyimages|bridgemanimages|agefotostock|pixabay\.com/photos', re.I)
+
+
+def _web_imagenes(name):
+    """última opción: búsqueda de imágenes en la web (DuckDuckGo); solo resultados cuyo título nombra al artista"""
+    try:
+        h = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15', 'Referer': 'https://duckduckgo.com/'}
+        q = urllib.parse.quote(name + ' musician portrait')
+        page = urllib.request.urlopen(urllib.request.Request('https://duckduckgo.com/?iax=images&ia=images&q=' + q, headers=h), timeout=15).read().decode('utf-8', 'replace')
+        vqd = re.search(r'vqd=["\']?([\d-]+)', page)
+        if not vqd:
+            return []
+        data = json.loads(urllib.request.urlopen(urllib.request.Request('https://duckduckgo.com/i.js?l=us-en&o=json&f=,,,type:photo,,&p=1&vqd=' + vqd.group(1) + '&q=' + q, headers=h), timeout=15).read().decode('utf-8', 'replace'))
+        nn, out = _norm_nombre(name), []
+        for r in data.get('results') or []:
+            if STOCK.search((r.get('url') or '') + ' ' + (r.get('image') or '')):          # bancos de fotos: marcas de agua y derechos estrictos
+                continue
+            if nn and nn in _norm_nombre(r.get('title', '')) and r.get('image') and (r.get('width') or 0) >= 400 and len(out) < 5:
+                out.append(('web', r['image']))
+        return out
+    except Exception:
+        return []
 
 
 def cara_de(name, solo_wiki=False):
     """(png, meta) de la cara recortada de un artista, o None; se guarda en disco, también los intentos fallidos"""
+    if not os.path.exists(os.path.join(CARAS_DIR, 'v4')):                  # nuevas fuentes: se vuelve a intentar con los artistas que no tenían foto
+        os.makedirs(CARAS_DIR, exist_ok=True)
+        for f in os.listdir(CARAS_DIR):
+            if f.endswith('.no'):
+                os.remove(os.path.join(CARAS_DIR, f))
+        open(os.path.join(CARAS_DIR, 'v4'), 'w').write('4')
     key = hashlib.sha1(' '.join(name.lower().split()).encode()).hexdigest()[:16]
     png, meta, no = (os.path.join(CARAS_DIR, key + e) for e in ('.png', '.json', '.no'))
     def guardada():
@@ -377,7 +424,7 @@ def cara_de(name, solo_wiki=False):
         os.makedirs(CARAS_DIR, exist_ok=True)
         mejor = None                                                          # (puntuación, bytes, meta): de frente, nítida y grande
         for fuente, url in _fotos_candidatas(name, solo_wiki):
-            if fuente == 'deezer' and mejor and mejor[0] >= .6:
+            if fuente != 'wiki' and mejor and mejor[0] >= .6:                    # con una buena foto de Wikipedia no hace falta mirar más lejos
                 break
             try:
                 req = urllib.request.Request(url, headers={'User-Agent': 'Lumora/1.0 (aplicacion personal de letras)'})
@@ -389,6 +436,8 @@ def cara_de(name, solo_wiki=False):
                         continue
                     m = json.loads(r.stdout); m['fuente'] = fuente
                     sc = float(m.get('q', 0)) + min(.25, float(m.get('fr', 0)) * .9) - float(m.get('yaw', 0)) * .6
+                    if fuente == 'web' and sc < .4:                                  # de la web abierta solo fotos muy claras: no hay forma de comprobar quién sale
+                        continue
                     if not mejor or sc > mejor[0]:
                         mejor = (sc, open(out, 'rb').read(), m)
                 if mejor and mejor[0] >= .78:

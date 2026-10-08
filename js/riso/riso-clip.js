@@ -64,8 +64,9 @@
     const named = (R.people && text ? R.people.detect(text, 3) : []), rr0 = R.rng(seed ^ 0x9e37);
     const objs = [...new Set([...(L?.objects || []), ...named, ...own, ...(plan?.objects || [])])].map(id => PROP_OF[id] || id).filter(hasProp);
     const prev = RC.kindHist.slice(-2), blockTxt = IN.lines.filter(l => l.text && l.t >= (IN.cuts[sec] ?? 0) && l.t < (IN.cuts[sec + 1] ?? 1e9)).map(l => l.text).join(' ');
-    const byWords = sceneByWords(text, blockTxt, mood), recent = RC.recentScenes || (RC.recentScenes = []), cfgOn = !window.CFG || CFG.singers !== false, singers = cfgOn && R.singers ? R.singers.plan(window.ext?.st?.artist, window.ext?.st?.name) : null;
-    for (const m of singers || []) R.artistFigures?.faceOf(m.name);                      // las fotos de todos los créditos se piden por adelantado
+    const byWords = sceneByWords(text, blockTxt, mood), recent = RC.recentScenes || (RC.recentScenes = []), cfgOn = !window.CFG || CFG.singers !== false, singers0 = cfgOn && R.singers ? R.singers.plan(window.ext?.st?.artist, window.ext?.st?.name) : null;
+    for (const m of singers0 || []) R.artistFigures?.faceOf(m.name);                     // las fotos de todos los créditos se piden por adelantado
+    const singers = singers0 && (window.CFG?.faces === false || singers0.some(m => R.artistFigures?.hasFace(m.name))) ? singers0 : null;   // sin ninguna foto lista, el plano de cantante espera
     let kind;
     if (why === 'title') kind = 'title'; else if (why === 'outro') kind = 'outro';
     else if (li < 0) kind = singers && time > 5 && r() < .38 ? 'singer' : objs.length && r() < .5 ? 'prop' : 'scene';

@@ -187,6 +187,7 @@
       c.globalCompositeOperation = 'lighter'; c.drawImage(H.plate, x0, y0 + 36 * scale, W2, H2); c.globalCompositeOperation = 'source-over';
       c.restore();
     },
+    hasFace(name) { return !!this.faceOf(name); },
     faceOf(name) { const key = norm(name); if (!key || typeof fetch !== 'function') return null; const st = heads.get(key);
       if (!st) { loadFace(name, key); return null; } if (st.state === 'none' && Date.now() - st.t > 600000) { heads.delete(key); return null; } return st.state === 'ok' ? st : null; },
     request(name) {
@@ -214,6 +215,7 @@
       if (!id && !motion.partner && !profiles[this.idOf(name)]) this.request(name);
       const photo = !motion.partner && !motion.back && window.CFG?.faces !== false ? this.faceOf(name) : null;
       if (photo) return this.bust(K, photo, x, ground, scale, motion);
+      if (window.CFG?.faces !== false) return;                               // sin foto todavía: no se dibuja un cuerpo falso; la foto se busca en internet y aparece en cuanto llega
       const p = this.profile(name, id, motion.album), c = K.c, t = window.CFG?.reduceMotion ? 0 : motion.time || 0, active = !!motion.active;
       const instrument = motion.instrument || p.instrument;
       const act = motion.act || null, back = !!motion.back, beatT = t * (motion.bpm || 110) / 60 * Math.PI;
@@ -348,4 +350,8 @@
   };
   if (window.SETUI) SETUI.addRow('contenido', ['faces', 'Caras reales de los artistas', 'sw', null, 'pone la foto del artista (de Wikipedia), recortada y en trama, sobre su figura; sin ella se dibuja un retrato con sus rasgos. Revisa los derechos de imagen antes de publicar'], true);
   if (window.SETUI) SETUI.addRow('contenido', ['facesWiki', 'Fotos solo de Wikipedia', 'sw', null, 'las caras salen únicamente de Wikipedia (licencias más claras); apagado, si no hay foto allí se usa la imagen oficial del artista en Deezer, que cubre más artistas pero tiene derechos de autor'], false);
+  // mapa de artistas en segundo plano: los de tu historial van consiguiendo su foto poco a poco
+  if (typeof setTimeout === 'function') setTimeout(async () => { try { if (window.CFG?.faces === false || !window.RISOSTORE?.list) return; const rows = await RISOSTORE.list('historial');
+    const names = [...new Set(rows.map(r => String(r.artist || '').split(/,|&|\bfeat\.?|\bft\.?/i)[0].trim()).filter(n => n.length > 1))].slice(0, 80); let i = 0;
+    const tick = () => { if (i >= names.length) return; api.faceOf(names[i++]); setTimeout(tick, 7000); }; tick(); } catch (e) {} }, 8000);
 })();
