@@ -16,5 +16,8 @@ for (const text of ["Don't leave me", 'No te vayas', 'Never come back', 'Nunca v
 assert.equal(R.narrative.compile([{ text: 'Te espero en casa' }, { text: 'Te fuiste' }])[1].action, 'leave');
 assert.equal(R.narrative.compile([{ text: '' }])[0], null);
 assert.equal(R.narrative.compile([{ text: 'Goodbye' }, { text: "Don't leave me" }])[1].carry, null);
+const chorus = R.narrative.compile(['I wait for you at home', 'A quiet moment', 'Goodbye on the street', 'A quiet moment', 'Still here'].map(text => ({ text })));
+assert.equal(chorus[3].carry, 'wait'); assert.equal(chorus[3].place, 'cuarto');
+assert.equal(chorus[4].carry, 'wait'); assert.equal(chorus[4].place, 'cuarto');
 const changed = R.narrative.plan([{ text: 'We start again', t: 0 }]); assert.equal(changed[0].motif, 'semilla_brote');
 console.log('ok: continuidad, acciones, estribillos, negación, caché e independencia del orden de reproducción');

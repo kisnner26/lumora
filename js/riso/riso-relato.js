@@ -35,7 +35,10 @@
       const previous = repeats.get(text);
       // un estribillo recupera su composición y símbolo aunque cambie la estrofa.
       const beat = { li, action: event || (action ? 'hold' : null), carry: action, place, motif, mood, cast, chapter, visualChapter: chapter, reprise: previous !== undefined, anchor: previous ?? li };
-      if (previous !== undefined) { const first = frames[previous]; if (first) Object.assign(beat, { place: first.place, motif: first.motif, cast: first.cast, visualChapter: first.visualChapter }); }
+      if (previous !== undefined) { const first = frames[previous]; if (first) {
+        Object.assign(beat, { place: first.place, motif: first.motif, cast: first.cast, action: first.action, carry: first.carry, mood: first.mood, visualChapter: first.visualChapter });
+        place = first.place; motif = first.motif; cast = first.cast; action = first.carry; mood = first.mood;
+      } }
       repeats.set(text, previous ?? li);
       // el mapa local guarda la composición original sin depender del orden de reproducción.
       frames[li] = beat;
