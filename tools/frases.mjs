@@ -1,6 +1,10 @@
 // frases de la batería de detección, compartidas por la prueba con navegador y la de node
 // [frase, id esperado] (el id esperado debe estar entre los detectados)
 export const DEBE = [
+  ['cruzando el puente hacia tu casa', 'puente_camino'], ['love letter', 'carta_abierta'], ['maleta de viaje', 'maleta_viaje'],
+  ['open door', 'puerta_entreabierta'], ['rainy window', 'ventana_lluvia'], ['old photograph', 'foto_rota'],
+  ['empty bench', 'banco_vacio'], ['invisible string', 'hilo_rojo'], ['stairs', 'escalera_salida'],
+  ['lighthouse', 'faro_costa'], ['start again', 'semilla_brote'], ['empty chair', 'silla_ausente'],
   ['soy de Nicaragua, mi tierra es de volcanes', 'flag_ni'], ['los nicas somos así', 'flag_ni'], ['boricua hasta la muerte', 'flag_pr'], ['soy de Colombia', 'flag_co'],
   ['viva México cabrones', 'flag_mx'], ['I love New York', 'flag_us'], ['dancing in Paris tonight', 'flag_fr'], ['una noche en Madrid', 'flag_es'], ['direction to Tokyo', 'flag_jp'],
   ['vamos a Cuba', 'flag_cu'], ['la selección de Argentina', 'flag_ar'], ['carnaval en Brasil', 'flag_br'], ['London calling', 'flag_gb'], ['Jamaica me llama', 'flag_jm'],
@@ -17,7 +21,7 @@ export const DEBE = [
   ['bajo la torre Eiffel', 'torre_eiffel'], ['las pirámides de Egipto', 'piramides'], ['un canguro en Australia', 'canguro'], ['el cóndor de los Andes', 'condor'], ['vamos a Machu Picchu', 'machu_picchu'],
 ];
 // frases neutras que no deben disparar ningún dibujo
-export const NO = ['te quiero mucho mi amor', 'the city lights are burning', 'un café en la mañana', 'i miss you baby', 'dance until the morning sun', 'tengo el corazón roto', 'no me digas que no', 'cruzando el puente hacia tu casa', 'solo quiero estar contigo', 'tal vez mañana te vea', 'gracias por todo', 'eres mi mate en este juego', 'siempre te veo igual', 'lo que siento es real', 'quiero verte otra vez', 'tú y yo, nada más', 'eres fuerte y valiente', 'me duele el alma', 'voy paso a paso'];
+export const NO = ['te quiero mucho mi amor', 'the city lights are burning', 'un café en la mañana', 'i miss you baby', 'dance until the morning sun', 'tengo el corazón roto', 'no me digas que no', 'solo quiero estar contigo', 'tal vez mañana te vea', 'gracias por todo', 'eres mi mate en este juego', 'siempre te veo igual', 'lo que siento es real', 'quiero verte otra vez', 'tú y yo, nada más', 'eres fuerte y valiente', 'me duele el alma', 'voy paso a paso'];
 // errores reales encontrados con letras de verdad: [frase, ids que NO deben salir, ids que SÍ deben salir]
 export const REGRESIONES = [
   ['and it hurts like a broken heart', ['pulgar_arriba', 'redes_like'], []],
