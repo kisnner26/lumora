@@ -72,7 +72,7 @@ const RISO = window.RISO = (() => {
   const VS = 'attribute vec2 p;varying vec2 v;void main(){v=p*.5+.5;gl_Position=vec4(p,0.,1.);}';
   const FS = `precision highp float;
 varying vec2 v; uniform sampler2D uP; uniform vec2 uRes; uniform vec3 uPaper, uI1, uI2, uI3;
-uniform vec2 uR1, uR2, uR3, uWhip; uniform vec3 uPass; uniform float uZoom, uCell, uGrain, uAmt;
+uniform vec2 uR1, uR2, uR3, uWhip; uniform vec3 uPass; uniform float uZoom, uCell, uGrain, uAmt, uBleed, uPrint, uSeed;
 float h21(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
 float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3. - 2. * f);
   return mix(mix(h21(i), h21(i + vec2(1., 0.)), f.x), mix(h21(i + vec2(0., 1.)), h21(i + vec2(1., 1.)), f.x), f.y); }
@@ -91,7 +91,7 @@ float screen(vec2 p, float ang, float tone, float mode, float n){
   if (tone < .045) return 0.;
   float c = cos(ang), s = sin(ang);
   vec2 q = vec2(c * p.x + s * p.y, -s * p.x + c * p.y) / uCell, f = fract(q) - .5;
-  float aa = .8 / uCell + .015, t = min(tone, .78);
+  float aa = .8 / uCell + .015, t = min(tone * (1. + uBleed), .78);
   float dots = 1. - smoothstep(sqrt(t / 3.14159) - aa, sqrt(t / 3.14159) + aa, length(f));
   float lines = 1. - smoothstep(t * .5 - aa, t * .5 + aa, abs(f.y));
   float m = mix(dots, lines, mode);
@@ -103,12 +103,13 @@ void main(){
   vec3 t = plate(v) * uPass;
   float n = vn(px / 1.9), n2 = vn(px / 5.3 + 7.);
   vec3 col = uPaper;
-  col *= mix(vec3(1.), uI3, screen(px, .785, t.b, 0., n) * .93);
-  col *= mix(vec3(1.), uI2, screen(px, 1.309, t.g, 0., n2) * .95);
-  col *= mix(vec3(1.), uI1, screen(px, .262, t.r, 0., n) * .97);
+  float pr = 1. + uPrint * .14;
+  col *= mix(vec3(1.), uI3, clamp(screen(px, .785, t.b, 0., n) * .93 * pr, 0., 1.));
+  col *= mix(vec3(1.), uI2, clamp(screen(px, 1.309, t.g, 0., n2) * .95 * pr, 0., 1.));
+  col *= mix(vec3(1.), uI1, clamp(screen(px, .262, t.r, 0., n) * .97 * pr, 0., 1.));
   // papel: grano fino, fibras y viñeta cálida
-  float g = h21(floor(px * .8) + 17.), fib = vn(vec2(px.x * .35, px.y * .02) + 3.) * .5 + vn(vec2(px.x * .02, px.y * .3)) * .5;
-  col *= 1. + (g - .5) * .075 * uGrain + (fib - .5) * .045 * uGrain + (vn(px * .012) - .5) * .05;
+  float g = h21(floor(px * .8) + 17. + uSeed), fib = vn(vec2(px.x * .35, px.y * .02) + 3.) * .5 + vn(vec2(px.x * .02, px.y * .3)) * .5;
+  col *= 1. + (g - .5) * .075 * uGrain + (fib - .5) * .045 * uGrain + (g - .5) * uPrint * .05 + (vn(px * .012) - .5) * .05;
   col = mix(col, col * vec3(.92, .88, .80), smoothstep(.5, 1.05, length(v - .5) * 1.25) * .8);
   gl_FragColor = vec4(col, 1.);
 }`;
@@ -286,7 +287,7 @@ void main(){
         const tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
         for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v);
         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-        this.U = {}; for (const n of ['uP', 'uRes', 'uPaper', 'uI1', 'uI2', 'uI3', 'uR1', 'uR2', 'uR3', 'uWhip', 'uPass', 'uZoom', 'uCell', 'uGrain']) this.U[n] = gl.getUniformLocation(pr, n);
+        this.U = {}; for (const n of ['uP', 'uRes', 'uPaper', 'uI1', 'uI2', 'uI3', 'uR1', 'uR2', 'uR3', 'uWhip', 'uPass', 'uZoom', 'uCell', 'uGrain', 'uBleed', 'uPrint', 'uSeed']) this.U[n] = gl.getUniformLocation(pr, n);
         this.gl = gl; this.ok = true;
       } catch (e) { console.warn('riso: shader', e.message); }
     }
@@ -408,7 +409,11 @@ void main(){
       const s = h / 900;
       gl.uniform1i(U.uP, 0); gl.uniform2f(U.uRes, w, h); gl.uniform3fv(U.uPaper, this.paper || inks.paper);
       gl.uniform3fv(U.uI1, inks.i[0]); gl.uniform3fv(U.uI2, inks.i[1]); gl.uniform3fv(U.uI3, inks.i[2]);
-      const r1 = rg(0, 0, 0), r2 = rg(-3.2 * s, 2.4 * s, 1), r3 = rg(2.6 * s, -2.8 * s, 2);
+      // cada golpe «imprime» una capa nueva: las planchas saltan en otra dirección y se asientan; los graves ensanchan el punto de tinta
+      const calm = !!window.CFG?.reduceMotion, live = A.live ? 1 : .5, kick = calm ? 0 : A.beat * live, bass = calm ? 0 : A.low * live, ph = A.beats * 2.399;
+      const hit = (k) => { const d = (bass * 2.2 + kick * 6) * s, a = ph + k * 2.094; return [Math.cos(a) * d, Math.sin(a) * d]; };
+      const r1 = rg(0, 0, 0), r2 = rg(-3.2 * s + hit(1)[0], 2.4 * s + hit(1)[1], 1), r3 = rg(2.6 * s + hit(2)[0], -2.8 * s + hit(2)[1], 2);
+      gl.uniform1f(U.uBleed, bass * .2 + kick * .16); gl.uniform1f(U.uPrint, kick); gl.uniform1f(U.uSeed, calm ? 0 : (A.beats % 11) * 3.7);
       gl.uniform2f(U.uR1, r1[0], r1[1]); gl.uniform2f(U.uR2, r2[0], r2[1]); gl.uniform2f(U.uR3, r3[0], r3[1]);
       const ps = this.pass || [1, 1, 1]; gl.uniform3f(U.uPass, ps[0], ps[1], ps[2]); gl.uniform2f(U.uWhip, whip[0], whip[1]); gl.uniform1f(U.uZoom, zb);
       gl.uniform1f(U.uCell, Math.max(4.2, h / [118, 138, 156][this.detail - 1])); gl.uniform1f(U.uGrain, [.8, 1, 1][this.detail - 1]);
