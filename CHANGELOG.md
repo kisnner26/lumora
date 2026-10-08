@@ -9,6 +9,9 @@
 
 ## sin publicar
 
+- recuerdo: un botón en la barra (y en el panel de experiencia) guarda diez segundos de la canción con el audio procesado, el universo y su semilla en una etiqueta; copia la semilla al portapapeles.
+- los artistas actúan dentro del videoclip: caminan, corren, bailan, saludan y miran el horizonte de espaldas, dentro del mundo del lugar, con público que salta al ritmo en las canciones de fiesta; también encabezan los planos sin acción de objetos.
+- impresión riso que late: cada golpe re-imprime las planchas en otra dirección, los graves ensanchan el punto de tinta y el grano del papel se renueva.
 - videoclip más cinematográfico: la letra decide el lugar, el clima (lluvia, tormenta, nieve, niebla, fuego, viento), la hora (noche, amanecer, atardecer) y lo que hace quien canta (conducir, bailar, llorar, correr, dormir, cantar, caminar), con caducidad entre versos. El mundo ocupa toda la pantalla con paralaje, la cámara respira con el ritmo y cambia de plano según la acción.
 - geometry dash: se elimina el visualizador propio en neón; las canciones de los 22 niveles principales usan el videoclip de siempre y suman cuatro tomas exclusivas en el estilo de lumora (cubo que salta, nave, onda y cambio de gravedad).
 - experiencia de audio: ambientes acústicos (sala, fiesta, catedral, espacio binaural), eco al tempo y reverberación sobre un archivo local, una entrada loopback o el audio del Mac (tap de Core Audio, sin driver extra); el audio original se silencia mientras se procesa.

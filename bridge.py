@@ -437,7 +437,7 @@ def to_mp4(data):
         src, dst = os.path.join(d, 'in.webm'), os.path.join(d, 'out.mp4')
         open(src, 'wb').write(data)
         r = subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', src, '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '19',
-                            '-pix_fmt', 'yuv420p', '-r', '30', '-movflags', '+faststart', dst], capture_output=True, text=True, timeout=600)
+                            '-c:a', 'aac', '-b:a', '192k', '-pix_fmt', 'yuv420p', '-r', '30', '-movflags', '+faststart', dst], capture_output=True, text=True, timeout=600)
         if r.returncode != 0 or not os.path.exists(dst):
             raise RuntimeError(r.stderr.strip()[:200] or 'ffmpeg falló')
         return open(dst, 'rb').read()
