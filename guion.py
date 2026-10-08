@@ -477,3 +477,80 @@ def artist_look(name):
         except Exception:
             pass
     return look
+
+
+# ---------- quién canta cada verso: tramos por artista acreditado, con la confianza de cada uno ----------
+VOCES_FILE = os.path.expanduser('~/Library/Caches/lumora-voces.json')
+VOCES_SCHEMA = {
+    'type': 'object', 'additionalProperties': False, 'required': ['fuente', 'bloques'],
+    'properties': {
+        'fuente': {'type': 'string', 'description': 'de dónde sale el reparto: genius, otra web o memoria'},
+        'bloques': {'type': 'array', 'items': {'type': 'object', 'additionalProperties': False, 'required': ['desde', 'hasta', 'voz', 'confianza'],
+                    'properties': {'desde': {'type': 'integer'}, 'hasta': {'type': 'integer'}, 'voz': {'type': 'string'}, 'confianza': {'type': 'number'}}}},
+    },
+}
+VOCES_SYSTEM = ('Eres un experto en discografías. Te doy el título, los artistas acreditados y la letra con el número de cada línea. Indica quién canta cada tramo de líneas. '
+                'Busca primero la letra anotada de la canción en la web (Genius marca «[Verso 1: Nombre]», «[Estribillo: Nombre]») y usa ese reparto; si no la encuentras, usa solo lo que sabes con seguridad de la canción. '
+                '«voz» debe ser exactamente uno de los nombres acreditados que te doy, o «varios» si cantan a la vez, o «desconocido» si no puedes saberlo. '
+                'Nunca adivines ni repartas por turnos: es mejor «desconocido» con confianza baja que un nombre dudoso. confianza va de 0 a 1 (1 = lo vi anotado en una fuente). '
+                'Los tramos cubren todas las líneas sin huecos ni solapes, en orden.')
+
+
+def _voces_prompt(req):
+    return 'Canción: {t}\nArtistas acreditados (usa estos nombres exactos): {a}\n\nLetra (número: línea):\n{l}'.format(
+        t=req['titulo'], a=' | '.join(req['creditos']), l='\n'.join(f"{x['i']}: {x['text']}" for x in req['lines']))
+
+
+def _voces_cli(req):
+    env = {k: v for k, v in os.environ.items() if not k.startswith(('ANTHROPIC_', 'CLAUDE_CODE', 'CLAUDECODE'))}
+    cmd = [CLAUDE_BIN, '-p', '--model', MODEL, '--effort', 'low', '--output-format', 'json', '--no-session-persistence', '--tools', 'WebSearch,WebFetch', '--allowedTools', 'WebSearch,WebFetch',
+           '--setting-sources', '', '--strict-mcp-config', '--disable-slash-commands', '--system-prompt', VOCES_SYSTEM, '--json-schema', json.dumps(VOCES_SCHEMA)]
+    r = subprocess.run(cmd, input=_voces_prompt(req), capture_output=True, text=True, timeout=240, env=env, cwd=os.path.expanduser('~'))
+    res = json.loads(r.stdout)
+    out = res.get('structured_output')
+    if out is None:
+        out = json.loads((res.get('result') or '').strip().removeprefix('```json').removesuffix('```'))
+    return out
+
+
+def quien_canta(req):
+    """tramos de líneas por voz: [{desde, hasta, voz, confianza}] con los nombres acreditados; las voces dudosas salen como «desconocido»"""
+    creditos = [str(c).strip() for c in (req.get('creditos') or []) if str(c).strip()][:6]
+    lines = [{'i': int(l['i']), 'text': str(l['text'])[:200]} for l in (req.get('lines') or []) if str(l.get('text', '')).strip()][:400]
+    if len(creditos) < 2 or not lines:
+        return {'bloques': [{'desde': lines[0]['i'] if lines else 0, 'hasta': lines[-1]['i'] if lines else 0, 'voz': creditos[0] if creditos else 'desconocido', 'confianza': 1.0 if creditos else 0}], 'fuente': 'un solo crédito'}
+    key = hashlib.sha1((req.get('titulo', '') + '|' + '|'.join(sorted(c.lower() for c in creditos))).lower().encode()).hexdigest()[:20]
+    with STATE['lock']:
+        cache = STATE.setdefault('voces', None)
+        if cache is None:
+            try:
+                cache = STATE['voces'] = json.load(open(VOCES_FILE))
+            except Exception:
+                cache = STATE['voces'] = {}
+        if key in cache:
+            return cache[key]
+    with STATE['lock']:
+        lock = STATE.setdefault('voces_lock', {}).setdefault(key, threading.Lock())
+    with lock:
+        with STATE['lock']:
+            if key in STATE['voces']:
+                return STATE['voces'][key]
+        out = _voces_cli({'titulo': str(req.get('titulo', ''))[:120], 'creditos': creditos, 'lines': lines})
+    validos = {c.lower(): c for c in creditos}
+    bl = []
+    for b in out.get('bloques') or []:
+        v = str(b.get('voz', '')).strip(); vl = v.lower()
+        voz = validos.get(vl) or ('varios' if vl == 'varios' else 'desconocido')
+        conf = max(0.0, min(1.0, float(b.get('confianza', 0)))) if voz != 'desconocido' else 0.0
+        bl.append({'desde': int(b.get('desde', 0)), 'hasta': int(b.get('hasta', 0)), 'voz': voz, 'confianza': conf})
+    res = {'bloques': bl, 'fuente': str(out.get('fuente', ''))[:60]}
+    with STATE['lock']:
+        STATE['voces'][key] = res
+        try:
+            os.makedirs(os.path.dirname(VOCES_FILE), exist_ok=True)
+            tmp = VOCES_FILE + '.tmp'
+            json.dump(STATE['voces'], open(tmp, 'w'), ensure_ascii=False)
+            os.replace(tmp, VOCES_FILE)
+        except Exception:
+            pass
+    return res

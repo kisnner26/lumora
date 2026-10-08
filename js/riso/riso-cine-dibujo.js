@@ -89,7 +89,7 @@
     // si la canción tiene artista con perfil, él o ella es quien actúa; las escenas con objetos (puerta, taxi, carta…) siguen con los muñecos
     const SGm = R.singers, cfgOn = !window.CFG || CFG.singers !== false, ck = typeof ext !== 'undefined' ? ext.key() : '';
     if (F._castKey !== ck) { F._castKey = ck; F._cast = cfgOn && SGm ? SGm.plan(ext.st.artist, ext.st.name) : null; for (const m of F._cast || []) if (!m.id) R.artistFigures.request(m.name); }
-    const castAll = !hideActors && !empty && !(action === 'board' && pose.p > .86) ? F._cast : null, cast = castAll && (window.CFG?.faces === false ? castAll : castAll.filter(m => R.artistFigures.hasFace(m.name))), star = cast && cast.length ? (shot.filmMode || cast.length === 1 ? cast[0] : cast[(b.li || 0) % cast.length]) : null;   // en una colaboración, cada verso lo canta uno de los créditos
+    const castAll = !hideActors && !empty && !(action === 'board' && pose.p > .86) ? F._cast : null, cast = castAll && (window.CFG?.faces === false ? castAll : castAll.filter(m => R.artistFigures.hasFace(m.name))), who = cast && cast.length > 1 && R.voices ? R.voices.singerAt(b.li) : null, grp = !!(cast && cast.length > 1 && (!who || who === 'varios')), star = cast && cast.length ? (cast.length === 1 ? cast[0] : who && who !== 'varios' ? (cast.find(m => m.name.toLowerCase() === who.name.toLowerCase()) || cast[0]) : cast[0]) : null;   // quién canta lo dice el reparto; sin saberlo salen todos   // en una colaboración, cada verso lo canta uno de los créditos
     if (star) {
       c.save(); c.globalAlpha = starAlpha;
       const figAct = objectAction ? ({ board: 'walk', give: 'wave' }[action] || null) : act === 'cry' || ((b.li || 0) % 4 === 3 && !act) ? 'look' : act === 'sleep' ? null : act === 'sing' || !act ? 'sing' : act;
@@ -107,7 +107,8 @@
       }
       const talk = lineOn && figAct === 'sing' && !reduced ? Math.min(1, en1 * 1.7 * (.35 + .65 * Math.abs(Math.sin(now * 10.7 + Math.sin(now * 3.1) * 2)))) : 0;
       c.save(); c.translate(left, 0); c.scale(sxS, 1); c.translate(-left, 0);
-      R.artistFigures.draw(K, star.name, star.id, left, ground, sc, { time: now + star.h % 7, bpm, hug: hugDx, energy: en1, hit: hit1, look: pst ? dirP * Math.min(1, (gapP < 600 ? 1 : 0)) : 0, act: figAct === 'look' ? null : figAct, back: false, active: figAct === 'sing' && lineOn && !reduced, open: talk, instrument: star.instrument, album: typeof ext !== 'undefined' ? ext.st.album || '' : '' });
+      const members = grp ? cast.slice(0, 3) : [star], spread = grp ? (members.length === 3 ? 250 : 210) : 0, alb = typeof ext !== 'undefined' ? ext.st.album || '' : '';
+      members.forEach((m, i) => R.artistFigures.draw(K, m.name, m.id, left + (i - (members.length - 1) / 2) * spread, ground, grp ? sc * (members.length === 3 ? .66 : .78) : sc, { time: now + m.h % 7, bpm, hug: hugDx, energy: en1, hit: hit1, key: m.name, spot: !grp && !!who && cast.length > 1, look: 0, act: figAct === 'look' ? null : figAct, back: false, active: figAct === 'sing' && lineOn && !reduced && (!grp || who === 'varios'), open: talk, instrument: m.instrument, album: alb }));   // cuando no se sabe quién canta, salen todos juntos
       c.restore();
       if (cast.length > 1 && star.band) cast.filter(m => m !== star).slice(0, 2).forEach((m, i) => R.artistFigures.draw(K, m.name, m.id, left + (i ? 200 : -200), ground, sc * .86, { time: now + m.h % 7, bpm, act: figAct === 'look' ? null : figAct, instrument: m.instrument, active: false, album: typeof ext !== 'undefined' ? ext.st.album || '' : '' }));
       c.restore();

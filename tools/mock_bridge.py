@@ -179,6 +179,11 @@ class H(SimpleHTTPRequestHandler):
         return super().do_GET()
     def do_POST(self):
         u = urlparse(self.path); n = int(self.headers.get('Content-Length') or 0); body = self.rfile.read(n) if n else b''
+        if u.path == '/voces':                                    # el mismo atribuidor de voces que el puente real
+            try:
+                import guion
+                return self.j(guion.quien_canta(json.loads(body or b'{}')))
+            except Exception as e: return self.j({'error': str(e)[:120]}, 503)
         if u.path == '/cmd':
             c = parse_qs(u.query).get('c', [''])[0]
             if c == 'playpause':

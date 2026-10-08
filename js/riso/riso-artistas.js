@@ -154,7 +154,7 @@
   const num = (v, a, b, d) => typeof v === 'number' && isFinite(v) ? Math.max(a, Math.min(b, v)) : d;
   const clean = l => { if (!l || !l.known) return { known: false }; const f = l.face || {}, o = { known: true, skin: num(l.skin, .08, .6, .15), hair: LK.hair.includes(l.hair) ? l.hair : 'short', hairInk: [1, 2, 3].includes(l.hairInk) ? l.hairInk : 1, outfit: LK.outfit.includes(l.outfit) ? l.outfit : 'shirt', clothes: [-1, 1, 2, 3].includes(l.clothes) ? l.clothes : 1, hat: LK.hat.includes(l.hat) ? l.hat : null, instrument: LK.instrument.includes(l.instrument) ? l.instrument : null, face: Object.fromEntries(['width', 'height', 'jaw', 'eyes', 'nose', 'lips'].map(k => [k, num(f[k], .86, 1.14, 1)])) }; for (const k of BOOLS) o[k] = !!l[k]; return o; };
   // caras reales: la foto del artista, recortada sin fondo por el puente, se imprime en trama riso (sombras en la tinta oscura, medios tonos en la cálida)
-  const heads = new Map();
+  const heads = new Map(), emph = new Map();
   const facePlate = (img, meta) => {
     const pw = 256, ph = Math.round(256 * img.naturalHeight / img.naturalWidth), cv = document.createElement('canvas'); cv.width = pw; cv.height = ph;
     const g = cv.getContext('2d', { willReadFrequently: true }); g.drawImage(img, 0, 0, pw, ph);
@@ -180,9 +180,11 @@
       const dance = act === 'dance' || act === 'jump', walk = act === 'walk' || act === 'run', S = Math.sin;
       const bob = (dance ? Math.abs(S(beatT)) * 22 * (.5 + en) : walk ? Math.abs(S(t * 5.5)) * 7 : S(t * 1.6) * 3) + hit * 9;
       const tilt = (dance ? S(beatT * .5) * .08 : S(t * 1.2) * .022) + (motion.look || 0) * .025, sway = dance ? S(beatT * .5) * 16 : walk ? S(t * 2.75) * 9 : S(t * .8) * 4;
+      // el que canta se destaca (más grande) y los demás se retiran un poco; el cambio de uno a otro es gradual
+      const ek = motion.key || 'x', pe = emph.get(ek), tg = motion.dim ? .8 : motion.spot ? 1.12 : 1, dte = pe ? t - pe.t : 1e9; let em = tg; if (pe && dte > 0 && dte < .6 && !calm) em = pe.v + (tg - pe.v) * (1 - Math.exp(-dte * 6)); if (emph.size > 40) emph.clear(); emph.set(ek, { t, v: em }); scale = scale * em; const alpha = Math.max(.45, Math.min(1, .5 + (em - .8) / .32 * .5));
       const sc2 = 190 * scale / (H.meta.w * H.pw), W2 = H.pw * sc2, H2 = H.ph * sc2, x0 = -H.meta.cx * W2, y0 = -H2 + 36 * scale, talk = motion.open || 0;
       K.ell(x, ground + 6, W2 * .3, 8, 0, { f: 1, ft: .16 });
-      c.save(); c.translate(x + sway, ground + 36 * scale - bob); c.rotate(tilt); c.scale(1 + S(t * 1.7) * .006 * (1 + en), 1 + S(t * 1.7) * .01 * (1 + en) + talk * .018); c.translate(0, -36 * scale);
+      c.save(); c.globalAlpha = alpha; c.translate(x + sway, ground + 36 * scale - bob); c.rotate(tilt); c.scale(1 + S(t * 1.7) * .006 * (1 + en), 1 + S(t * 1.7) * .01 * (1 + en) + talk * .018); c.translate(0, -36 * scale);
       c.drawImage(H.knock, x0, y0 + 36 * scale, W2, H2);
       c.globalCompositeOperation = 'lighter'; c.drawImage(H.plate, x0, y0 + 36 * scale, W2, H2); c.globalCompositeOperation = 'source-over';
       c.restore();

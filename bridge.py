@@ -1004,6 +1004,13 @@ class Handler(SimpleHTTPRequestHandler):
                 AUTOR['data'][k] = {**body.get('project', {}), 'saved': time.time()}
             save_autor()
             return self.send_json({'ok': True})
+        if u.path == '/voces':                                 # quién canta cada verso de una colaboración (tarda: busca el reparto en la web y queda guardado)
+            n = int(self.headers.get('Content-Length') or 0)
+            try:
+                import guion
+                return self.send_json(guion.quien_canta(json.loads(self.rfile.read(n) or b'{}')))
+            except Exception as e:
+                return self.send_json({'error': str(e)[:160]}, 503)
         if u.path == '/story':                                 # guion completo de la canción, escrito por Claude
             n = int(self.headers.get('Content-Length') or 0)
             try:

@@ -65,7 +65,8 @@
     const objs = [...new Set([...(L?.objects || []), ...named, ...own, ...(plan?.objects || [])])].map(id => PROP_OF[id] || id).filter(hasProp);
     const prev = RC.kindHist.slice(-2), blockTxt = IN.lines.filter(l => l.text && l.t >= (IN.cuts[sec] ?? 0) && l.t < (IN.cuts[sec + 1] ?? 1e9)).map(l => l.text).join(' ');
     const byWords = sceneByWords(text, blockTxt, mood), recent = RC.recentScenes || (RC.recentScenes = []), cfgOn = !window.CFG || CFG.singers !== false, singers0 = cfgOn && R.singers ? R.singers.plan(window.ext?.st?.artist, window.ext?.st?.name) : null;
-    for (const m of singers0 || []) R.artistFigures?.faceOf(m.name);                     // las fotos de todos los créditos se piden por adelantado
+    for (const m of singers0 || []) R.artistFigures?.faceOf(m.name);
+    if (singers0 && singers0.length > 1) R.voices?.ensure(singers0);                    // en una colaboración se busca quién canta cada verso                     // las fotos de todos los créditos se piden por adelantado
     const singers = singers0 && (window.CFG?.faces === false || singers0.some(m => R.artistFigures?.hasFace(m.name))) ? singers0 : null;   // sin ninguna foto lista, el plano de cantante espera
     let kind;
     if (why === 'title') kind = 'title'; else if (why === 'outro') kind = 'outro';

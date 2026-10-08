@@ -36,7 +36,7 @@
   window.LMRECUERDO = { capture, seconds: SECONDS };
   const btn = document.createElement('button'); btn.id = 'hudRecuerdo'; btn.title = `recuerdo de ${SECONDS} segundos con su universo y su semilla`; btn.setAttribute('aria-label', 'guardar un recuerdo de diez segundos');
   btn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13.5" r="7.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M9.5 3h5M12 13.5V9.5M12 13.5l3 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
-  btn.addEventListener('click', capture); document.getElementById('hudTools')?.appendChild(btn);
+  btn.dataset.label = 'recuerdo de ' + SECONDS + ' s'; btn.addEventListener('click', () => { document.getElementById('hudMore')?.setAttribute('hidden', ''); capture(); }); (document.getElementById('hudMore') || document.getElementById('hudTools'))?.appendChild(btn);
   const foot = document.querySelector('#experience .xp-foot');
   if (foot) { const b = document.createElement('button'); b.className = 'xp-btn primary'; b.textContent = `recuerdo de ${SECONDS} s ↗`; b.style.marginLeft = 'auto'; b.addEventListener('click', () => { document.getElementById('experience').close(); capture(); }); foot.insertBefore(b, foot.firstChild); }
 })();
