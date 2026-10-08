@@ -1,5 +1,12 @@
 # historial de cambios
 
+## 2026-10-08
+
+- añade guion visual local con continuidad entre versos y composiciones que vuelven en el estribillo.
+- amplía el catálogo a 71 perfiles de artistas y 753 dibujos; diferencia proporciones faciales y vestuario por álbum.
+- incorpora 12 recursos narrativos y reglas de continuidad para el director opcional.
+- corrige la galería de pruebas, el encuadre del aplauso y el coste de los círculos pequeños.
+
 ## sin publicar
 
 - la criatura es interactiva: sus ojos siguen al cursor, salta y suena al tocarla (la voz depende de su nombre), habla en un globo, baila al ritmo de lo que suena, hace un supersalto con doble toque y se puede silenciar; barra espaciadora para acariciarla.
