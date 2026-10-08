@@ -65,7 +65,14 @@
       c.save(); c.translate(800, ground); c.scale(wz, wz); c.rotate((view.roll || 0) * .6); c.translate(-800 - (view.x || 0) - (view.drift || 0), -ground - (view.y || 0));
       if (!interior) this.sky(K, at.time, now, beat, 520);
       K.line(-300, ground, 1900, ground, 1, 5);
-      if (R.world?.enabled) R.world.draw(K, R.world.profile(place), now, { cx: interior ? cx : 800, ground });
+      if (R.world?.enabled) {
+        const prof = R.world.profile(place), sc = view.scroll || 0;
+        if (!sc || interior) R.world.draw(K, prof, now, { cx: interior ? cx : 800, ground });
+        else {                                                  // el mundo corre en mosaico espejado (los bordes coinciden): el paisaje pasa de verdad
+          const n0 = Math.floor(sc / 1300);
+          for (let n = n0 - 1; n <= n0 + 2; n++) { const X = 800 + n * 1300 - sc; if (X < -700 || X > 2300) continue; c.save(); c.translate(X, 0); c.scale(n % 2 ? -1 : 1, 1); c.translate(-X, 0); R.world.draw(K, prof, now, { cx: X, ground }); c.restore(); }
+        }
+      }
       if (interior) this.sky(K, at.time, now, beat, 520);
       this.weather(K, at.weather, now, beat, ground);
       c.restore();

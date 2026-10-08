@@ -24,11 +24,11 @@
     // cámara: el plano se adapta a lo que pasa y respira con el ritmo
     const camBeat = act && ['medium', 'wide'].includes(b.camera) ? { ...b, camera: { cry: 'close', sing: 'close', sleep: 'close', drive: 'wide', run: 'wide', dance: 'medium' }[act] } : b;
     const camera = this.camera(camBeat, elapsed, cx, reduced), beat = reduced ? 0 : (typeof IN !== 'undefined' && IN.beat) || 0;
-    const dolly = reduced ? 0 : (pose.p - .5) * .1 * ((b.li || 0) % 2 ? 1 : -1), sway = reduced ? 0 : Math.sin(now * .7) * 12 + Math.sin(now * 1.9) * 4, lift = reduced ? 0 : Math.cos(now * .6) * 8;
-    const roll = reduced ? 0 : Math.sin(now * .35) * .012 * (.6 + (b.section?.energy || 5) / 10), punch = beat * .022;
+    const dolly = reduced ? 0 : (pose.p - .5) * .2 * ((b.li || 0) % 2 ? 1 : -1), sway = reduced ? 0 : Math.sin(now * .7) * 12 + Math.sin(now * 1.9) * 4, lift = reduced ? 0 : Math.cos(now * .6) * 8;
+    const roll = reduced ? 0 : Math.sin(now * .35) * .012 * (.6 + (b.section?.energy || 5) / 10), punch = beat * .045;
     // ---------- fondo a pantalla completa: el mundo del lugar, el cielo y el clima ----------
-    const drift = reduced ? 0 : act === 'walk' ? Math.sin(now * .22) * 150 : act === 'run' ? Math.sin(now * .5) * 260 : 0;
-    A?.backdrop(K, { place, at, now, beat, ground, cx, view: { x: (camera.x - cx) * .45 + sway * .4, y: (camera.y - 460) * .45 + lift * .4, drift, dolly, punch, roll } });
+    const scroll = reduced ? 0 : { walk: 150, run: 420, drive: 520 }[act] * now || 0, drift = 0;
+    A?.backdrop(K, { place, at, now, beat, ground, cx, view: { x: (camera.x - cx) * .45 + sway * .4, y: (camera.y - 460) * .45 + lift * .4, drift, scroll, dolly, punch, roll } });
     if (A && (act === 'dance' || (at.act === 'dance' && !action)) && place !== 'espacio') A.crowd(K, now, beat, 1, ground + 20);
     // ---------- los actores, con su propia cámara ----------
     c.save(); c.translate(cx, 450); c.rotate(roll); c.scale((camera.reverse ? -1 : 1) * camera.z * 1.1 * (1 + dolly + punch), camera.z * 1.1 * (1 + dolly + punch)); c.translate(-camera.x - sway, -camera.y - lift);
@@ -68,7 +68,7 @@
     const cast = !action && !hideActors && !empty ? F._cast : null, star = cast && cast[(b.li || 0) % cast.length];
     if (star) {
       const figAct = act === 'cry' || ((b.li || 0) % 4 === 3 && !act) ? 'look' : act === 'sleep' ? null : act === 'sing' || !act ? 'sing' : act;
-      const sc = .78 * (figAct === 'look' ? .9 : 1), place2 = at.place;
+      const sc = 1.0 * (figAct === 'look' ? .9 : 1), place2 = at.place;
       R.artistFigures.draw(K, star.name, star.id, left, ground, sc, { time: now + star.h % 7, bpm, act: figAct === 'look' ? null : figAct, back: figAct === 'look', active: figAct === 'sing' && !reduced, open: figAct === 'sing' ? Math.abs(Math.sin(now * 7)) * .8 : 0, instrument: star.instrument, album: typeof ext !== 'undefined' ? ext.st.album || '' : '' });
       if (cast.length > 1 && star.band) cast.filter(m => m !== star).slice(0, 2).forEach((m, i) => R.artistFigures.draw(K, m.name, m.id, left + (i ? 200 : -200), ground, sc * .86, { time: now + m.h % 7, bpm, act: figAct === 'look' ? null : figAct, instrument: m.instrument, active: false, album: typeof ext !== 'undefined' ? ext.st.album || '' : '' }));
     } else {
@@ -81,7 +81,7 @@
       const tx = cx - 20, wob = reduced ? 0 : Math.sin(now * 18) * 2.5, spin = now * 9;
       for (let i = 0; i < 9; i++) { const px = ((i * 230 - now * 880) % 2100 + 2100) % 2100 - 300 - cx + 800 - 800; K.rect(cx + px - 300, ground - 150, 14, 150, { f: 3, ft: .5, s: 1, lw: 3 }); }
       K.line(cx - 700, ground + 28, cx + 700, ground + 28, 2, 5); for (let i = 0; i < 12; i++) { const px = ((i * 170 - now * 880) % 2040 + 2040) % 2040 - 1000; K.rect(cx + px, ground + 50, 90, 8, { f: -1, s: 1, lw: 2 }); }
-      c.save(); c.translate(tx, wob);
+      c.save(); c.translate(tx, wob + ground); c.scale(1.35, 1.35); c.translate(0, -ground);
       K.ell(0, ground - 4, 210, 12, 0, { f: 1, ft: .22 });
       K.poly([[-190, ground - 80], [-120, ground - 88], [-70, ground - 168], [90, ground - 168], [150, ground - 92], [215, ground - 82], [215, ground - 24], [-190, ground - 24]], { f: 2, ft: .88, s: 1, lw: 6 });
       K.poly([[-58, ground - 156], [80, ground - 156], [128, ground - 92], [-100, ground - 92]], { f: -1, s: 1, lw: 4 });
