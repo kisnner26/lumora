@@ -96,5 +96,5 @@
     let lo = 0, hi = segs.length - 1; while (lo < hi) { const m = (lo + hi + 1) >> 1; if (segs[m].t0 <= t) lo = m; else hi = m - 1; }
     const s = segs[lo]; return s.acc + s.v * (Math.min(t, s.t1) - s.t0) + (t > s.t1 ? 0 : 0);
   }
-  if (window.SETUI) SETUI.addRow('contenido', ['film', 'Película continua', 'sw', null, 'una sola toma por escena: el mundo, los personajes y la cámara siguen vivos entre versos y solo cambian de lugar caminando; apágala para volver al montaje de planos sueltos'], true);
+  if (window.SETUI) SETUI.addRow('contenido', ['film', 'Película continua (experimental)', 'sw', null, 'modo experimental: una sola toma continua con el mundo, los personajes y la cámara; deja fuera el catálogo de dibujos, las escenas y la palabra gigante. Apagado, lumora usa todo su motor (montaje de planos)'], false);
 })();

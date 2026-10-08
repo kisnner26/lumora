@@ -52,7 +52,7 @@
   }
   // modo película: una toma continua por sección, con el mundo, los personajes y la cámara vivos; la letra va encima y no corta la acción
   const songMood = () => { const m = new Map(); for (const x of R.film?.result?.beats || []) if (x?.mood) m.set(x.mood, (m.get(x.mood) || 0) + 1); return [...m.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || 'sereno'; };
-  const filmOn = () => !!(R.story && R.film && R.world?.enabled && (!window.CFG || CFG.film !== false));
+  const filmOn = () => !!(R.story && R.film && R.world?.enabled && window.CFG && CFG.film === true);
   const beatAt = time => { const b = R.film.plan(IN.lines, IN.cuts, SEM.plans, proc.dur).beats, lt = time + .2 + (IN.off || 0); let out = null; for (const x of b) { if (!x || !IN.lines[x.li]) continue; if (IN.lines[x.li].t <= lt) out = x; else break; } return out || b.find(Boolean) || null; };
   function makeShot(li, sec, time, why, force) {
     const plan = SEM.plans[sec] || null, text = li >= 0 ? IN.lines[li].text : '', L = text ? storyOf(text) : null, seed = hash(ext.key() + '|' + li + '|' + sec + '|' + (li < 0 ? Math.floor(time / 4) : 0) + (RC.salt || '') + '|' + (R.world?.settings().seed || ''));
@@ -69,7 +69,7 @@
     if (why === 'title') kind = 'title'; else if (why === 'outro') kind = 'outro';
     else if (li < 0) kind = singers && time > 5 && r() < .38 ? 'singer' : objs.length && r() < .5 ? 'prop' : 'scene';
     else if (named.some(id => ['famosos', 'paises', 'banderas'].includes(R.catalog?.info[id]?.cat)) && r() < .92) kind = 'prop';                 // lo que el verso nombra (país, persona, objeto del catálogo) manda sobre la palabra gigante y las escenas
-    else if (narrative?.action && (narrative.action !== 'hold' || li % 4 !== 3) && !L?.big) kind = 'tableau';
+    else if (narrative?.action && (narrative.action !== 'hold' || li % 3 === 0) && !L?.big) kind = 'tableau';              // la historia manda cuando pasa algo; mientras sigue la misma acción, el resto del repertorio
     else if (L?.big && keyWord(text, L)) kind = 'giant';
     else if (li >= 0 && singers && prev[1] !== 'singer' && r() < (energy >= 7 ? .7 : .5) + (RC.count ? 0 : .3)) kind = 'singer';        // retrato del artista que figura en los créditos
     else if (byWords && !recent.slice(-2).includes(byWords) && prev[1] !== 'scene' && r() < .8) kind = 'scene';
@@ -109,7 +109,7 @@
       let id = (R.scenes[plan?.scene] ? plan.scene : SCENE_MAP[plan?.scene]) || byWords || (narrative?.action ? narrative.place : null) || MOOD_SCENE[mood] || 'ciudad';
       if (R.scenes.ella && !byWords && /eyes|woman|couple/.test((objs || []).join(',')) && ['romantico', 'feliz', 'euforico', 'sereno'].includes(mood)) id = 'ella'; else if (!byWords && (/eyes|man/.test((objs || []).join(',')) || (mood === 'romantico' && r() < .4))) id = 'retrato';
       if (!byWords && !plan?.scene && !narrative?.action && li >= 0 && RC.lastScene === id && r() < .6) { const alt = R.order.filter(x => x !== id); id = alt[(r() * alt.length) | 0]; }
-      if (R.world?.enabled && !plan?.scene && !byWords && !narrative?.action) { shot.worldPlace = id; id = 'universo'; }   // el mundo hereda el lugar que pedía la letra o el ánimo
+      if (R.world?.enabled && !plan?.scene && !byWords && !narrative?.action && r() < .28) { shot.worldPlace = id; id = 'universo'; }   // el mundo procedural es una escena más del repertorio, no la única   // el mundo hereda el lugar que pedía la letra o el ánimo
       const gd = R.gd?.detect(ext.st?.name, ext.st?.artist, ext.st?.album); if (gd && !byWords && r() < .5) { R.gd.level = gd; id = R.gd.scene(gd, r); }
       shot.scene = id; RC.lastScene = id; recent.push(id); if (recent.length > 6) recent.shift(); shot.inks = R.scenes[id].inks;
       if (r() < .45) shot.inks = inkList[(sec + 1) % inkList.length];
