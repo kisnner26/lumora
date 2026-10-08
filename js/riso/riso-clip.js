@@ -51,18 +51,20 @@
     return bs >= 1.5 || (bs >= 1 && !text) ? best : null;
   }
   function makeShot(li, sec, time, why, force) {
-    const plan = SEM.plans[sec] || null, text = li >= 0 ? IN.lines[li].text : '', L = text ? storyOf(text) : null, seed = hash(ext.key() + '|' + li + '|' + sec + '|' + Math.floor(time / 4) + (RC.salt || ''));
-    const r = rngS(seed), mood = plan?.mood || 'sereno', energy = plan?.energy ?? 5, inkList = MOOD_INKS[mood] || [0, 1, 2];
+    const plan = SEM.plans[sec] || null, text = li >= 0 ? IN.lines[li].text : '', L = text ? storyOf(text) : null, seed = hash(ext.key() + '|' + li + '|' + sec + '|' + (li < 0 ? Math.floor(time / 4) : 0) + (RC.salt || ''));
+    const narrative = li >= 0 ? R.narrative?.plan(IN.lines)[li] : null;
+    const r = rngS(seed), mood = plan?.mood || narrative?.mood || 'sereno', energy = plan?.energy ?? 5, inkList = MOOD_INKS[mood] || [0, 1, 2];
     const shot = { kind: 'prop', li, sec, t0: timeNow(), k0: st.t, seed, plan, mood, energy, inks: inkList[(sec + (plan?.color === 'oscuro' ? 1 : 0)) % inkList.length], bg: 'paper', layout: 0, why };
     const own = typeof LEX !== 'undefined' && text ? LEX.filter(([, re]) => re.test(text)).map(q => q[0]) : [];
     const named = (R.people && text ? R.people.detect(text, 3) : []), rr0 = R.rng(seed ^ 0x9e37);
-    const objs = [...new Set([...named, ...own, ...(L?.objects || []), ...(plan?.objects || [])])].map(id => PROP_OF[id] || id).filter(hasProp);
+    const objs = [...new Set([...(L?.objects || []), ...named, ...own, ...(plan?.objects || [])])].map(id => PROP_OF[id] || id).filter(hasProp);
     const prev = RC.kindHist.slice(-2), blockTxt = IN.lines.filter(l => l.text && l.t >= (IN.cuts[sec] ?? 0) && l.t < (IN.cuts[sec + 1] ?? 1e9)).map(l => l.text).join(' ');
     const byWords = sceneByWords(text, blockTxt, mood), recent = RC.recentScenes || (RC.recentScenes = []), cfgOn = !window.CFG || CFG.singers !== false, singers = cfgOn && R.singers ? R.singers.plan(window.ext?.st?.artist, window.ext?.st?.name) : null;
     let kind;
     if (why === 'title') kind = 'title'; else if (why === 'outro') kind = 'outro';
     else if (li < 0) kind = singers && time > 5 && r() < .38 ? 'singer' : objs.length && r() < .5 ? 'prop' : 'scene';
-    else if (named.length && r() < .92) kind = 'prop';                 // lo que el verso nombra (país, persona, objeto del catálogo) manda sobre la palabra gigante y las escenas
+    else if (named.some(id => ['famosos', 'paises', 'banderas'].includes(R.catalog?.info[id]?.cat)) && r() < .92) kind = 'prop';                 // lo que el verso nombra (país, persona, objeto del catálogo) manda sobre la palabra gigante y las escenas
+    else if (narrative?.action && (narrative.action !== 'hold' || li % 4 !== 3) && !L?.big) kind = 'tableau';
     else if (L?.big && keyWord(text, L)) kind = 'giant';
     else if (li >= 0 && singers && prev[1] !== 'singer' && r() < (energy >= 7 ? .7 : .5) + (RC.count ? 0 : .3)) kind = 'singer';        // retrato del artista que figura en los créditos
     else if (byWords && !recent.slice(-2).includes(byWords) && prev[1] !== 'scene' && r() < .8) kind = 'scene';
@@ -72,8 +74,18 @@
       kind = r() * (w.prop + w.scene) < w.prop ? 'prop' : 'scene';
     }
     if (force) kind = force;
+    shot.narrative = narrative;
     shot.kind = kind; RC.kindHist.push(kind); if (RC.kindHist.length > 6) RC.kindHist.shift();
     shot.cut = energy >= 7 ? ['h', 'spin', 'v'][(r() * 3) | 0] : energy <= 3 ? ['zin', 'zout'][(r() * 2) | 0] : ['h', 'v', 'zin', 'zout'][(r() * 4) | 0];
+    if (kind === 'tableau') {
+      const motif = narrative.motif, info = R.catalog?.info[motif];
+      const allowed = !info || !window.CFG?.catOn || CFG.catOn[info.cat] !== false;
+      const focal = (L?.objects || []).map(id => PROP_OF[id] || id).find(hasProp) || named.find(hasProp) || (motif && hasProp(motif) && allowed ? motif : objs[0]);
+      shot.props = focal ? [{ id: focal, ph: 0, rot: 0 }] : [];
+      shot.inks = inkList[narrative.visualChapter % inkList.length];
+      shot.bg = 'paper'; shot.flip = !!(hash(ext.key()) % 2); shot.layout = 0;
+      shot.cut = energy >= 7 ? 'h' : 'zin';
+    }
     if (kind === 'prop') {
       const cm = (R.catalog?.moodProps[mood] || []).filter(hasProp), ids = objs.length ? [...new Set(objs)] : [...(MOOD_PROP[mood] || ['stars']), ...cm].filter(hasProp);
       shot.props = ids.slice(0, r() < .35 ? 3 : 1).map((id, i) => ({ id: R.catalog ? R.catalog.pickVariant(id, r) : id, i, ph: r() * 6, rot: (r() - .5) * .14 }));
@@ -85,9 +97,9 @@
     }
     if (kind === 'singer') { shot.singers = singers; shot.props = []; shot.bg = ['burst', 'grid', 'flood'][(r() * 3) | 0]; shot.layout = (r() * 3) | 0; shot.flip = r() < .5; shot.scene = 'voz'; shot.cut = energy >= 7 ? 'h' : shot.cut; }
     if (kind === 'scene') {
-      let id = byWords || plan && SCENE_MAP[plan.scene] || (R.scenes[plan?.scene] ? plan.scene : null) || MOOD_SCENE[mood] || 'ciudad';
+      let id = (R.scenes[plan?.scene] ? plan.scene : SCENE_MAP[plan?.scene]) || byWords || (narrative?.action ? narrative.place : null) || MOOD_SCENE[mood] || 'ciudad';
       if (R.scenes.ella && !byWords && /eyes|woman|couple/.test((objs || []).join(',')) && ['romantico', 'feliz', 'euforico', 'sereno'].includes(mood)) id = 'ella'; else if (!byWords && (/eyes|man/.test((objs || []).join(',')) || (mood === 'romantico' && r() < .4))) id = 'retrato';
-      if (li >= 0 && RC.lastScene === id && r() < .6) { const alt = R.order.filter(x => x !== id); id = alt[(r() * alt.length) | 0]; }
+      if (!byWords && !plan?.scene && !narrative?.action && li >= 0 && RC.lastScene === id && r() < .6) { const alt = R.order.filter(x => x !== id); id = alt[(r() * alt.length) | 0]; }
       shot.scene = id; RC.lastScene = id; recent.push(id); if (recent.length > 6) recent.shift(); shot.inks = R.scenes[id].inks;
       if (r() < .45) shot.inks = inkList[(sec + 1) % inkList.length];
     }
@@ -213,18 +225,18 @@
     const v = K.v, m = st.margin, kt = K.t - s.k0, li = s.li, text = s.text?.text || '', age = s.text ? (time + .2 + (IN.off || 0)) - s.text.t : 0, dur = s.text?.dur || 3;
     const showText = IN.show !== false && text;
     st.setInks(s.inks);
-    if (s.kind === 'prop' || s.kind === 'singer') {
+    if (s.kind === 'prop' || s.kind === 'singer' || s.kind === 'tableau') {
       drawBg(s, kt);
       const draw = clamp(kt / 1.1), cxp = pcx(s), cy = 450;
       const sc = s.props.length > 1 ? 1.05 : 1.35;
-      if (s.kind === 'singer') R.singers.draw(s, kt, time, age, dur); else s.props.forEach((p, i) => { const off = i === 0 ? [0, 0] : [(i === 1 ? -1 : 1) * (s.flip ? -1 : 1) * 250, (i === 1 ? 1 : -1) * 130], k = clamp((kt - i * .35) / 1.1);
+      if (s.kind === 'tableau') R.narrative.draw(K, s, kt); else if (s.kind === 'singer') R.singers.draw(s, kt, time, age, dur); else s.props.forEach((p, i) => { const off = i === 0 ? [0, 0] : [(i === 1 ? -1 : 1) * (s.flip ? -1 : 1) * 250, (i === 1 ? 1 : -1) * 130], k = clamp((kt - i * .35) / 1.1);
         R.props.drawProp(K, p.id, cxp + off[0], cy + off[1], sc * (i === 0 ? 1 : .55), easeOut(k), { seed: s.seed + i * 7, ph: p.ph, rot: p.rot }); });
       if (s.props.length > 1 || s.bg === 'paper') K.tape(cxp - 190, cy - 240, 120, 38, -.5);
       K.screen(() => {
         let wlh = v.h * .4; if (showText) { const w = (v.w - m * 2) * .46, x = s.flip ? v.r - m - w - 10 : v.l + m + 10; if (window.CFG?.textBox) { const ft = fitText(text, w, v.h * .5, { size: 104 * clamp(CFG.lyricSize || 1, .7, 1.6), w: 600, font: 'hand' }); K.rect(x - 16, v.t + m + 88, w + 32, ft.lines.length * ft.size * 1.12 + 26, { f: -1, s: 1, lw: 3.5 }); } wlh = writeLine(text, x, v.t + m + 96, w, v.h * .5, age, dur, { align: s.flip ? 'right' : 'left', keyPaper: s.bg === 'flood' }).h; }
         if (s.text?.tr && showText) { const w = (v.w - m * 2) * .46, x = s.flip ? v.r - m - w - 10 : v.l + m + 10, yy = v.t + m + 96 + wlh + 18; trBox(s.text.tr, s.flip ? x + w : x, Math.min(yy, v.b - m - 330), w, s.flip ? 'right' : 'left'); }
       });
-      notes(s.kind === 'singer' ? { ...s, notes: s.notes.filter(n => n !== 'stat' && n !== 'post') } : s, time, s.flip ? 'noStamp' : 'x');
+      notes(s.kind === 'singer' || s.kind === 'tableau' ? { ...s, notes: s.notes.filter(n => n !== 'stat' && n !== 'post') } : s, time, s.flip ? 'noStamp' : 'x');
     } else if (s.kind === 'scene') {
       const sc = R.scenes[s.scene]; let state = RC.sceneState[s.scene]; if (!state) state = RC.sceneState[s.scene] = sc.make(R.rng(hash(ext.key() + s.scene)), K) || {};
       K.c.save(); try { sc.draw(K, state, K.t, dt, R.A); } finally { K.c.restore(); }
