@@ -168,7 +168,7 @@
   };
   const loadFace = (name, key) => {
     const st = { state: 'loading', t: Date.now() }; heads.set(key, st);
-    fetch('/cara?name=' + encodeURIComponent(name) + (window.CFG?.facesWiki ? '&src=wiki' : '')).then(async r => { if (!r.ok) throw new Error('none'); const meta = JSON.parse(r.headers.get('X-Cara') || '{}'), blob = await r.blob(); if (!meta.w) throw new Error('meta');
+    fetch('/cara?v=5&name=' + encodeURIComponent(name) + (window.CFG?.facesWiki ? '&src=wiki' : window.CFG?.facesWide ? '&src=wide' : '')).then(async r => { if (!r.ok) throw new Error('none'); const meta = JSON.parse(r.headers.get('X-Cara') || '{}'), blob = await r.blob(); if (!meta.w) throw new Error('meta');
       const img = new Image(); img.onload = () => { try { Object.assign(st, facePlate(img, meta), { state: 'ok' }); dispatchEvent(new CustomEvent('lumora:artistas', { detail: key })); } catch (e) { st.state = 'none'; } URL.revokeObjectURL(img.src); }; img.onerror = () => { st.state = 'none'; }; img.src = URL.createObjectURL(blob); })
       .catch(() => { st.state = 'none'; });
   };
@@ -354,4 +354,5 @@
   if (typeof setTimeout === 'function') setTimeout(async () => { try { if (window.CFG?.faces === false || !window.RISOSTORE?.list) return; const rows = await RISOSTORE.list('historial');
     const names = [...new Set(rows.map(r => String(r.artist || '').split(/,|&|\bfeat\.?|\bft\.?/i)[0].trim()).filter(n => n.length > 1))].slice(0, 80); let i = 0;
     const tick = () => { if (i >= names.length) return; api.faceOf(names[i++]); setTimeout(tick, 7000); }; tick(); } catch (e) {} }, 8000);
+  if (window.SETUI) SETUI.addRow('contenido', ['facesWide', 'Búsqueda web ampliada de fotos', 'sw', null, 'si no hay foto verificada (Wikipedia, TheAudioDB, Deezer), busca en Wikimedia Commons y en la web; puede equivocarse de persona'], false);
 })();
