@@ -89,7 +89,17 @@
       case '/translate': return Promise.resolve(J({ error: 'la traducción solo está en la versión de mac' }));
       case '/prefs': return Promise.resolve(J({ sessions: 0, text: '' }));
       case '/cmd': return Promise.resolve(J({ ok: false }));
-      case '/bpm': case '/next': case '/like': case '/autor': case '/lights': case '/convert': case '/wiki': return Promise.resolve(J({}));
+      case '/autor': {
+        try {
+          if (init?.method === 'POST') { const body = JSON.parse(init.body || '{}'), key = 'lumora_autor_' + body.key;
+            if (!body.key) return Promise.resolve(J({ error: 'falta la canción' }));
+            if (body.delete) localStorage.removeItem(key); else localStorage.setItem(key, JSON.stringify(body.project));
+            return Promise.resolve(J({ ok: true }));
+          }
+          return Promise.resolve(J(JSON.parse(localStorage.getItem('lumora_autor_' + u.searchParams.get('key')) || '{}')));
+        } catch { return Promise.resolve(J({ error: 'no se pudo guardar en este navegador' })); }
+      }
+      case '/bpm': case '/next': case '/like': case '/lights': case '/convert': case '/wiki': return Promise.resolve(J({}));
       default: return Promise.resolve(J({}));
     }
   };

@@ -19,10 +19,11 @@ const STORY = { on: false, text: '', lines: {}, byText: new Map(),
     for (const l of r.lines || []) {
       const src = IN.lines[l.i]?.text; if (!src) continue;
       const w = (l.word || '').trim(), has = w && norm(src).includes(norm(w));   // la palabra tiene que estar en el verso
-      const e = { objects: [...new Set(l.objects || [])].filter(id => MOTIF[id]).slice(0, 2), word: has ? w : '', big: !!l.big && has, person: (l.person || '').trim() };
+      const e = { objects: [...new Set(l.objects || [])].filter(id => MOTIF[id] || window.RISO?.props?.DEFS[id]).slice(0, 2), word: has ? w : '', big: !!l.big && has, person: (l.person || '').trim() };
       this.lines[l.i] = e; if (!this.byText.has(norm(src))) this.byText.set(norm(src), e);
     }
     if (r.story) this.text = r.story;
+    if (r.cinema && window.RISO?.film) RISO.film.setEdits(r.cinema);
     this.on = true;
   },
   forText(t) { return this.byText.get((t || '').trim().toLowerCase()); } };
@@ -97,7 +98,8 @@ async function planSong() {
         return v; }); };
   // si el usuario armó esta canción a mano (modo autor), manda su versión y Claude no lee nada
   let own = null;
-  try { own = await fetch('/autor?key=' + encodeURIComponent(autorKey())).then(r => r.json()); } catch (e) {}
+  try { own = window.RISOSTORE ? await RISOSTORE.get('misc', 'autor|' + autorKey()) : null;
+    if (!own) own = await fetch('/autor?key=' + encodeURIComponent(autorKey())).then(r => r.json()); } catch (e) {}
   if (SEM.key !== key) return;
   if (!(own && own.blocks && own.cuts && own.cuts.length === IN.cuts.length)) own = null;
   const reqs = own ? [Promise.resolve({ ...own, cached: true, autor: true })] : useAI ? segs.map(ask) : [Promise.resolve(DIR.plan())], req = reqs[0], rest = reqs.slice(1);
