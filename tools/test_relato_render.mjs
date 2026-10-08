@@ -18,7 +18,7 @@ try {
     st.setScene('qa', { instant: true }); st.frame(.016);
     return counts;
   });
-  assert.equal(result.profiles, 71);
+  assert.equal(result.profiles, 80);
   await p.screenshot({ path: '/tmp/lumora-artistas-perfiles.png' });
   await p.evaluate(() => {
     const R = RISO, st = R.stage;
@@ -55,5 +55,5 @@ try {
   });
   await p.locator('#c').screenshot({ path: '/tmp/lumora-relato-clip.png' });
   assert.deepEqual(errores, []);
-  console.log('ok: 12 recursos, render de 71 perfiles, secuencia narrativa e integración del clip; capturas /tmp/lumora-*.png');
+  console.log('ok: 12 recursos, render de 80 perfiles, secuencia narrativa e integración del clip; capturas /tmp/lumora-*.png');
 } finally { await b.close(); srv.stop(); }
