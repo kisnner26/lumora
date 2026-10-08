@@ -89,7 +89,10 @@ if let s = salida as String?, !s.isEmpty {
 guard AudioHardwareCreateAggregateDevice(dic as CFDictionary, &agg) == noErr else { limpiar(); fallo("no se pudo crear el dispositivo del tap") }
 
 var fmt: AudioStreamBasicDescription = leer(tap, kAudioTapPropertyFormat, AudioStreamBasicDescription()) ?? AudioStreamBasicDescription()
-let rate = Float32(fmt.mSampleRate > 0 ? fmt.mSampleRate : 48000)
+// el dispositivo agregado corre al reloj de la salida, que puede diferir de la frecuencia declarada por el tap
+let nominal: Float64 = leer(agg, kAudioDevicePropertyNominalSampleRate, Float64(0)) ?? 0
+if args.contains("--diagnostico") { FileHandle.standardError.write(Data("tap \(fmt.mSampleRate) agregado \(nominal)\n".utf8)) }
+let rate = Float32(nominal > 0 ? nominal : (fmt.mSampleRate > 0 ? fmt.mSampleRate : 48000))
 var cabecera = rate
 withUnsafeBytes(of: &cabecera) { _ = fwrite($0.baseAddress, 1, 4, stdout) }
 fflush(stdout)
