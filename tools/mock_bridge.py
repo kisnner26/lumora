@@ -121,6 +121,13 @@ class H(SimpleHTTPRequestHandler):
             return
         u = urlparse(self.path); q = {k: v[0] for k, v in parse_qs(u.query).items()}; p = u.path
         if p == '/now': return self.j(snapshot())
+        if p == '/cara':                                          # misma cara recortada que el puente real
+            try:
+                import bridge
+                res = bridge.cara_de(q.get('name', '')) if q.get('name', '').strip() else None
+            except Exception: res = None
+            if not res: return self.j({'none': True}, 404)
+            body, meta = res; self.send_response(200); self.send_header('Content-Type', 'image/png'); self.send_header('Content-Length', str(len(body))); self.send_header('X-Cara', json.dumps(meta)); self.end_headers(); self.wfile.write(body); return
         if p == '/artista':                                       # mismo generador de rasgos que el puente real (usa Claude si está disponible)
             try:
                 import guion

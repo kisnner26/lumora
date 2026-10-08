@@ -7,3 +7,5 @@ tools/traducir
 personal/
 app/build/
 .venv-empaque/
+tools/rostro
+tools/tomador

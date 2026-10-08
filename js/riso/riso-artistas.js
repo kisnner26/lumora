@@ -153,8 +153,29 @@
   const BOOLS = ['beard', 'moustache', 'sideburns', 'glasses', 'earrings', 'eyeliner', 'lipstick', 'headband', 'fringe', 'chain', 'necklace', 'tie', 'glove', 'tattoos'];
   const num = (v, a, b, d) => typeof v === 'number' && isFinite(v) ? Math.max(a, Math.min(b, v)) : d;
   const clean = l => { if (!l || !l.known) return { known: false }; const f = l.face || {}, o = { known: true, skin: num(l.skin, .08, .6, .15), hair: LK.hair.includes(l.hair) ? l.hair : 'short', hairInk: [1, 2, 3].includes(l.hairInk) ? l.hairInk : 1, outfit: LK.outfit.includes(l.outfit) ? l.outfit : 'shirt', clothes: [-1, 1, 2, 3].includes(l.clothes) ? l.clothes : 1, hat: LK.hat.includes(l.hat) ? l.hat : null, instrument: LK.instrument.includes(l.instrument) ? l.instrument : null, face: Object.fromEntries(['width', 'height', 'jaw', 'eyes', 'nose', 'lips'].map(k => [k, num(f[k], .86, 1.14, 1)])) }; for (const k of BOOLS) o[k] = !!l[k]; return o; };
+  // caras reales: la foto del artista, recortada sin fondo por el puente, se imprime en trama riso (sombras en la tinta oscura, medios tonos en la cálida)
+  const heads = new Map();
+  const facePlate = (img, meta) => {
+    const pw = 256, ph = Math.round(256 * img.naturalHeight / img.naturalWidth), cv = document.createElement('canvas'); cv.width = pw; cv.height = ph;
+    const g = cv.getContext('2d', { willReadFrequently: true }); g.drawImage(img, 0, 0, pw, ph);
+    const d = g.getImageData(0, 0, pw, ph), a = d.data, fw = meta.w * pw, cyPx = meta.cy * ph, knock = document.createElement('canvas'); knock.width = pw; knock.height = ph;
+    const kc = knock.getContext('2d'), kd = kc.createImageData(pw, ph);
+    for (let y = 0; y < ph; y++) { const fade = Math.max(0, Math.min(1, 1 - (y - (cyPx + fw * .72)) / (fw * .5)));      // el cuello se desvanece: debajo va el cuerpo dibujado
+      for (let x = 0; x < pw; x++) { const i = (y * pw + x) * 4, al = a[i + 3] / 255 * fade, l = (a[i] * .3 + a[i + 1] * .59 + a[i + 2] * .11) / 255;
+        const dark = Math.max(0, Math.min(1, (1 - l) * 1.25 - .1)), warm = Math.max(0, 1 - Math.abs(l - .55) * 2.6) * .55;
+        a[i] = Math.round(dark * 255); a[i + 1] = Math.round(warm * 255); a[i + 2] = 0; a[i + 3] = Math.round(al * 255); kd.data[i + 3] = a[i + 3]; } }
+    g.putImageData(d, 0, 0); kc.putImageData(kd, 0, 0); return { plate: cv, knock, meta, pw, ph };
+  };
+  const loadFace = (name, key) => {
+    const st = { state: 'loading', t: Date.now() }; heads.set(key, st);
+    fetch('/cara?name=' + encodeURIComponent(name)).then(async r => { if (!r.ok) throw new Error('none'); const meta = JSON.parse(r.headers.get('X-Cara') || '{}'), blob = await r.blob(); if (!meta.w) throw new Error('meta');
+      const img = new Image(); img.onload = () => { try { Object.assign(st, facePlate(img, meta), { state: 'ok' }); dispatchEvent(new CustomEvent('lumora:artistas', { detail: key })); } catch (e) { st.state = 'none'; } URL.revokeObjectURL(img.src); }; img.onerror = () => { st.state = 'none'; }; img.src = URL.createObjectURL(blob); })
+      .catch(() => { st.state = 'none'; });
+  };
   const pending = new Set(), retry = new Map(), poseState = new Map();
-  const api = R.artistFigures = { profiles, custom,
+  const api = R.artistFigures = { profiles, custom, heads,
+    faceOf(name) { const key = norm(name); if (!key || typeof fetch !== 'function') return null; const st = heads.get(key);
+      if (!st) { loadFace(name, key); return null; } if (st.state === 'none' && Date.now() - st.t > 600000) { heads.delete(key); return null; } return st.state === 'ok' ? st : null; },
     request(name) {
       const key = norm(name); if (!key || custom[key] || pending.has(key) || (retry.get(key) || 0) > Date.now() || typeof fetch !== 'function') return; pending.add(key);
       fetch('/artista?name=' + encodeURIComponent(name)).then(r => r.ok ? r.json() : Promise.reject(new Error('sin respuesta'))).then(j => { custom[key] = clean(j.look); try { localStorage.setItem('lumora_artistas_v1', JSON.stringify(custom)); } catch (e) {} dispatchEvent(new CustomEvent('lumora:artistas', { detail: key })); })
@@ -178,6 +199,7 @@
       const h = hash(name); return { id: null, skin: .15, hair: ['short', 'mop', 'messy'][h % 3], hairInk: 1, outfit: ['jacket', 'shirt', 'hoodie'][h % 3], clothes: 2 + h % 2 }; },
     draw(K, name, id, x, ground, scale, motion = {}) {
       if (!id && !motion.partner && !profiles[this.idOf(name)]) this.request(name);
+      const photo = !motion.partner && !motion.back && window.CFG?.faces !== false && !(profiles[id || this.idOf(name)]?.custom) ? this.faceOf(name) : null;
       const p = this.profile(name, id, motion.album), c = K.c, t = window.CFG?.reduceMotion ? 0 : motion.time || 0, active = !!motion.active;
       const instrument = motion.instrument || p.instrument;
       const act = motion.act || null, back = !!motion.back, beatT = t * (motion.bpm || 110) / 60 * Math.PI;
@@ -201,12 +223,14 @@
       }
       c.translate(0, bob + R0.dy); c.translate(0, -185); c.rotate(reduce ? 0 : R0.tilt); c.translate(0, 185);
       if (!reduce) { c.translate(0, -185); c.scale(1 + Math.sin(t * 1.7) * .009 * (1 + en), 1 + Math.sin(t * 1.7) * .012 * (1 + en)); c.translate(0, 185); }
+      if (!photo) {
       if (['long', 'waves', 'ponytail', 'braids', 'dreads', 'mullet', 'bob'].includes(p.hair)) {
         if (p.hair === 'bob') path('M-43 -423 Q-70 -410 -60 -335 L-25 -335 L-25 -413 Z M25 -413 L25 -335 H60 Q70 -410 43 -423 Z', p.hairInk);
         else path('M-41 -421 Q-79 -402 -62 -299 L-70 -252 L-29 -267 L-22 -410 Z M25 -413 Q76 -412 63 -320 L73 -265 L27 -270 Z', p.hairInk, .95);
         if (p.hair === 'waves') for (const side of [-1, 1]) for (let i = 0; i < 5; i++) circle(side * (53 + Math.sin(i * 2) * 8), -390 + i * 25, 17, p.hairInk);
         if (p.hair === 'ponytail') path('M39 -424 Q99 -432 90 -346 L64 -288 L60 -368 Z', p.hairInk);
         if (p.hair === 'braids' || p.hair === 'dreads') for (let i = 0; i < 8; i++) path(`M${-58 + i * 16} -407 Q${-74 + i * 20} -338 ${-64 + i * 18} -276`, undefined, 1, p.hair === 'dreads' ? 9 : 5);
+      }
       }
       if (p.outfit === 'hoodie') path('M-53 -334 Q-75 -379 -43 -424 Q0 -454 43 -424 Q72 -378 52 -334 Z', p.clothes, .9, 6);
       const dress = p.outfit === 'dress', coat = p.outfit === 'coat';
@@ -240,6 +264,7 @@
         circle(-28, ly, 11, -1); circle(30, ry, 11, -1);
       }
       if (p.tattoos) { path('M-73 -260 L-60 -251 L-73 -239 M61 -284 L73 -277 L65 -263', undefined, 1, 3); }
+      if (!photo) {
       const face = p.face || { width: 1, height: 1, jaw: 1, eyes: 1, nose: 1, lips: 1 };
       c.save(); c.translate(0, -340); c.rotate(reduce ? 0 : R0.nod); if (!reduce) c.transform(1, 0, Math.sin(t * 2.1 + .5) * .03 * (1 + (walking || dancing ? 1.6 : 0) + en) + R0.tilt * .5, 1, 0, 0); c.translate(look * 7, 340); c.translate(0, -390); c.scale(face.width, face.height); c.translate(0, 390);
       const headPath = `M-43 -405 Q-47 -356 ${-22 * face.jaw} -344 Q0 ${-344 + 12 * face.jaw} ${22 * face.jaw} -344 Q47 -356 43 -405 Q32 -440 0 -438 Q-32 -440 -43 -405 Z`;
@@ -276,6 +301,14 @@
       if (p.hat === 'beanie') { path('M-45 -415 Q-48 -465 0 -468 Q49 -465 45 -415 Z', 2); K.rect(-46, -425, 92, 18, { f: 2, s: 1, lw: 3 }); }
       if (p.helmet) { path('M-45 -402 Q-46 -452 0 -454 Q47 -450 45 -401 L35 -348 H-35 Z', 3, .8, 5); path('M-37 -407 H37 L31 -376 H-31 Z', 1); K.line(-24, -397, 25, -397, -1, 4); }
       c.restore();
+      } else {
+        // la cara real: recorte de la foto, impresa en trama; sigue el cabeceo, la inclinación y el pelo con inercia de la figura
+        const H = photo, sc2 = 92 / (H.meta.w * H.pw), W2 = H.pw * sc2, H2 = H.ph * sc2, x0 = -H.meta.cx * W2, y0 = -392 - H.meta.cy * H2;
+        c.save(); c.translate(0, -340); c.rotate(reduce ? 0 : R0.nod); if (!reduce) c.transform(1, 0, Math.sin(t * 2.1 + .5) * .02 + R0.tilt * .4, 1, 0, 0); c.translate(look * 6, 340);
+        c.drawImage(H.knock, x0, y0, W2, H2);                                   // lo que había debajo queda en papel
+        c.globalCompositeOperation = 'lighter'; c.drawImage(H.plate, x0, y0, W2, H2); c.globalCompositeOperation = 'source-over';
+        c.restore();
+      }
       if (instrument === 'guitar' || instrument === 'bass' || instrument === 'ukulele') {
         const k = instrument === 'ukulele' ? .66 : 1;
         c.save(); c.translate(-10, -244); c.scale(k, k); c.rotate(-.3);
@@ -299,4 +332,5 @@
       c.restore();
     }
   };
+  if (window.SETUI) SETUI.addRow('contenido', ['faces', 'Caras reales de los artistas', 'sw', null, 'pone la foto del artista (de Wikipedia), recortada y en trama, sobre su figura; sin ella se dibuja un retrato con sus rasgos. Revisa los derechos de imagen antes de publicar'], true);
 })();

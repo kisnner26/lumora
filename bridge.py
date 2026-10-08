@@ -296,6 +296,65 @@ def fetch_wiki(q, lang):
     return out
 
 
+
+# ---------- caras reales: la foto del artista (Wikipedia), recortada sin fondo con tools/rostro (Vision de macOS) ----------
+ROSTRO_BIN = os.path.join(TOOLS, 'rostro')
+CARAS_DIR = os.path.expanduser('~/Library/Caches/lumora-caras')
+CARAS_LOCK = threading.Lock()
+CARAS_BUSY = {}
+MUSICO = re.compile(r'singer|rapper|musician|band|songwriter|\bDJ\b|producer|vocalist|guitarist|drummer|pianist|composer|cantante|rapero|m[uú]sic|grupo', re.I)
+
+
+def _wiki_foto(name):
+    """devuelve la URL de una foto de un músico con ese nombre, o None si no hay un artículo claro con foto"""
+    def summary(title):
+        return get_json('https://en.wikipedia.org/api/rest_v1/page/summary/' + urllib.parse.quote(title.strip().replace(' ', '_')))
+    def valido(d):
+        return d and d.get('type') == 'standard' and (d.get('thumbnail') or {}).get('source') and MUSICO.search((d.get('description') or '') + ' ' + (d.get('extract') or '')[:240])
+    cand = [summary(name)]
+    if not valido(cand[0]):
+        q = get_json('https://en.wikipedia.org/w/rest.php/v1/search/title?limit=3&q=' + urllib.parse.quote(name)) or {}
+        cand = [summary(p.get('key') or p.get('title')) for p in (q.get('pages') or [])[:3] if p.get('key') or p.get('title')]
+    for d in cand:
+        if valido(d):
+            return re.sub(r'/\d+px-', '/960px-', d['thumbnail']['source'].split('?')[0])
+    return None
+
+
+def cara_de(name):
+    """(png, meta) de la cara recortada de un artista, o None; se guarda en disco, también los intentos fallidos"""
+    key = hashlib.sha1(' '.join(name.lower().split()).encode()).hexdigest()[:16]
+    png, meta, no = (os.path.join(CARAS_DIR, key + e) for e in ('.png', '.json', '.no'))
+    if os.path.exists(png) and os.path.exists(meta):
+        return open(png, 'rb').read(), json.load(open(meta))
+    if os.path.exists(no) and time.time() - os.path.getmtime(no) < 7 * 86400:
+        return None
+    if not os.path.exists(ROSTRO_BIN):
+        return None
+    with CARAS_LOCK:
+        lock = CARAS_BUSY.setdefault(key, threading.Lock())
+    with lock:
+        if os.path.exists(png) and os.path.exists(meta):
+            return open(png, 'rb').read(), json.load(open(meta))
+        os.makedirs(CARAS_DIR, exist_ok=True)
+        try:
+            url = _wiki_foto(name)
+            if not url:
+                raise RuntimeError('sin foto')
+            req = urllib.request.Request(url, headers={'User-Agent': 'Lumora/1.0 (aplicacion personal de letras)'})
+            with tempfile.TemporaryDirectory() as d:
+                src = os.path.join(d, 'in.img')
+                open(src, 'wb').write(urllib.request.urlopen(req, timeout=25).read())
+                r = subprocess.run([ROSTRO_BIN, src, png], capture_output=True, text=True, timeout=60)
+                if r.returncode != 0 or not os.path.exists(png):
+                    raise RuntimeError('sin cara')
+                json.dump(json.loads(r.stdout), open(meta, 'w'))
+            return open(png, 'rb').read(), json.load(open(meta))
+        except Exception:
+            open(no, 'w').write('1')
+            return None
+
+
 # ---------- oído: niveles del audio del sistema (tools/oido, ScreenCaptureKit) ----------
 OIDO_BIN = os.path.join(TOOLS, 'oido')
 TOMADOR_BIN = os.path.join(TOOLS, 'tomador')
@@ -649,6 +708,21 @@ class Handler(SimpleHTTPRequestHandler):
                 return self.send_json({'scenes': guion.SCENES, 'objects': guion.OBJECTS, 'moods': guion.MOODS, 'times': guion.TIMES,
                                        'colors': guion.COLORS, 'transitions': guion.TRANSITIONS})
             return self.send_json({'ready': guion.available(), 'model': guion.MODEL})
+        if path == '/cara':                                     # la cara real del artista, recortada y sin fondo (PNG con su posición en la cabecera X-Cara)
+            name = parse_qs(urlparse(self.path).query).get('name', [''])[0][:80]
+            res = cara_de(name) if name.strip() else None
+            if not res:
+                return self.send_json({'none': True}, 404)
+            body, meta = res
+            self.send_response(200)
+            self.send_header('Content-Type', 'image/png')
+            self.send_header('Content-Length', str(len(body)))
+            self.send_header('Cache-Control', 'max-age=86400')
+            self.send_header('X-Cara', json.dumps(meta))
+            self.send_header('Access-Control-Expose-Headers', 'X-Cara')
+            self.end_headers()
+            self.wfile.write(body)
+            return
         if path == '/artista':                                  # rasgos reconocibles de un artista (los genera Claude una vez y quedan guardados)
             import guion
             name = parse_qs(urlparse(self.path).query).get('name', [''])[0]

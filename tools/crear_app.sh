@@ -13,6 +13,7 @@ cp app/Info.plist "$OUT/Contents/Info.plist"
 swiftc -O -parse-as-library tools/traducir.swift -o "$OUT/Contents/Resources/tools/traducir"
 swiftc -O -parse-as-library tools/oido.swift -o "$OUT/Contents/Resources/tools/oido"
 swiftc -O tools/tomador.swift -o "$OUT/Contents/Resources/tools/tomador"
+swiftc -O tools/rostro.swift -o "$OUT/Contents/Resources/tools/rostro"
 
 # puente: congelado con PyInstaller si existe .venv-empaque (la app no necesita python); si no, los fuentes
 if [ -x .venv-empaque/bin/pyinstaller ]; then
