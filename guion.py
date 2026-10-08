@@ -16,7 +16,7 @@ for sp in glob.glob(os.path.join(ROOT, '.venv', 'lib', 'python3*', 'site-package
 MODEL = 'claude-sonnet-5'                                         # con la suscripción (Claude Code); con clave de API usa el mismo
 EFFORT = 'medium'
 CLAUDE_BIN = shutil.which('claude') or '/opt/homebrew/bin/claude'
-VERSION = 'g4'                                                   # cambia si cambia el prompt: invalida la memoria
+VERSION = 'g5'                                                   # cambia si cambia el prompt: invalida la memoria
 KEY_FILE = next((p for p in map(os.path.expanduser, ('~/.config/lumora/anthropic_key', '~/.config/taxicab/anthropic_key')) if os.path.exists(p)), os.path.expanduser('~/.config/lumora/anthropic_key'))
 CACHE_FILE = os.path.expanduser('~/Library/Caches/lumora-guiones.json')
 
@@ -70,6 +70,18 @@ OBJECTS = {
     'network': 'red de datos', 'hero': 'emblema de superhéroe', 'halftone': 'trama de cómic', 'speedlines': 'líneas de velocidad de cómic',
     'pow': 'onomatopeya de cómic / golpe', 'web': 'telaraña', 'sport': 'deporte nombrado en la letra', 'nation': 'país nombrado en la letra',
     'brand': 'marca nombrada en la letra',
+    'carta_abierta': 'carta abierta / comunicación íntima',
+    'maleta_viaje': 'maleta / partida / despedida',
+    'puerta_entreabierta': 'puerta / umbral / regreso',
+    'ventana_lluvia': 'ventana mojada / espera en casa',
+    'foto_rota': 'fotografía rota / recuerdo / separación',
+    'banco_vacio': 'banco vacío / espera / ausencia',
+    'hilo_rojo': 'hilo entre dos personas / vínculo',
+    'puente_camino': 'puente / cruzar / reencuentro',
+    'escalera_salida': 'escalera / ascenso / salida',
+    'faro_costa': 'faro / orientación / esperanza',
+    'semilla_brote': 'semilla germinando / empezar de nuevo',
+    'silla_ausente': 'silla vacía / alguien que falta',
 }
 MOODS = ['euforico', 'feliz', 'romantico', 'sereno', 'nostalgico', 'melancolico', 'triste', 'oscuro', 'rabioso', 'desafiante']
 TIMES = ['amanecer', 'dia', 'atardecer', 'noche', 'madrugada']
@@ -95,6 +107,7 @@ Cómo decidir:
 - Las figuras de personas: woman, man o couple solo cuando la letra habla de alguien concreto (ella, él, nosotros). Fíjate en el género de quien se habla.
 - sport, nation y brand solo si la letra nombra un deporte, país o marca real.
 - La energía (0 a 10) sigue la estructura: estrofas más bajas, coros y drops más altos, final que baja o explota según la canción.
+- Continuidad gráfica: conserva el lugar, las personas y un objeto significativo mientras la acción siga. Cambia la composición cuando ocurra algo (partir, esperar, regresar, recordar), no solo porque cambie el verso. En un estribillo que vuelve, recupera su objeto y escenario. Respeta las negaciones: «no te vayas» no muestra una partida consumada.
 - Variedad con sentido: no repitas el mismo escenario más de 2 bloques seguidos salvo que la historia siga en ese lugar.
 - scene2 es un escenario secundario tenue mezclado detrás; úsalo solo si suma al significado, si no pon "ninguno". atmos es una capa ambiental suave para todo el bloque (por ejemplo lluvia en un bloque triste); "ninguno" si no hace falta.
 - word: la palabra más importante del verso, copiada tal cual como aparece en el verso (una sola palabra). big: true solo en los versos que merecen la palabra gigante en pantalla (ganchos, remates, la palabra clave del coro); como mucho uno de cada cinco versos.
