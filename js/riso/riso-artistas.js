@@ -147,7 +147,19 @@
     }
     return o;
   };
-  const api = R.artistFigures = { profiles, idOf: name => aliases.get(norm(name)) || null,
+  // artistas fuera del catálogo: Claude describe su imagen real (una vez) y el retrato se les parece; se guarda en este navegador
+  let custom = {}; try { custom = JSON.parse(localStorage.getItem('lumora_artistas_v1') || '{}'); } catch (e) {}
+  const LK = { hair: ['short', 'mop', 'messy', 'long', 'waves', 'ponytail', 'braids', 'dreads', 'mullet', 'bob', 'afro', 'curls', 'bun', 'beehive', 'quiff', 'slick', 'wavesShort', 'buzz', 'bald'], outfit: ['jacket', 'shirt', 'hoodie', 'suit', 'military', 'cardigan', 'jumpsuit', 'coat', 'dress', 'crop'], hat: ['fedora', 'cap', 'beanie'], instrument: ['guitar', 'bass', 'drums', 'keys', 'ukulele'] };
+  const BOOLS = ['beard', 'moustache', 'sideburns', 'glasses', 'earrings', 'eyeliner', 'lipstick', 'headband', 'fringe', 'chain', 'necklace', 'tie', 'glove', 'tattoos'];
+  const num = (v, a, b, d) => typeof v === 'number' && isFinite(v) ? Math.max(a, Math.min(b, v)) : d;
+  const clean = l => { if (!l || !l.known) return { known: false }; const f = l.face || {}, o = { known: true, skin: num(l.skin, .08, .6, .15), hair: LK.hair.includes(l.hair) ? l.hair : 'short', hairInk: [1, 2, 3].includes(l.hairInk) ? l.hairInk : 1, outfit: LK.outfit.includes(l.outfit) ? l.outfit : 'shirt', clothes: [-1, 1, 2, 3].includes(l.clothes) ? l.clothes : 1, hat: LK.hat.includes(l.hat) ? l.hat : null, instrument: LK.instrument.includes(l.instrument) ? l.instrument : null, face: Object.fromEntries(['width', 'height', 'jaw', 'eyes', 'nose', 'lips'].map(k => [k, num(f[k], .86, 1.14, 1)])) }; for (const k of BOOLS) o[k] = !!l[k]; return o; };
+  const pending = new Set(), retry = new Map();
+  const api = R.artistFigures = { profiles, custom,
+    request(name) {
+      const key = norm(name); if (!key || custom[key] || pending.has(key) || (retry.get(key) || 0) > Date.now() || typeof fetch !== 'function') return; pending.add(key);
+      fetch('/artista?name=' + encodeURIComponent(name)).then(r => r.ok ? r.json() : Promise.reject(new Error('sin respuesta'))).then(j => { custom[key] = clean(j.look); try { localStorage.setItem('lumora_artistas_v1', JSON.stringify(custom)); } catch (e) {} dispatchEvent(new CustomEvent('lumora:artistas', { detail: key })); })
+        .catch(() => retry.set(key, Date.now() + 180000)).finally(() => pending.delete(key));
+    }, idOf: name => aliases.get(norm(name)) || null,
     profile(name, id, album = '') { const known = profiles[id || this.idOf(name)]; if (known) {
       // el vestuario sigue eras explícitas del álbum, sin contaminar el perfil base.
       if (known.id === 'tyler_joseph') {
@@ -162,8 +174,10 @@
       return known;
     }
       // un nombre desconocido no aporta información sobre su aspecto real.
+      const lk = custom[norm(name)]; if (lk && lk.known) return { id: null, ...lk };
       const h = hash(name); return { id: null, skin: .15, hair: ['short', 'mop', 'messy'][h % 3], hairInk: 1, outfit: ['jacket', 'shirt', 'hoodie'][h % 3], clothes: 2 + h % 2 }; },
     draw(K, name, id, x, ground, scale, motion = {}) {
+      if (!id && !motion.partner && !profiles[this.idOf(name)]) this.request(name);
       const p = this.profile(name, id, motion.album), c = K.c, t = window.CFG?.reduceMotion ? 0 : motion.time || 0, active = !!motion.active;
       const instrument = motion.instrument || p.instrument;
       const act = motion.act || null, back = !!motion.back, beatT = t * (motion.bpm || 110) / 60 * Math.PI;

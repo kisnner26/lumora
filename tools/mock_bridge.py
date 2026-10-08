@@ -121,6 +121,11 @@ class H(SimpleHTTPRequestHandler):
             return
         u = urlparse(self.path); q = {k: v[0] for k, v in parse_qs(u.query).items()}; p = u.path
         if p == '/now': return self.j(snapshot())
+        if p == '/artista':                                       # mismo generador de rasgos que el puente real (usa Claude si está disponible)
+            try:
+                import guion
+                return self.j({'look': guion.artist_look(q.get('name', ''))})
+            except Exception as e: return self.j({'error': str(e)[:120]}, 503)
         if p == '/mock/estado': return self.j({**snapshot(), 'song': ST['song']})
         if p == '/mock':
             scn = q.get('scn', '')

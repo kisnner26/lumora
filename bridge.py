@@ -649,6 +649,13 @@ class Handler(SimpleHTTPRequestHandler):
                 return self.send_json({'scenes': guion.SCENES, 'objects': guion.OBJECTS, 'moods': guion.MOODS, 'times': guion.TIMES,
                                        'colors': guion.COLORS, 'transitions': guion.TRANSITIONS})
             return self.send_json({'ready': guion.available(), 'model': guion.MODEL})
+        if path == '/artista':                                  # rasgos reconocibles de un artista (los genera Claude una vez y quedan guardados)
+            import guion
+            name = parse_qs(urlparse(self.path).query).get('name', [''])[0]
+            try:
+                return self.send_json({'look': guion.artist_look(name)})
+            except Exception as e:
+                return self.send_json({'error': str(e)[:160]}, 503)
         if path == '/prefs':
             import guion
             p = guion.load_prefs()

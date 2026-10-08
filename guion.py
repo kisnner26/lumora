@@ -376,3 +376,104 @@ def storyboard(req):
     finally:
         ev.set()
         STATE['inflight'].pop(key, None)
+
+
+# ---------- aspecto del artista real: rasgos reconocibles para el retrato vectorial ----------
+LOOK_FILE = os.path.expanduser('~/Library/Caches/lumora-artistas.json')
+LOOK_ENUM = {
+    'hair': ['short', 'mop', 'messy', 'long', 'waves', 'ponytail', 'braids', 'dreads', 'mullet', 'bob', 'afro', 'curls', 'bun', 'beehive', 'quiff', 'slick', 'wavesShort', 'buzz', 'bald'],
+    'outfit': ['jacket', 'shirt', 'hoodie', 'suit', 'military', 'cardigan', 'jumpsuit', 'coat', 'dress', 'crop'],
+    'hat': ['none', 'fedora', 'cap', 'beanie'], 'instrument': ['none', 'guitar', 'bass', 'drums', 'keys', 'ukulele'],
+}
+LOOK_BOOL = ['beard', 'moustache', 'sideburns', 'glasses', 'earrings', 'eyeliner', 'lipstick', 'headband', 'fringe', 'chain', 'necklace', 'tie', 'glove', 'tattoos']
+LOOK_SCHEMA = {
+    'type': 'object', 'additionalProperties': False,
+    'required': ['known', 'skin', 'hair', 'hairInk', 'outfit', 'clothes', 'hat', 'instrument', 'face'] + LOOK_BOOL,
+    'properties': {
+        'known': {'type': 'boolean'}, 'skin': {'type': 'number'}, 'hair': {'type': 'string', 'enum': LOOK_ENUM['hair']}, 'hairInk': {'type': 'integer', 'enum': [1, 2, 3]},
+        'outfit': {'type': 'string', 'enum': LOOK_ENUM['outfit']}, 'clothes': {'type': 'integer', 'enum': [-1, 1, 2, 3]},
+        'hat': {'type': 'string', 'enum': LOOK_ENUM['hat']}, 'instrument': {'type': 'string', 'enum': LOOK_ENUM['instrument']},
+        'face': {'type': 'object', 'additionalProperties': False, 'required': ['width', 'height', 'jaw', 'eyes', 'nose', 'lips'],
+                 'properties': {k: {'type': 'number'} for k in ('width', 'height', 'jaw', 'eyes', 'nose', 'lips')}},
+        **{k: {'type': 'boolean'} for k in LOOK_BOOL},
+    },
+}
+LOOK_SYSTEM = ('Eres director de arte de un video musical ilustrado. Describes la imagen pública y reconocible de un artista musical para un retrato vectorial de tres tintas, '
+               'solo con los rasgos que esa persona o el cantante principal del grupo tiene de verdad en su imagen habitual (peinado, color de pelo, vello facial, gafas, tono de piel, ropa característica, accesorios, instrumento). '
+               'No inventes: si no conoces a esa persona o grupo, devuelve known=false y valores neutros. Solo artistas musicales públicos; nunca personas privadas. '
+               'skin: 0.10 muy claro, 0.20 claro, 0.28 trigueño, 0.40 moreno, 0.55 muy oscuro. hairInk: 1 pelo oscuro (negro o castaño oscuro), 2 pelirrojo, castaño rojizo o teñido de color cálido, 3 rubio, canoso o teñido claro. '
+               'clothes: color de su ropa característica: 1 oscuro (negro, azul marino), 2 cálido (rojo, naranja, mostaza), 3 frío o claro (verde, azul, gris), -1 blanco. '
+               'face: proporciones de 0.88 a 1.12 (1 es neutro): width ancho de cara, height alto, jaw mandíbula, eyes separación y tamaño de ojos, nose nariz, lips labios. hat: none si no suele llevar sombrero o gorro.')
+
+
+def _look_cli(name):
+    env = {k: v for k, v in os.environ.items() if not k.startswith(('ANTHROPIC_', 'CLAUDE_CODE', 'CLAUDECODE'))}
+    cmd = [CLAUDE_BIN, '-p', '--model', MODEL, '--effort', 'low', '--output-format', 'json', '--no-session-persistence', '--tools', '', '--setting-sources', '',
+           '--strict-mcp-config', '--disable-slash-commands', '--system-prompt', LOOK_SYSTEM, '--json-schema', json.dumps(LOOK_SCHEMA)]
+    r = subprocess.run(cmd, input='Artista: ' + name, capture_output=True, text=True, timeout=120, env=env, cwd=os.path.expanduser('~'))
+    res = json.loads(r.stdout)
+    out = res.get('structured_output')
+    if out is None:
+        text = (res.get('result') or '').strip().removeprefix('```json').removesuffix('```')
+        out = json.loads(text)
+    return out
+
+
+def _look_api(name):
+    client = _client()
+    msg = client.messages.create(model=MODEL, max_tokens=1200, system=LOOK_SYSTEM, messages=[{'role': 'user', 'content': 'Artista: ' + name}],
+                                 output_config={'format': {'type': 'json_schema', 'schema': LOOK_SCHEMA}})
+    return json.loads(next(b.text for b in msg.content if b.type == 'text'))
+
+
+def _clean_look(raw):
+    c = lambda v, a, b, d: max(a, min(b, float(v))) if isinstance(v, (int, float)) and not isinstance(v, bool) else d
+    out = {'known': bool(raw.get('known')), 'skin': c(raw.get('skin'), .08, .6, .15)}
+    for k in ('hair', 'outfit'):
+        out[k] = raw.get(k) if raw.get(k) in LOOK_ENUM[k] else ('short' if k == 'hair' else 'shirt')
+    out['hairInk'] = raw.get('hairInk') if raw.get('hairInk') in (1, 2, 3) else 1
+    out['clothes'] = raw.get('clothes') if raw.get('clothes') in (-1, 1, 2, 3) else 1
+    out['hat'] = raw.get('hat') if raw.get('hat') in ('fedora', 'cap', 'beanie') else None
+    out['instrument'] = raw.get('instrument') if raw.get('instrument') in ('guitar', 'bass', 'drums', 'keys', 'ukulele') else None
+    f = raw.get('face') if isinstance(raw.get('face'), dict) else {}
+    out['face'] = {k: c(f.get(k), .86, 1.14, 1.0) for k in ('width', 'height', 'jaw', 'eyes', 'nose', 'lips')}
+    for k in LOOK_BOOL:
+        out[k] = bool(raw.get(k))
+    return out
+
+
+def artist_look(name):
+    name = ' '.join(str(name or '').split())[:80]
+    key = name.lower()
+    if len(name) < 2:
+        return {'known': False}
+    with STATE['lock']:
+        cache = STATE.setdefault('looks', None)
+        if cache is None:
+            try:
+                cache = STATE['looks'] = json.load(open(LOOK_FILE))
+            except Exception:
+                cache = STATE['looks'] = {}
+        if key in cache:
+            return cache[key]
+    raw = None
+    if has_key():
+        try:
+            raw = _look_api(name)
+        except Exception:
+            raw = None
+    if raw is None and os.path.exists(CLAUDE_BIN):
+        raw = _look_cli(name)
+    if raw is None:
+        raise RuntimeError('Claude no está disponible')
+    look = _clean_look(raw)
+    with STATE['lock']:
+        STATE['looks'][key] = look
+        try:
+            os.makedirs(os.path.dirname(LOOK_FILE), exist_ok=True)
+            tmp = LOOK_FILE + '.tmp'
+            json.dump(STATE['looks'], open(tmp, 'w'), ensure_ascii=False)
+            os.replace(tmp, LOOK_FILE)
+        except Exception:
+            pass
+    return look

@@ -70,7 +70,7 @@
     const hideActors = act === 'drive';
     // si la canción tiene artista con perfil, él o ella es quien actúa; las escenas con objetos (puerta, taxi, carta…) siguen con los muñecos
     const SGm = R.singers, cfgOn = !window.CFG || CFG.singers !== false, ck = typeof ext !== 'undefined' ? ext.key() : '';
-    if (F._castKey !== ck) { F._castKey = ck; F._cast = cfgOn && SGm ? SGm.plan(ext.st.artist, ext.st.name) : null; }
+    if (F._castKey !== ck) { F._castKey = ck; F._cast = cfgOn && SGm ? SGm.plan(ext.st.artist, ext.st.name) : null; for (const m of F._cast || []) if (!m.id) R.artistFigures.request(m.name); }
     const cast = !action && !hideActors && !empty ? F._cast : null, star = cast && cast[(b.li || 0) % cast.length];
     if (star) {
       const figAct = act === 'cry' || ((b.li || 0) % 4 === 3 && !act) ? 'look' : act === 'sleep' ? null : act === 'sing' || !act ? 'sing' : act;
@@ -78,7 +78,7 @@
       const gapP = pst ? { near: 240, with: 215, embrace: 130, apart: 380 }[pst] || 230 : 0, hugDx = pst === 'embrace' && figAct === 'hug' ? dirP * gapP / sc : 0;
       if (pst) {                                                                          // el otro: llega, camina al lado, se abraza o se queda lejos, de espaldas
         const pAct = pst === 'with' ? figAct : pst === 'embrace' ? (figAct === 'hug' ? 'hug' : null) : pst === 'near' && (figAct === 'walk' || figAct === 'dance') ? figAct : null;
-        R.artistFigures.draw(K, 'ella', null, left + dirP * gapP, ground, sc * .93, { time: now + 3.3, bpm, act: pAct === 'look' ? null : pAct, back: pst === 'apart' || (pst === 'with' && figAct === 'look'), hug: -hugDx * sc / (sc * .93), active: false, album: '' });
+        R.artistFigures.draw(K, 'ella', null, left + dirP * gapP, ground, sc * .93, { time: now + 3.3, bpm, act: pAct === 'look' ? null : pAct, partner: true, back: pst === 'apart' || (pst === 'with' && figAct === 'look'), hug: -hugDx * sc / (sc * .93), active: false, album: '' });
       }
       R.artistFigures.draw(K, star.name, star.id, left, ground, sc, { time: now + star.h % 7, bpm, hug: hugDx, act: figAct === 'look' ? null : figAct, back: figAct === 'look', active: figAct === 'sing' && !reduced, open: figAct === 'sing' ? Math.abs(Math.sin(now * 7)) * .8 : 0, instrument: star.instrument, album: typeof ext !== 'undefined' ? ext.st.album || '' : '' });
       if (cast.length > 1 && star.band) cast.filter(m => m !== star).slice(0, 2).forEach((m, i) => R.artistFigures.draw(K, m.name, m.id, left + (i ? 200 : -200), ground, sc * .86, { time: now + m.h % 7, bpm, act: figAct === 'look' ? null : figAct, instrument: m.instrument, active: false, album: typeof ext !== 'undefined' ? ext.st.album || '' : '' }));
