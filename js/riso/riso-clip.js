@@ -103,7 +103,7 @@
       let id = (R.scenes[plan?.scene] ? plan.scene : SCENE_MAP[plan?.scene]) || byWords || (narrative?.action ? narrative.place : null) || MOOD_SCENE[mood] || 'ciudad';
       if (R.scenes.ella && !byWords && /eyes|woman|couple/.test((objs || []).join(',')) && ['romantico', 'feliz', 'euforico', 'sereno'].includes(mood)) id = 'ella'; else if (!byWords && (/eyes|man/.test((objs || []).join(',')) || (mood === 'romantico' && r() < .4))) id = 'retrato';
       if (!byWords && !plan?.scene && !narrative?.action && li >= 0 && RC.lastScene === id && r() < .6) { const alt = R.order.filter(x => x !== id); id = alt[(r() * alt.length) | 0]; }
-      if (R.world?.enabled && !plan?.scene && !byWords) id='universo';
+      if (R.world?.enabled && !plan?.scene && !byWords && !narrative?.action) { shot.worldPlace = id; id = 'universo'; }   // el mundo hereda el lugar que pedía la letra o el ánimo
       const gd = R.gd?.detect(ext.st?.name, ext.st?.artist, ext.st?.album); if (gd && !byWords && r() < .5) { R.gd.level = gd; id = R.gd.scene(gd, r); }
       shot.scene = id; RC.lastScene = id; recent.push(id); if (recent.length > 6) recent.shift(); shot.inks = R.scenes[id].inks;
       if (r() < .45) shot.inks = inkList[(sec + 1) % inkList.length];

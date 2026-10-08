@@ -67,5 +67,5 @@
     },
     decode(c){const im=c.getImageData(0,0,c.canvas.width,c.canvas.height),d=im.data,paper=[246,238,226],inks=[[33,43,128],[246,111,36],[96,161,192]];for(let i=0;i<d.length;i+=4){const coverage=[d[i]/255,d[i+1]/255,d[i+2]/255];for(let j=0;j<3;j++)d[i+j]=paper[j]*coverage.reduce((v,t,k)=>v*(1-t*(1-inks[k][j]/255)),1);d[i+3]=255;}c.putImageData(im,0,0);}
   };
-  R.register({id:'universo',name:'universo procedural',inks:0,make:()=>({}),cam(cam,t){cam.x=Math.sin(t*.06)*18;cam.y=0;cam.z=1;cam.r=0;},draw(K,s,t){const p=U.profile(U.settings().biome==='auto'?'costa':U.settings().biome);U.draw(K,p,t,{cx:800,ground:760});K.code('universo · '+U.settings().seed.slice(0,16),80,825,{size:16});}});
+  R.register({id:'universo',name:'universo procedural',inks:0,make:()=>({}),cam(cam,t){cam.x=Math.sin(t*.06)*18;cam.y=0;cam.z=1;cam.r=0;},draw(K,s,t){const place=window.RISOCLIP?.shot?.worldPlace||'costa',p=U.profile({museo:'cuarto',retrato:'cuarto',ella:'cuarto',oficina:'ciudad'}[place]||place);U.draw(K,p,t,{cx:800,ground:760});K.code('universo · '+U.settings().seed.slice(0,16),80,825,{size:16});}});
 })();
