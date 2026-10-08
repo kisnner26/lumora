@@ -199,7 +199,7 @@ function applyProject() {
 }
 function project() { return { cuts: IN.cuts, blocks: AUT.P.blocks, lines: Object.entries(AUT.P.lines).map(([i, e]) => ({ i: +i, ...e })), story: AUT.P.story, cinema: AUT.P.cinema || { lines: {}, sections: {} } }; }
 async function flushAutorSave() {
-  clearTimeout(AUT.saveT); const pending = AUT.pendingSave; if (!pending) return;
+  clearTimeout(AUT.saveT); const pending = AUT.pendingSave; if (!pending) return AUT.saveQueue;
   AUT.pendingSave = null;
   AUT.saveQueue = (AUT.saveQueue || Promise.resolve()).catch(() => {}).then(async () => {
   try {
@@ -358,7 +358,8 @@ function action(a) {
   if (a === 'claude') {
     if (!confirm('¿descartar tu versión y volver al guion de Claude?')) return;
     clearTimeout(AUT.saveT); AUT.pendingSave = null; RISO.film?.setEdits({});
-    RISOSTORE.del('misc', 'autor|' + autorKey()).then(() => fetch('/autor', { method: 'POST', body: JSON.stringify({ key: autorKey(), delete: true }) })).then(() => { closeAutor(true); SEM.key = ''; planSong(); toast('volviste al guion de Claude'); });
+    const key = autorKey();
+    Promise.resolve(AUT.saveQueue).then(() => RISOSTORE.del('misc', 'autor|' + key)).then(() => fetch('/autor', { method: 'POST', body: JSON.stringify({ key, delete: true }) })).then(() => { if (autorKey() !== key) return; closeAutor(true); SEM.key = ''; planSong(); toast('volviste al guion de Claude'); });
     return;
   }
   if (a === 'rec') { if (REC.on) return stopRec(); ext.cmd('start'); setTimeout(startRec, 700); toast('grabando desde el inicio: se descarga en mp4 al detener'); }
