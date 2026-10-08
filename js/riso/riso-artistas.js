@@ -185,7 +185,7 @@
       const hop = act === 'jump' ? Math.abs(Math.sin(beatT)) * 46 : 0, sway = 0;
       const reduce = !!window.CFG?.reduceMotion; const en = motion.energy ?? .5, look = motion.look || 0; let R0 = solve(act, t, beatT, active, true, motion.hug || 0, en, motion.hit || 0), micAt = null;
       { const key = motion.key || name, prev = poseState.get(key), dtp = prev ? t - prev.t : 1e9;    // al cambiar de acción, las articulaciones se funden en vez de saltar
-        if (prev && dtp > 0 && dtp < .5 && !reduce) { const k = 1 - Math.exp(-dtp * 8), mx = (a, b) => a + (b - a) * k, mv = (a, b) => [mx(a[0], b[0]), mx(a[1], b[1])]; R0 = { ...R0, fL: mv(prev.o.fL, R0.fL), fR: mv(prev.o.fR, R0.fR), hL: mv(prev.o.hL, R0.hL), hR: mv(prev.o.hR, R0.hR), dy: mx(prev.o.dy, R0.dy), tilt: mx(prev.o.tilt, R0.tilt), nod: mx(prev.o.nod, R0.nod) }; }
+        if (prev && dtp > 0 && dtp < .5 && !reduce) { const k = 1 - Math.exp(-dtp * 5.5), mx = (a, b) => a + (b - a) * k, mv = (a, b) => [mx(a[0], b[0]), mx(a[1], b[1])]; R0 = { ...R0, fL: mv(prev.o.fL, R0.fL), fR: mv(prev.o.fR, R0.fR), hL: mv(prev.o.hL, R0.hL), hR: mv(prev.o.hR, R0.hR), dy: mx(prev.o.dy, R0.dy), tilt: mx(prev.o.tilt, R0.tilt), nod: mx(prev.o.nod, R0.nod) }; }
         if (poseState.size > 40) poseState.clear(); poseState.set(key, { t, o: R0 }); }
       const bob = Math.sin(t * 2.2) * (active ? 3 : 1), open = motion.open || 0;
       c.save(); c.translate(x, ground - hop); c.scale(scale * (p.build || 1), scale); c.rotate(Math.sin(t * 1.6) * (active ? .018 : .007) + sway);

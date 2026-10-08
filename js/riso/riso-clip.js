@@ -51,6 +51,7 @@
     return bs >= 1.5 || (bs >= 1 && !text) ? best : null;
   }
   // modo película: una toma continua por sección, con el mundo, los personajes y la cámara vivos; la letra va encima y no corta la acción
+  const songMood = () => { const m = new Map(); for (const x of R.film?.result?.beats || []) if (x?.mood) m.set(x.mood, (m.get(x.mood) || 0) + 1); return [...m.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || 'sereno'; };
   const filmOn = () => !!(R.story && R.film && R.world?.enabled && (!window.CFG || CFG.film !== false));
   const beatAt = time => { const b = R.film.plan(IN.lines, IN.cuts, SEM.plans, proc.dur).beats, lt = time + .2 + (IN.off || 0); let out = null; for (const x of b) { if (!x || !IN.lines[x.li]) continue; if (IN.lines[x.li].t <= lt) out = x; else break; } return out || b.find(Boolean) || null; };
   function makeShot(li, sec, time, why, force) {
@@ -114,7 +115,7 @@
       if (r() < .45) shot.inks = inkList[(sec + 1) % inkList.length];
     }
     if (kind === 'giant') { shot.word = (keyWord(text, L) || (text.split(/\s+/).map(w => w.replace(/[^\p{L}\p{N}'’-]/gu, '')).sort((a, b) => b.length - a.length)[0] || '')).toUpperCase(); shot.bg = r() < .5 ? 'burst' : 'flood'; shot.cut = 'zin'; }
-    if (shot.filmMode) { shot.flip = (hash(ext.key()) & 1) === 1; shot.layout = 0; shot.bg = 'paper'; shot.cut = 'zin'; }
+    if (shot.filmMode) { shot.flip = (hash(ext.key()) & 1) === 1; shot.layout = 0; shot.bg = 'paper'; shot.cut = 'zin'; shot.inks = (MOOD_INKS[songMood()] || [0])[0]; }
     if (kind === 'title' || kind === 'outro') { shot.cut = 'zout'; shot.inks = 0; }
     shot.notes = pickNotes(r, kind);
     return shot;
@@ -244,6 +245,7 @@
         R.props.drawProp(K, p.id, cxp + off[0], cy + off[1], sc * (i === 0 ? 1 : .55), easeOut(k), { seed: s.seed + i * 7, ph: p.ph, rot: p.rot }); });
       if (s.props.length > 1 || s.bg === 'paper') K.tape(cxp - 190, cy - 240, 120, 38, -.5);
       K.screen(() => {
+        if (s.prevText && s.filmMode && showText && time - s.prevText.until < .45 && s.prevText.li !== s.text?.li) { const pw = (v.w - m * 2) * .46, px = s.flip ? v.r - m - pw - 10 : v.l + m + 10; K.c.save(); K.c.globalAlpha = Math.max(0, 1 - (time - s.prevText.until) / .45); writeLine(s.prevText.text, px, v.t + m + 96, pw, v.h * .5, 99, 4, { align: s.flip ? 'right' : 'left', keyPaper: s.bg === 'flood' }); K.c.restore(); }
         let wlh = v.h * .4; if (showText) { const w = (v.w - m * 2) * .46, x = s.flip ? v.r - m - w - 10 : v.l + m + 10; if (window.CFG?.textBox) { const ft = fitText(text, w, v.h * .5, { size: 104 * clamp(CFG.lyricSize || 1, .7, 1.6), w: 600, font: 'hand' }); K.rect(x - 16, v.t + m + 88, w + 32, ft.lines.length * ft.size * 1.12 + 26, { f: -1, s: 1, lw: 3.5 }); } wlh = writeLine(text, x, v.t + m + 96, w, v.h * .5, age, dur, { align: s.flip ? 'right' : 'left', keyPaper: s.bg === 'flood' }).h; }
         if (s.text?.tr && showText) { const w = (v.w - m * 2) * .46, x = s.flip ? v.r - m - w - 10 : v.l + m + 10, yy = v.t + m + 96 + wlh + 18; trBox(s.text.tr, s.flip ? x + w : x, Math.min(yy, v.b - m - 330), w, s.flip ? 'right' : 'left'); }
       });
@@ -323,6 +325,7 @@
     const li = lineIdx(time); if (li < 0 || !IN.lines[li]) { if (s.text && time > s.text.t + s.text.dur + 1.5) s.text = null; return; }
     if (s.text && s.text.li === li) return;
     const l = IN.lines[li], next = IN.lines.slice(li + 1).find(q => q.text), dur = next ? Math.max(1, next.t - l.t) : 4, tr = IN.trMode === 'orig' ? '' : (IN.tr?.[li] || '');
+    if (s.text && s.filmMode) s.prevText = { ...s.text, until: time };
     s.text = { li, t: l.t, text: l.text, dur, tr: IN.trMode === 'es' && tr ? '' : tr };
     if (IN.trMode === 'es' && IN.tr?.[li]) s.text.text = IN.tr[li];
   }
@@ -381,6 +384,7 @@
       if (!cur) { RC.shot = next; RC.count = 1; }
       else if (next.filmMode && cur.filmMode) {
         const sd = R.story.data, a = sd?.secs[cur.sec]?.place, b2 = sd?.secs[next.sec]?.place, interior = a === 'cuarto' || b2 === 'cuarto';
+        next.k0 = cur.k0;                                                      // la toma sigue: nada de lo que ya estaba en pantalla vuelve a empezar
         if (interior && a !== b2) { RC.pending = next; st.cutTo(() => { RC.shot = next; RC.pending = null; RC.count++; }, 'zin'); } else { RC.shot = next; RC.count++; }
       }
       else { if (why === 'sec' && R.fx) { const k = R.fx.pickCut(next, cur); if (k) next.cut = k; } RC.pending = next; st.cutTo(() => { RC.shot = next; RC.pending = null; RC.count++; }, next.cut); }

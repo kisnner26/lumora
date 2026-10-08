@@ -45,25 +45,25 @@
       this.key = key; return this.rows;
     },
     at(li) { return (this.rows[li]) || null; },
-    // cielo: sol, luna y estrellas según la hora
-    sky(K, time, t, a, horizon = 500) {
-      const c = K.c, calm = !!window.CFG?.reduceMotion;
+    // cielo: sol, luna y estrellas según la hora; k (0..1) es cuánto se ve, para fundir una hora con la siguiente
+    sky(K, time, t, a, horizon = 500, k = 1) {
+      const c = K.c, calm = !!window.CFG?.reduceMotion; if (k < .02) return;
       if (time === 'noche') {
-        K.rect(-100, -100, 1800, 1100, { f: 1, ft: .16, over: true });
-        for (let i = 0; i < 46; i++) { const x = (i * 211 + 40) % 1600, y = 40 + (i * 97) % (horizon - 80), tw = calm ? .6 : .4 + .6 * Math.abs(Math.sin(t * (.6 + (i % 5) * .2) + i)); K.circ(x, y, 1.4 + (i % 3) * .9, { f: -1, ft: tw }); }
-        K.glow(3, 1180, 190, 220 + a * 50, .5);
+        K.rect(-100, -100, 1800, 1100, { f: 1, ft: .16 * k, over: true });
+        const n = Math.round(46 * k); for (let i = 0; i < n; i++) { const x = (i * 211 + 40) % 1600, y = 40 + (i * 97) % (horizon - 80), tw = calm ? .6 : .4 + .6 * Math.abs(Math.sin(t * (.6 + (i % 5) * .2) + i)); K.circ(x, y, 1.4 + (i % 3) * .9, { f: -1, ft: tw * k }); }
+        K.glow(3, 1180, 190, 220 + a * 50, .5 * k);
       } else if (time === 'amanecer' || time === 'atardecer') {
-        const rise = time === 'amanecer' ? Math.min(1, (t % 40) / 40) : 1, sy = horizon - 20 - (time === 'amanecer' ? rise * 90 : 0) + (time === 'atardecer' ? 0 : 0);
-        K.rect(-100, horizon - 300, 1800, 340, { f: 2, ft: .06, over: true });
-        K.glow(2, 800, sy, 420 + a * 60, .4); K.circ(800, sy, 74, { f: 2, ft: .8, s: 1, lw: 4 });
-        for (let i = 0; i < 16; i++) { const an = i / 16 * Math.PI * 2 + (calm ? 0 : t * .05); K.line(800 + Math.cos(an) * 96, sy + Math.sin(an) * 96, 800 + Math.cos(an) * (150 + (i % 2) * 50), sy + Math.sin(an) * (150 + (i % 2) * 50), 2, 3, .4); }
-      } else if (time === 'dia') K.glow(2, 1300, 150, 360, .45);
+        const rise = time === 'amanecer' ? Math.min(1, (t % 40) / 40) : 1, sy = horizon - 20 - (time === 'amanecer' ? rise * 90 : 0);
+        K.rect(-100, horizon - 300, 1800, 340, { f: 2, ft: .06 * k, over: true });
+        K.glow(2, 800, sy, 420 + a * 60, .4 * k); K.circ(800, sy, 74, { f: 2, ft: .8 * k, s: 1, lw: 4 * k + .5 });
+        for (let i = 0; i < 16; i++) { const an = i / 16 * Math.PI * 2 + (calm ? 0 : t * .05); K.line(800 + Math.cos(an) * 96, sy + Math.sin(an) * 96, 800 + Math.cos(an) * (150 + (i % 2) * 50), sy + Math.sin(an) * (150 + (i % 2) * 50), 2, 3, .4 * k); }
+      } else if (time === 'dia') K.glow(2, 1300, 150, 360, .45 * k);
     },
     // el escenario completo: cielo, mundo del lugar y clima, anclado al suelo. «view» mueve la cámara del fondo (paralaje)
     backdrop(K, { place, at = {}, now, beat = 0, ground = 710, cx = 800, view = {} }) {
       const c = K.c, interior = place === 'cuarto', wz = (interior ? 1 : 1.32) * (1 + (view.dolly || 0) * .5 + (view.punch || 0) * .6);
       c.save(); c.translate(800, ground); c.scale(wz, wz); c.rotate((view.roll || 0) * .6); c.translate(-800 - (view.x || 0) - (view.drift || 0), -ground - (view.y || 0));
-      if (!interior) this.sky(K, at.time, now, beat, 520);
+      if (!interior) for (const [tm, kk] of view.skies || [[at.time, 1]]) this.sky(K, tm, now, beat, 520, kk);
       K.line(-300, ground, 1900, ground, 1, 5);
       if (R.world?.enabled) {
         const sc = view.scroll || 0;
@@ -76,9 +76,9 @@
           K.line(xs, 40, xs, ground, 1, 7, .85); K.line(xs + 14, 90, xs + 14, ground, 2, 3, .6);
         } else tiles(R.world.profile(place));
       }
-      if (interior) this.sky(K, at.time, now, beat, 520);
+      if (interior) for (const [tm, kk] of view.skies || [[at.time, 1]]) this.sky(K, tm, now, beat, 520, kk);
       if (!interior && R.world?.enabled) this.life(K, place, at.time, now, ground, view.scroll || 0, R.world.profile(place));
-      this.weather(K, at.weather, now, beat, ground);
+      for (const [wt, kk] of view.weathers || [[at.weather, 1]]) this.weather(K, wt, now, beat, ground, kk);
       c.restore();
     },
     // vida propia del lugar: tráfico y peatones lejanos, barcos y gaviotas, luciérnagas, un rodadero en el desierto; deterministas y a la velocidad del paisaje
@@ -132,25 +132,25 @@
       }
     },
     // clima: partículas deterministas a pantalla completa
-    weather(K, type, t, a, ground = 710) {
-      if (!type) return; const calm = !!window.CFG?.reduceMotion, tt = calm ? 0 : t;
+    weather(K, type, t, a, ground = 710, k = 1) {
+      if (!type || k < .02) return; const N = n => Math.max(1, Math.round(n * k)); const calm = !!window.CFG?.reduceMotion, tt = calm ? 0 : t;
       if (type === 'lluvia' || type === 'tormenta') {
-        const n = type === 'tormenta' ? 120 : 76, sp = type === 'tormenta' ? 1500 : 1000;
+        const n = N(type === 'tormenta' ? 120 : 76), sp = type === 'tormenta' ? 1500 : 1000;
         for (let i = 0; i < n; i++) { const x = ((i * 97 + tt * 110) % 1760) - 80, y = ((i * 173 + tt * sp * (.7 + (i % 5) * .08)) % 1000) - 60; K.line(x, y, x - 16, y + 52, 1, 2, .5 + (i % 3) * .12); }
-        for (let i = 0; i < 16; i++) { const ph = (tt * 2.2 + i * .37) % 1, x = (i * 331) % 1600; if (ph < .6) K.ell(x, ground + 20 + (i % 4) * 30, 8 + ph * 40, 2 + ph * 8, 0, { s: 1, lw: 2, st: .8 - ph }); }
-        K.rect(-100, -100, 1800, 1100, { f: 3, ft: .1, over: true });
+        for (let i = 0; i < N(16); i++) { const ph = (tt * 2.2 + i * .37) % 1, x = (i * 331) % 1600; if (ph < .6) K.ell(x, ground + 20 + (i % 4) * 30, 8 + ph * 40, 2 + ph * 8, 0, { s: 1, lw: 2, st: .8 - ph }); }
+        K.rect(-100, -100, 1800, 1100, { f: 3, ft: .1 * k, over: true });
         if (type === 'tormenta') { const flash = Math.max(0, 1 - ((tt * .45) % 3.2) * 4); if (flash > 0) { K.rect(-100, -100, 1800, 1100, { f: -1, ft: flash * .55, over: true }); const bx = 500 + (Math.floor(tt * .45 / 3.2) * 377) % 700; K.path(c => { c.moveTo(bx, 0); c.lineTo(bx - 40, 200); c.lineTo(bx + 20, 220); c.lineTo(bx - 60, 460); c.lineTo(bx - 10, 480); c.lineTo(bx - 90, ground); }, { s: 2, lw: 8, st: flash }); } }
       } else if (type === 'nieve') {
-        for (let i = 0; i < 100; i++) { const x = ((i * 131 + Math.sin(tt * .7 + i) * 36 + tt * 24) % 1700) - 50, y = ((i * 89 + tt * (46 + (i % 4) * 22)) % 960) - 30; K.circ(x, y, 2.5 + (i % 4) * 1.3, { f: -1, s: 1, lw: 1.6, st: .5 }); }
-        K.rect(-100, -100, 1800, 1100, { f: 3, ft: .09, over: true });
+        for (let i = 0; i < N(100); i++) { const x = ((i * 131 + Math.sin(tt * .7 + i) * 36 + tt * 24) % 1700) - 50, y = ((i * 89 + tt * (46 + (i % 4) * 22)) % 960) - 30; K.circ(x, y, 2.5 + (i % 4) * 1.3, { f: -1, s: 1, lw: 1.6, st: .5 }); }
+        K.rect(-100, -100, 1800, 1100, { f: 3, ft: .09 * k, over: true });
       } else if (type === 'niebla') {
-        for (let i = 0; i < 6; i++) { const y = 260 + i * 78, d = ((tt * (7 + i * 3) + i * 300) % 2000) - 400; K.rect(-400 + d, y, 2200, 70 + (i % 3) * 18, { f: 3, ft: .16, over: true }); K.rect(-1400 + d, y + 20, 2200, 40, { f: -1, ft: .22, over: true }); }
+        for (let i = 0; i < 6; i++) { const y = 260 + i * 78, d = ((tt * (7 + i * 3) + i * 300) % 2000) - 400; K.rect(-400 + d, y, 2200, 70 + (i % 3) * 18, { f: 3, ft: .16 * k, over: true }); K.rect(-1400 + d, y + 20, 2200, 40, { f: -1, ft: .22 * k, over: true }); }
       } else if (type === 'fuego') {
-        K.glow(2, 800, ground + 40, 520 + a * 80, .16);
-        for (let i = 0; i < 54; i++) { const x = (i * 149) % 1600 + Math.sin(tt * 1.4 + i) * 40, ph = (tt * (.18 + (i % 5) * .05) + i * .13) % 1, y = ground + 30 - ph * 760; K.circ(x, y, (1 - ph) * 7 + 1, { f: i % 3 ? 2 : -1, ft: 1 - ph * .6 }); }
+        K.glow(2, 800, ground + 40, 520 + a * 80, .16 * k);
+        for (let i = 0; i < N(54); i++) { const x = (i * 149) % 1600 + Math.sin(tt * 1.4 + i) * 40, ph = (tt * (.18 + (i % 5) * .05) + i * .13) % 1, y = ground + 30 - ph * 760; K.circ(x, y, (1 - ph) * 7 + 1, { f: i % 3 ? 2 : -1, ft: 1 - ph * .6 }); }
       } else if (type === 'viento') {
-        for (let i = 0; i < 18; i++) { const y = 110 + i * 40 + Math.sin(i) * 20, x = ((i * 277 + tt * 520) % 2000) - 200, len = 140 + (i % 4) * 70; K.path(c => { c.moveTo(x, y); c.bezierCurveTo(x + len * .3, y - 14, x + len * .6, y + 14, x + len, y); }, { s: 1, lw: 2.5, st: .45 }); }
-        for (let i = 0; i < 8; i++) { const x = ((i * 421 + tt * 380) % 1900) - 150, y = 220 + (i * 83) % 460 + Math.sin(tt * 3 + i) * 30; K.ell(x, y, 16, 7, tt * 4 + i, { f: i % 2 ? 2 : 3, ft: .7 }); }
+        for (let i = 0; i < N(18); i++) { const y = 110 + i * 40 + Math.sin(i) * 20, x = ((i * 277 + tt * 520) % 2000) - 200, len = 140 + (i % 4) * 70; K.path(c => { c.moveTo(x, y); c.bezierCurveTo(x + len * .3, y - 14, x + len * .6, y + 14, x + len, y); }, { s: 1, lw: 2.5, st: .45 }); }
+        for (let i = 0; i < N(8); i++) { const x = ((i * 421 + tt * 380) % 1900) - 150, y = 220 + (i * 83) % 460 + Math.sin(tt * 3 + i) * 30; K.ell(x, y, 16, 7, tt * 4 + i, { f: i % 2 ? 2 : 3, ft: .7 }); }
       }
     },
   };

@@ -13,7 +13,7 @@
   const ATMOS_WEATHER = { rain: 'lluvia', ventana_lluvia: 'lluvia', snow: 'nieve', fire: 'fuego', fireworks: 'fuego', thunder: 'tormenta', smoke: 'niebla', leaves: 'viento' };
   const FALL = ['ciudad', 'costa', 'bosque', 'desierto', 'espacio'];
   const SPEED = { walk: 150, run: 420, drive: 520, journey: 420 };
-  const WALK_IN = 3.4, SEAM_OFFSET = 700;
+  const WALK_IN = 4.2, SEAM_OFFSET = 700, DT = 1 / 20, LAG = .55;
   // el otro: llega, se abraza o se aleja según lo que dice cada verso
   const TOGETHER = word('together|we|us|our|juntos|juntas|nosotros|nosotras|nuestro|nuestra|stay with me|quedate'), HUG = word('hold|hug|embrace|kiss|abrazo|abrazar|abrazame|besar|beso|besame|mi vida|te quiero|love you|te amo'),
     APART = word('miss|alone|without you|gone|left|goodbye|lost|apart|sin ti|solo|sola|adios|te fuiste|me dejaste|lejos|olvidar|forget|ghost|empty|vacio'), YOU = word('you|your|baby|girl|boy|tu|ti|te|ella|el|amor|mi amor|cielo');
@@ -29,7 +29,10 @@
       const secs = sections.map((sec, k) => {
         const idx = lines.map((l, i) => [l, i]).filter(([l, i]) => rows[i] && l.t >= sec.start && l.t < sec.end).map(([, i]) => i), plan = plans[k] || {};
         const mid = ((sec.start + sec.end) / 2) / end, energy = sec.energy ?? 5, sad = beats.filter(b => b && lines[b.li]?.t >= sec.start && lines[b.li]?.t < sec.end && ['melancolico', 'triste', 'oscuro', 'nostalgico'].includes(b.mood)).length > idx.length / 2;
-        let place = mode(idx.map(i => rows[i].place)) || SCENE_BIOME[plan.scene] || null;
+        const placeVotes = idx.map(i => rows[i].place), interiorVotes = placeVotes.filter(v => v === 'cuarto').length;
+        // un interior corta la caminata entre lugares: solo si la letra insiste en él (o el guion de Claude lo pide), si no se queda fuera
+        let place = mode(placeVotes.map(v => v === 'cuarto' && interiorVotes < 2 && !['habitacion', 'cuarto', 'retrato', 'museo'].includes(plan.scene) ? null : v)) || SCENE_BIOME[plan.scene] || null;
+        if (place === 'cuarto' && interiorVotes < 2 && !['habitacion', 'cuarto', 'retrato', 'museo'].includes(plan.scene)) place = null;
         let time = mode(idx.map(i => rows[i].time)) || (['amanecer', 'dia', 'atardecer', 'noche'].includes(plan.time) ? plan.time : plan.time === 'madrugada' ? 'noche' : null);
         if (!time) time = energy >= 7 ? (mid < .5 ? 'dia' : mid < .8 ? 'atardecer' : 'noche') : mid < .22 ? 'atardecer' : mid < .8 ? 'noche' : sad ? 'noche' : 'amanecer';
         let weather = mode(idx.map(i => rows[i].weather)) || ATMOS_WEATHER[plan.atmos] || (sad && ['bridge', 'climax'].includes(sec.role) ? 'lluvia' : sad && sec.role === 'outro' ? 'niebla' : sec.role === 'climax' && energy >= 8 ? 'viento' : null);
@@ -66,8 +69,11 @@
         const t0 = ts[i], t1 = ts[i + 1], bi = bt.findLastIndex(b => b.t <= t0), act = bi >= 0 ? bt[bi].p.act : 'walk', forced = windows.find(w => t0 >= w.a && t0 < w.b);
         const v = forced ? SPEED.journey : (SPEED[act] || 0) * (bi < 0 ? 1 : 1); segs.push({ t0, t1, v, acc }); acc += v * (t1 - t0);
       }
-      const seams = windows.map(w => ({ k: w.k, t: w.a, from: secs[w.k - 1].place, to: secs[w.k].place })).map(m => { const u = scrollIn(segs, m.t) + SEAM_OFFSET; return { ...m, u }; });
-      return { secs, per, segs, seams, end, forced: windows };
+      // el camino acelera y frena con suavidad (nada se detiene de golpe): se integra una velocidad filtrada en una tabla
+      const targetAt = t => { let lo = 0, hi = segs.length - 1; if (!segs.length) return 0; if (t >= segs[hi].t0) return segs[hi].v; while (lo < hi) { const m = (lo + hi + 1) >> 1; if (segs[m].t0 <= t) lo = m; else hi = m - 1; } return segs[lo].v; };
+      const nT = Math.ceil(end / DT) + 2, tab = new Float32Array(nT + 1); { let v = targetAt(0), acc = 0; for (let k = 0; k <= nT; k++) { v += (targetAt(k * DT) - v) * (1 - Math.exp(-DT / LAG)); acc += v * DT; tab[k] = acc; } }
+      const seams = windows.map(w => ({ k: w.k, t: w.a, from: secs[w.k - 1].place, to: secs[w.k].place })).map(m => { const u = tabAt(tab, m.t) + SEAM_OFFSET; return { ...m, u }; });
+      return { secs, per, segs, tab, seams, end, forced: windows };
     },
     plan(lines, film, plans, duration, songKey) {
       const key = JSON.stringify([songKey, lines.map(l => [l.t, l.text]), film.sections.map(s => [s.start, s.end, s.role]), duration, (plans || []).map(p => p && [p.scene, p.time, p.atmos])]);
@@ -76,14 +82,15 @@
     },
     at(li) { return this.data?.per[li] || null; },
     // desplazamiento acumulado del paisaje en el segundo «t»: determinista, igual al saltar o repetir
-    scroll(t) { return this.data ? scrollIn(this.data.segs, t) : 0; },
+    scroll(t) { return this.data ? tabAt(this.data.tab, t) : 0; },
     // qué lugar ve cada parte de la pantalla: un único tramo, o el cruce entre el anterior y el nuevo
     view(t) {
-      const d = this.data; if (!d) return null; const sec = d.secs.filter(s => s.sec.start <= t).at(-1) || d.secs[0], sc = scrollIn(d.segs, t);
-      const seam = d.seams.filter(m => m.t <= t).at(-1); if (seam && sc - seam.u < SEAM_OFFSET && seam.k === sec.k) return { place: sec.place, seam: { u: seam.u, from: seam.from, to: seam.to }, scroll: sc };
-      return { place: sec.place, scroll: sc };
+      const d = this.data; if (!d) return null; const sec = d.secs.filter(s => s.sec.start <= t).at(-1) || d.secs[0], sc = tabAt(d.tab, t);
+      const seam = d.seams.filter(m => m.t <= t).at(-1); if (seam && sc - seam.u < SEAM_OFFSET && seam.k === sec.k) return { place: sec.place, time: sec.time, weather: sec.weather, k: sec.k, seam: { u: seam.u, from: seam.from, to: seam.to }, scroll: sc };
+      return { place: sec.place, time: sec.time, weather: sec.weather, k: sec.k, scroll: sc };
     },
   };
+  function tabAt(tab, t) { if (t <= 0) return 0; const f = t / DT, i = Math.floor(f); if (i >= tab.length - 1) return tab[tab.length - 1]; return tab[i] + (tab[i + 1] - tab[i]) * (f - i); }
   function scrollIn(segs, t) {
     if (!segs.length) return 0; if (t <= segs[0].t0) return segs[0].acc * 0 + segs[0].v * Math.min(0, t - segs[0].t0);
     let lo = 0, hi = segs.length - 1; while (lo < hi) { const m = (lo + hi + 1) >> 1; if (segs[m].t0 <= t) lo = m; else hi = m - 1; }
