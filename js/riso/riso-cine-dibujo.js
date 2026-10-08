@@ -11,7 +11,8 @@
     c.translate(cx, 450); c.scale(camera.reverse ? -camera.z : camera.z, camera.z); c.translate(-camera.x, -camera.y);
     // decorado persistente. no gira de escenario durante una misma acción.
     K.line(cx - 390, ground, cx + 390, ground, 1, 5);
-    if (b.place === 'cuarto') {
+    if (R.world?.enabled) R.world.draw(K,R.world.profile(b.place),b.t+elapsed,{cx,ground});
+    else if (b.place === 'cuarto') {
       K.rect(cx - 300, 150, 600, 560, { s: 3, lw: 4 });
       K.rect(cx - 250, 215, 135, 160, { f: 3, ft: .10, s: 3, lw: 3 });
       K.line(cx - 182, 215, cx - 182, 375, 3, 3); K.line(cx - 250, 295, cx - 115, 295, 3, 3);

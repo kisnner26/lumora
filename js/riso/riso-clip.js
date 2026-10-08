@@ -38,7 +38,7 @@
 
   // ---------- tomas ----------
   const meta = () => { const s = window.ext?.st || {}; return { title: (s.name || proc.title || '').replace(/\s*[\(\[](feat|ft|with)\.?[^)\]]*[\)\]]/i, '').trim() || 'sin título', artist: (s.artist || proc.artist || '').split(/,|&/)[0].trim(), album: s.album || '' }; };
-  const timeNow = () => (ext.active() ? ext.now() : T);
+  const timeNow = () => (ext.active() ? ext.now() : typeof audio !== 'undefined' && audio.src ? audio.currentTime : T);
   const lineIdx = time => { const lt = time + .2 + (IN.off || 0); let li = -1; for (let i = 0; i < IN.lines.length; i++) if (IN.lines[i].t <= lt) li = i; else break; if (li >= 0 && (!IN.lines[li].text || lt - IN.lines[li].t > 12)) li = -1; return li; };
   const secOf = time => IN.cuts.length > 1 ? Math.max(0, IN.cuts.findLastIndex(c => c <= time)) : Math.floor(time / (proc.secLen || 9));
   const storyOf = text => (typeof STORY !== 'undefined' && STORY.on && STORY.forText(text)) || null;
@@ -51,7 +51,7 @@
     return bs >= 1.5 || (bs >= 1 && !text) ? best : null;
   }
   function makeShot(li, sec, time, why, force) {
-    const plan = SEM.plans[sec] || null, text = li >= 0 ? IN.lines[li].text : '', L = text ? storyOf(text) : null, seed = hash(ext.key() + '|' + li + '|' + sec + '|' + (li < 0 ? Math.floor(time / 4) : 0) + (RC.salt || ''));
+    const plan = SEM.plans[sec] || null, text = li >= 0 ? IN.lines[li].text : '', L = text ? storyOf(text) : null, seed = hash(ext.key() + '|' + li + '|' + sec + '|' + (li < 0 ? Math.floor(time / 4) : 0) + (RC.salt || '') + '|' + (R.world?.settings().seed || ''));
     const narrative = li >= 0 ? (R.film ? R.film.plan(IN.lines, IN.cuts, SEM.plans, proc.dur).beats[li] : R.narrative?.plan(IN.lines)[li]) : null;
     const r = rngS(seed), mood = plan?.mood || narrative?.mood || 'sereno', energy = narrative?.section?.role === 'climax' ? Math.max(8, plan?.energy ?? 5) : narrative?.section?.role === 'bridge' ? Math.min(4, plan?.energy ?? 5) : plan?.energy ?? 5, inkList = MOOD_INKS[mood] || [0, 1, 2];
     const shot = { kind: 'prop', li, sec, t0: timeNow(), k0: st.t, seed, plan, mood, energy, inks: inkList[(sec + (plan?.color === 'oscuro' ? 1 : 0)) % inkList.length], bg: 'paper', layout: 0, why };
@@ -103,6 +103,7 @@
       let id = (R.scenes[plan?.scene] ? plan.scene : SCENE_MAP[plan?.scene]) || byWords || (narrative?.action ? narrative.place : null) || MOOD_SCENE[mood] || 'ciudad';
       if (R.scenes.ella && !byWords && /eyes|woman|couple/.test((objs || []).join(',')) && ['romantico', 'feliz', 'euforico', 'sereno'].includes(mood)) id = 'ella'; else if (!byWords && (/eyes|man/.test((objs || []).join(',')) || (mood === 'romantico' && r() < .4))) id = 'retrato';
       if (!byWords && !plan?.scene && !narrative?.action && li >= 0 && RC.lastScene === id && r() < .6) { const alt = R.order.filter(x => x !== id); id = alt[(r() * alt.length) | 0]; }
+      if (R.world?.enabled && !plan?.scene && !byWords) id='universo';
       shot.scene = id; RC.lastScene = id; recent.push(id); if (recent.length > 6) recent.shift(); shot.inks = R.scenes[id].inks;
       if (r() < .45) shot.inks = inkList[(sec + 1) % inkList.length];
     }
