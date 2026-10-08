@@ -133,14 +133,20 @@
     draw(K, name, id, x, ground, scale, motion = {}) {
       const p = this.profile(name, id, motion.album), c = K.c, t = window.CFG?.reduceMotion ? 0 : motion.time || 0, active = !!motion.active;
       const instrument = motion.instrument || p.instrument;
+      const act = motion.act || null, back = !!motion.back, beatT = t * (motion.bpm || 110) / 60 * Math.PI;
+      const walking = act === 'walk' || act === 'run', dancing = act === 'dance' || act === 'jump';
+      const swing = walking ? Math.sin(t * (act === 'run' ? 9 : 5.5)) * (act === 'run' ? .5 : .34) : 0;
+      const hop = dancing ? Math.abs(Math.sin(beatT)) * (act === 'jump' ? 46 : 26) : walking ? Math.abs(Math.sin(t * (act === 'run' ? 9 : 5.5))) * 8 : 0;
+      const la = dancing ? .55 + .45 * Math.sin(beatT) : act === 'wave' ? .9 : 0, sway = dancing ? Math.sin(beatT * .5) * .07 : walking ? Math.sin(t * 5.5) * .02 : 0;
       const bob = Math.sin(t * 2.2) * (active ? 3 : 1), open = motion.open || 0;
-      c.save(); c.translate(x, ground); c.scale(scale * (p.build || 1), scale); c.rotate(Math.sin(t * 1.6) * (active ? .018 : .007));
+      c.save(); c.translate(x, ground - hop); c.scale(scale * (p.build || 1), scale); c.rotate(Math.sin(t * 1.6) * (active ? .018 : .007) + sway);
       const path = (d, f, tone = 1, lw = 4, ink = 1) => { let q = paths.get(d); if (!q) { q = new Path2D(d); if (paths.size < 2048) paths.set(d, q); } if (f !== undefined) { c.fillStyle = f === -1 ? K.PAPER : K.ink(f, tone); c.fill(q); } c.strokeStyle = K.ink(ink); c.lineWidth = lw; c.lineJoin = 'round'; c.lineCap = 'round'; c.stroke(q); };
       const circle = (x, y, r, f, ft = 1) => K.circ(x, y, r, { f, ft, s: 1, lw: 4 });
       const skin = d => { path(d, -1); if (p.skin) path(d, 3, p.skin); };
       K.ell(0, 5, 83, 12, 0, { f: 1, ft: .25 });
-      path('M-36 -185 L-33 -16 H-6 L0 -176 L10 -16 H36 L38 -185 Z', 1, .85, 6);
-      path('M-35 -22 H-5 L-1 0 H-52 L-49 -10 Z M10 -22 H36 L53 -6 V0 H9 Z', 1);
+      for (const sd of [-1, 1]) { c.save(); c.translate(sd * 18, -185); c.rotate(sd * swing); c.translate(-sd * 18, 185);
+        path(sd < 0 ? 'M-36 -185 L-33 -16 H-6 L0 -176 Z' : 'M0 -176 L10 -16 H36 L38 -185 Z', 1, .85, 6);
+        path(sd < 0 ? 'M-35 -22 H-5 L-1 0 H-52 L-49 -10 Z' : 'M10 -22 H36 L53 -6 V0 H9 Z', 1); c.restore(); }
       c.translate(0, bob);
       if (['long', 'waves', 'ponytail', 'braids', 'dreads', 'mullet', 'bob'].includes(p.hair)) {
         if (p.hair === 'bob') path('M-43 -423 Q-70 -410 -60 -335 L-25 -335 L-25 -413 Z M25 -413 L25 -335 H60 Q70 -410 43 -423 Z', p.hairInk);
@@ -165,10 +171,10 @@
       if (p.chain || p.necklace) path('M-25 -329 Q0 -263 25 -329', undefined, 1, p.chain ? 7 : 3, 3);
       if (p.chain) path('M0 -282 L-7 -271 L0 -261 L7 -271 Z', 3);
       // manos y brazos: el micrófono sube durante el verso de esta voz.
-      const handY = active ? -323 : -236;
+      const handY = active || dancing ? -323 - (dancing ? Math.sin(beatT + 1.6) * 16 : 0) : act === 'wave' ? -236 : -236;
       if (!instrument) {
-      path('M-51 -326 Q-77 -297 -75 -249 L-61 -209', undefined, 1, 22, p.clothes === -1 ? 3 : p.clothes);
-      skin('M-70 -220 Q-84 -208 -72 -194 Q-56 -186 -53 -205 L-56 -218 Z');
+      path(`M-51 -326 Q${-77 - 20 * la} ${-297 - 60 * la} ${-61 - 36 * la} ${-209 - 207 * la}`, undefined, 1, 22, p.clothes === -1 ? 3 : p.clothes);
+      c.save(); c.translate(-36 * la, -207 * la + (act === 'wave' ? Math.sin(t * 9) * 8 : 0)); skin('M-70 -220 Q-84 -208 -72 -194 Q-56 -186 -53 -205 L-56 -218 Z'); c.restore();
       path(`M51 -326 Q83 -273 67 -252 L25 ${handY + 12}`, undefined, 1, 23, p.clothes === -1 ? 3 : p.clothes);
       skin(`M18 ${handY - 8} Q3 ${handY - 2} 15 ${handY + 15} Q34 ${handY + 24} 37 ${handY + 5} L31 ${handY - 8} Z`);
       if (p.glove) path(`M18 ${handY - 8} Q3 ${handY - 2} 15 ${handY + 15} Q34 ${handY + 24} 37 ${handY + 5} L31 ${handY - 8} Z`, -1);
@@ -181,7 +187,8 @@
       if (p.tattoos) { path('M-73 -260 L-60 -251 L-73 -239 M61 -284 L73 -277 L65 -263', undefined, 1, 3); }
       const face = p.face || { width: 1, height: 1, jaw: 1, eyes: 1, nose: 1, lips: 1 };
       c.save(); c.translate(0, -390); c.scale(face.width, face.height); c.translate(0, 390);
-      skin(`M-43 -405 Q-47 -356 ${-22 * face.jaw} -344 Q0 ${-344 + 12 * face.jaw} ${22 * face.jaw} -344 Q47 -356 43 -405 Q32 -440 0 -438 Q-32 -440 -43 -405 Z`);
+      const headPath = `M-43 -405 Q-47 -356 ${-22 * face.jaw} -344 Q0 ${-344 + 12 * face.jaw} ${22 * face.jaw} -344 Q47 -356 43 -405 Q32 -440 0 -438 Q-32 -440 -43 -405 Z`;
+      skin(headPath);
       // nariz, ojos, labios y detalles que distinguen cada silueta.
       path(`M2 -391 L${-4 * face.nose} ${-391 + 21 * face.nose} L5 ${-390 + 21 * face.nose}`, undefined, 1, 3);
       c.save(); c.scale(face.eyes, 1);
@@ -192,6 +199,7 @@
       if (p.beard) path('M-39 -371 L-29 -345 Q0 -321 29 -345 L39 -371 L21 -359 L10 -365 H-10 L-21 -359 Z', 1, .85, 3);
       if (p.moustache || p.beard) path('M-16 -361 Q-7 -370 0 -364 Q8 -370 16 -361', undefined, 1, 6);
       if (p.sideburns) { path('M-43 -399 L-32 -366 L-42 -370 Z M43 -399 L32 -366 L42 -370 Z', 1); }
+      if (back) path(headPath, p.hairInk === undefined ? 1 : p.hairInk);        // de espaldas: el pelo cubre la cara
       const hair = p.hair, hi = p.hairInk;
       if (hair === 'afro' || hair === 'curls') {
         const n = hair === 'afro' ? 12 : 9, r = hair === 'afro' ? 19 : 12;
