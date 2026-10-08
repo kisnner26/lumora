@@ -9,11 +9,11 @@
 const CV_DEF = { style: 'difuminado', lyr: 'linea', size: 'm', beat: true, clock: false, pin: false, react: true, ring: false, holo: false, depth: false, trata: false, tab: 'fondo' };
 const CV = (() => { try { return { ...CV_DEF, ...JSON.parse(localStorage.getItem('lm_cover2') || '{}') }; } catch (e) { return { ...CV_DEF }; } })();
 CV.art = ''; CV.listKey = '';
-if (!['fondo', 'vista'].includes(CV.tab)) CV.tab = 'fondo';
+if (!['fondo', 'vista', 'sonido'].includes(CV.tab)) CV.tab = 'fondo';
 const cvSave = () => { try { localStorage.setItem('lm_cover2', JSON.stringify(Object.fromEntries(Object.keys(CV_DEF).map(k => [k, CV[k]])))); } catch (e) {} };
 const cvEsc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const CV_OPTS = {
-  style: [['difuminado', 'difuminado'], ['ambiente', 'ambiente'], ['escena', 'escena'], ['minimo', 'mínimo'], ['vinilo', 'vinilo'], ['cassette', 'cassette'], ['cd', 'cd'], ['estanteria', 'estantería'], ['artista', 'artista']],
+  style: [['difuminado', 'difuminado'], ['ambiente', 'ambiente'], ['escena', 'escena'], ['minimo', 'mínimo'], ['vinilo', 'vinilo'], ['cassette', 'cassette'], ['cd', 'cd'], ['estanteria', 'estantería'], ['artista', 'artista'], ['universo', 'universo']],
   lyr: [['linea', 'línea'], ['completa', 'completa'], ['no', 'oculta']],
   size: [['s', 's'], ['m', 'm'], ['l', 'l']],
 };
@@ -23,7 +23,7 @@ const CV_DESC = {
            escena: 'el video de lumora sigue corriendo detrás, desenfocado', minimo: 'negro, la portada y el título en grande; nada más',
            vinilo: 'el disco con su brazo y su aguja. Arrástralo en círculo para adelantar o atrasar', cassette: 'la cinta asoma detrás. Arrástrala de lado para moverte por la canción',
            cd: 'el disco iridiscente asoma. Arrástralo en círculo para adelantar o atrasar', estanteria: 'los discos que escuchaste desfilan abajo, el último primero',
-           artista: 'otras portadas del artista flotan detrás, despacio' },
+           artista: 'otras portadas del artista flotan detrás, despacio', universo: 'un lugar generado para esta canción, que respira con los graves. cada semilla es un mundo distinto' },
   lyr: { linea: 'el verso que suena, debajo de la portada', completa: 'toda la letra al lado; toca un verso para saltar ahí', no: 'solo la portada, sin letra' },
   size: { s: 'portada chica: más aire alrededor', m: 'portada mediana', l: 'portada grande, casi a pantalla' },
 };
@@ -432,10 +432,11 @@ const cvSeg = k => `<div class="cv-seg">${CV_OPTS[k].map(([v, t]) => `<button da
     ['cvPin', 'fijar', 'fijar la barra: que no se oculte al quedarse quieto', '<path d="M9 3h6l-.6 6.2L19 13v2h-6v5l-1 2-1-2v-5H5v-2l4.6-3.8z"/>'],
   ];
   float.innerHTML = `<div class="cv-menu" id="cvMenu" data-tab="fondo">
-      <nav class="cv-tabs"><button data-tab="fondo">fondo</button><button data-tab="vista">portada y efectos</button></nav>
+      <nav class="cv-tabs"><button data-tab="fondo">fondo</button><button data-tab="vista">portada y efectos</button><button data-tab="sonido">sonido</button></nav>
       <div class="cv-pane" data-pane="fondo"><div class="cv-tiles">${CV_OPTS.style.map(tile).join('')}</div><p class="cv-desc" id="cvDescFondo"></p></div>
       <div class="cv-pane" data-pane="vista"><div class="cv-pair"><div><h5>letra</h5>${segs('lyr')}</div><div><h5>portada</h5>${segs('size')}</div></div>
         <h5>efectos</h5><div class="cv-chips">${CV_CHIPS.map(c => chip(...c)).join('')}</div><p class="cv-desc" id="cvDescVista"></p></div>
+      <div class="cv-pane" data-pane="sonido" id="cvPaneSonido"></div>
       <div class="cv-foot"><button id="cvPoster">póster del verso</button><button id="cvFs">pantalla completa</button></div>
     </div>
     <div class="cv-player">
