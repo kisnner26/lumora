@@ -12,7 +12,7 @@ for (const q of [0, .25, .5, .75, 1]) { await p.evaluate(v => { RISOMIX.hold = v
 let s = await st(); chk('(a) la mezcla dibuja en p=1 sin errores', s.on && !s.err, JSON.stringify(s));
 await p.evaluate(() => { RISOMIX.hold = null; RISOMIX.p = .999; }); await espera(700); s = await st();
 chk('(d) al terminar la mezcla sigue el videoclip normal (toma de título)', !s.on && s.shot === 'title', JSON.stringify(s));
-await espera(6000); s = await st(); chk('(d) y luego avanza a tomas normales', ['prop', 'scene', 'giant'].includes(s.shot), s.shot);
+await espera(6000); s = await st(); chk('(d) y luego avanza a tomas normales', ['prop', 'scene', 'giant', 'singer', 'tableau'].includes(s.shot), s.shot);
 // (b) cambio de canción sin solape
 await mock('scn=cambio'); await espera(1800); s = await st();
 chk('(b) cambio con posición 0: mezcla fija de 3 s', s.on && s.D === 3 && s.p < .8, JSON.stringify(s)); await p.screenshot({ path: '/tmp/mix-cambio.jpg', type: 'jpeg', quality: 80 });
