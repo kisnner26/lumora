@@ -6,7 +6,10 @@ const RISO = { K: {}, catalog: {}, props: {}, clamp: x => Math.max(0, Math.min(1
 const context = vm.createContext({ window: { RISO }, Math });
 for (const file of ['riso-artistas', 'riso-cantantes', 'riso-geometry']) vm.runInContext(readFileSync(new URL('../js/riso/' + file + '.js', import.meta.url), 'utf8'), context);
 const { artistFigures: A, singers: S, geometry: G } = RISO;
-assert.ok(Object.keys(A.profiles).length >= 50);
+assert.equal(Object.keys(A.profiles).length, 80);
+for (const [band, members] of [['twenty one pilots', ['tyler_joseph','josh_dun']], ['queen',['freddie_mercury','brian_may','roger_taylor','john_deacon']], ['nirvana',['kurt_cobain','dave_grohl','krist_novoselic']], ['the beatles',['john_lennon','paul_mccartney','george_harrison','ringo_starr']]]) assert.deepEqual(Array.from(S.plan(band), s => s.id), members);
+assert.equal(A.profile('Freddie Mercury', null, 'A Night at the Opera').moustache, false);
+assert.equal(A.profile('John Lennon', null, 'Rubber Soul').tie, true);
 for (const p of Object.values(A.profiles)) for (const name of p.names) assert.equal(S.idOf(name), p.id, name);
 assert.equal(S.idOf('The Weeknd Tribute'), null);
 assert.equal(S.idOf('Queen Tribute Band'), null);
