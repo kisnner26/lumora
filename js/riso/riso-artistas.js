@@ -160,7 +160,7 @@
     const g = cv.getContext('2d', { willReadFrequently: true }); g.drawImage(img, 0, 0, pw, ph);
     const d = g.getImageData(0, 0, pw, ph), a = d.data, fw = meta.w * pw, cyPx = meta.cy * ph, knock = document.createElement('canvas'); knock.width = pw; knock.height = ph;
     const kc = knock.getContext('2d'), kd = kc.createImageData(pw, ph);
-    for (let y = 0; y < ph; y++) { const fade = Math.max(0, Math.min(1, 1 - (y - (cyPx + fw * .72)) / (fw * .5)));      // el cuello se desvanece: debajo va el cuerpo dibujado
+    for (let y = 0; y < ph; y++) { const fade = Math.max(0, Math.min(1, (ph - y) / (ph * .09)));      // el busto termina en un borde limpio
       for (let x = 0; x < pw; x++) { const i = (y * pw + x) * 4, al = a[i + 3] / 255 * fade, l = (a[i] * .3 + a[i + 1] * .59 + a[i + 2] * .11) / 255;
         const dark = Math.max(0, Math.min(1, (1 - l) * 1.25 - .1)), warm = Math.max(0, 1 - Math.abs(l - .55) * 2.6) * .55;
         a[i] = Math.round(dark * 255); a[i + 1] = Math.round(warm * 255); a[i + 2] = 0; a[i + 3] = Math.round(al * 255); kd.data[i + 3] = a[i + 3]; } }
@@ -168,12 +168,25 @@
   };
   const loadFace = (name, key) => {
     const st = { state: 'loading', t: Date.now() }; heads.set(key, st);
-    fetch('/cara?name=' + encodeURIComponent(name)).then(async r => { if (!r.ok) throw new Error('none'); const meta = JSON.parse(r.headers.get('X-Cara') || '{}'), blob = await r.blob(); if (!meta.w) throw new Error('meta');
+    fetch('/cara?name=' + encodeURIComponent(name) + (window.CFG?.facesWiki ? '&src=wiki' : '')).then(async r => { if (!r.ok) throw new Error('none'); const meta = JSON.parse(r.headers.get('X-Cara') || '{}'), blob = await r.blob(); if (!meta.w) throw new Error('meta');
       const img = new Image(); img.onload = () => { try { Object.assign(st, facePlate(img, meta), { state: 'ok' }); dispatchEvent(new CustomEvent('lumora:artistas', { detail: key })); } catch (e) { st.state = 'none'; } URL.revokeObjectURL(img.src); }; img.onerror = () => { st.state = 'none'; }; img.src = URL.createObjectURL(blob); })
       .catch(() => { st.state = 'none'; });
   };
   const pending = new Set(), retry = new Map(), poseState = new Map();
   const api = R.artistFigures = { profiles, custom, heads,
+    // el retrato real, sin cuerpo: busto en trama que respira, cabecea y rebota con el ritmo
+    bust(K, H, x, ground, scale, motion = {}) {
+      const c = K.c, calm = !!window.CFG?.reduceMotion, t = calm ? 0 : motion.time || 0, en = motion.energy ?? .5, hit = calm ? 0 : motion.hit || 0, act = motion.act, beatT = t * (motion.bpm || 110) / 60 * Math.PI;
+      const dance = act === 'dance' || act === 'jump', walk = act === 'walk' || act === 'run', S = Math.sin;
+      const bob = (dance ? Math.abs(S(beatT)) * 22 * (.5 + en) : walk ? Math.abs(S(t * 5.5)) * 7 : S(t * 1.6) * 3) + hit * 9;
+      const tilt = (dance ? S(beatT * .5) * .08 : S(t * 1.2) * .022) + (motion.look || 0) * .025, sway = dance ? S(beatT * .5) * 16 : walk ? S(t * 2.75) * 9 : S(t * .8) * 4;
+      const sc2 = 190 * scale / (H.meta.w * H.pw), W2 = H.pw * sc2, H2 = H.ph * sc2, x0 = -H.meta.cx * W2, y0 = -H2 + 36 * scale, talk = motion.open || 0;
+      K.ell(x, ground + 6, W2 * .3, 8, 0, { f: 1, ft: .16 });
+      c.save(); c.translate(x + sway, ground + 36 * scale - bob); c.rotate(tilt); c.scale(1 + S(t * 1.7) * .006 * (1 + en), 1 + S(t * 1.7) * .01 * (1 + en) + talk * .018); c.translate(0, -36 * scale);
+      c.drawImage(H.knock, x0, y0 + 36 * scale, W2, H2);
+      c.globalCompositeOperation = 'lighter'; c.drawImage(H.plate, x0, y0 + 36 * scale, W2, H2); c.globalCompositeOperation = 'source-over';
+      c.restore();
+    },
     faceOf(name) { const key = norm(name); if (!key || typeof fetch !== 'function') return null; const st = heads.get(key);
       if (!st) { loadFace(name, key); return null; } if (st.state === 'none' && Date.now() - st.t > 600000) { heads.delete(key); return null; } return st.state === 'ok' ? st : null; },
     request(name) {
@@ -199,7 +212,8 @@
       const h = hash(name); return { id: null, skin: .15, hair: ['short', 'mop', 'messy'][h % 3], hairInk: 1, outfit: ['jacket', 'shirt', 'hoodie'][h % 3], clothes: 2 + h % 2 }; },
     draw(K, name, id, x, ground, scale, motion = {}) {
       if (!id && !motion.partner && !profiles[this.idOf(name)]) this.request(name);
-      const photo = !motion.partner && !motion.back && window.CFG?.faces !== false && !(profiles[id || this.idOf(name)]?.custom) ? this.faceOf(name) : null;
+      const photo = !motion.partner && !motion.back && window.CFG?.faces !== false ? this.faceOf(name) : null;
+      if (photo) return this.bust(K, photo, x, ground, scale, motion);
       const p = this.profile(name, id, motion.album), c = K.c, t = window.CFG?.reduceMotion ? 0 : motion.time || 0, active = !!motion.active;
       const instrument = motion.instrument || p.instrument;
       const act = motion.act || null, back = !!motion.back, beatT = t * (motion.bpm || 110) / 60 * Math.PI;
@@ -210,7 +224,7 @@
         if (prev && dtp > 0 && dtp < .5 && !reduce) { const k = 1 - Math.exp(-dtp * 5.5), mx = (a, b) => a + (b - a) * k, mv = (a, b) => [mx(a[0], b[0]), mx(a[1], b[1])]; R0 = { ...R0, fL: mv(prev.o.fL, R0.fL), fR: mv(prev.o.fR, R0.fR), hL: mv(prev.o.hL, R0.hL), hR: mv(prev.o.hR, R0.hR), dy: mx(prev.o.dy, R0.dy), tilt: mx(prev.o.tilt, R0.tilt), nod: mx(prev.o.nod, R0.nod) }; }
         if (poseState.size > 40) poseState.clear(); poseState.set(key, { t, o: R0 }); }
       const bob = Math.sin(t * 2.2) * (active ? 3 : 1), open = motion.open || 0;
-      c.save(); c.translate(x, ground - hop); c.scale(scale * (p.build || 1), scale); c.rotate(Math.sin(t * 1.6) * (active ? .018 : .007) + sway);
+      c.save(); c.translate(x, ground - hop); c.scale(scale * (p.build || 1), scale); c.beginPath(); c.rect(-150, -540, 300, 352); c.clip();      // sin cuerpo: solo cabeza y hombros c.rotate(Math.sin(t * 1.6) * (active ? .018 : .007) + sway);
       const path = (d, f, tone = 1, lw = 4, ink = 1) => { let q = paths.get(d); if (!q) { q = new Path2D(d); if (paths.size < 2048) paths.set(d, q); } if (f !== undefined) { c.fillStyle = f === -1 ? K.PAPER : K.ink(f, tone); c.fill(q); } c.strokeStyle = K.ink(ink); c.lineWidth = lw; c.lineJoin = 'round'; c.lineCap = 'round'; c.stroke(q); };
       const circle = (x, y, r, f, ft = 1) => K.circ(x, y, r, { f, ft, s: 1, lw: 4 });
       const skin = d => { path(d, -1); if (p.skin) path(d, 3, p.skin); };
@@ -333,4 +347,5 @@
     }
   };
   if (window.SETUI) SETUI.addRow('contenido', ['faces', 'Caras reales de los artistas', 'sw', null, 'pone la foto del artista (de Wikipedia), recortada y en trama, sobre su figura; sin ella se dibuja un retrato con sus rasgos. Revisa los derechos de imagen antes de publicar'], true);
+  if (window.SETUI) SETUI.addRow('contenido', ['facesWiki', 'Fotos solo de Wikipedia', 'sw', null, 'las caras salen únicamente de Wikipedia (licencias más claras); apagado, si no hay foto allí se usa la imagen oficial del artista en Deezer, que cubre más artistas pero tiene derechos de autor'], false);
 })();

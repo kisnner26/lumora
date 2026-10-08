@@ -44,10 +44,10 @@
     list.forEach((sg, i) => {
       const active = i === act && !!line, open = active ? clamp(.25 + .75 * Math.abs(sin(kt * 9 + i)) + R.A.beat * .3) : 0, y = ground + (1 - p) * 420, x = xs[i];
       if (active && n > 1) { K.poly([[x, 40], [x - 150 * k, y], [x + 150 * k, y]], { f: 2, ft: .18 }); }
-      if (sg.id === 'the_weeknd') {
+      if (sg.id === 'the_weeknd' && !R.artistFigures.faceOf(sg.name)) {
         // la figura completa sustituye al cantante genérico; conserva entrada y ritmo.
         R.props.drawProp(K, sg.id, x, y - 240 * k, 1.24 * k, 1, { seed: s.seed + i, ph: sg.h % 6, rot: sin(kt * 1.6 + i * 2) * (active ? .018 : .008) });
-      } else R.artistFigures.draw(K, sg.name, sg.id, x, y, k, { time: kt + i * 2, active: sg.band ? !!line : active, open: sg.instrument === 'drums' ? 0 : open, instrument: sg.instrument, bpm, act: sg.instrument ? null : move === 'look' ? null : move, back: !sg.instrument && move === 'look', album: typeof ext !== 'undefined' ? ext.st.album || '' : '' });
+      } else R.artistFigures.draw(K, sg.name, sg.id, x, y, k, { time: kt + i * 2, active: sg.band ? !!line : active, open: sg.instrument === 'drums' ? 0 : open, instrument: sg.instrument, bpm, act: sg.instrument ? null : move === 'look' ? null : move, back: false, album: typeof ext !== 'undefined' ? ext.st.album || '' : '' });
       // etiqueta con el nombre
       K.c.save(); K.c.translate(x, ground + 52); K.c.rotate((i % 2 ? .012 : -.012));
       const nm = sg.name.toUpperCase().slice(0, 26), w = Math.min(330, K.measure(nm, { font: 'display', size: 34 * Math.min(1, k + .1), w: 800, stretch: 'condensed' }) + 40);

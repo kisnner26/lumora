@@ -11,7 +11,7 @@
     if (STY && film && typeof IN !== 'undefined') STY.plan(IN.lines, film, typeof SEM !== 'undefined' ? SEM.plans : [], (E0 && E0.st.dur) || 0, E0 ? E0.key() : '');
     // todo lo que entra o sale de pantalla se funde con el tiempo: nada aparece ni desaparece de golpe
     const smooth = (key, target, rate) => { const S = F._s || (F._s = {}), o = S[key], dt = o ? now - o.t : 1e9; if (!o || dt < 0 || dt > .7 || reduced) { S[key] = { t: now, v: target }; return target; } o.v += (target - o.v) * (1 - Math.exp(-dt * rate)); o.t = now; return o.v; };
-    { const SG0 = R.singers, cfg0 = !window.CFG || CFG.singers !== false, ck0 = E0 ? E0.key() : ''; if (F._castKey !== ck0) { F._castKey = ck0; F._cast = cfg0 && SG0 && E0 ? SG0.plan(E0.st.artist, E0.st.name) : null; for (const m of F._cast || []) if (!m.id) R.artistFigures.request(m.name); } }
+    { const SG0 = R.singers, cfg0 = !window.CFG || CFG.singers !== false, ck0 = E0 ? E0.key() : ''; if (F._castKey !== ck0) { F._castKey = ck0; F._cast = cfg0 && SG0 && E0 ? SG0.plan(E0.st.artist, E0.st.name) : null; for (const m of F._cast || []) { if (!m.id) R.artistFigures.request(m.name); R.artistFigures.faceOf(m.name); } } }
     // movimiento con arranque y frenada suaves (ease in-out) para lo que entra, sale o gira; cuando cambia el objetivo, parte de donde estaba
     const tween = (key, target, dur) => { const S = F._tw || (F._tw = {}); let o = S[key]; const dt = o ? now - o.t : 1e9; if (!o || dt < 0 || dt > .7 || reduced) o = S[key] = { v0: target, v1: target, t0: now, t: now, v: target };
       if (o.v1 !== target) { o.v0 = o.v; o.v1 = target; o.t0 = now; } const q = Math.max(0, Math.min(1, (now - o.t0) / dur)); o.v = o.v0 + (o.v1 - o.v0) * q * q * (3 - 2 * q); o.t = now; return o.v; };
@@ -89,15 +89,15 @@
     // si la canción tiene artista con perfil, él o ella es quien actúa; las escenas con objetos (puerta, taxi, carta…) siguen con los muñecos
     const SGm = R.singers, cfgOn = !window.CFG || CFG.singers !== false, ck = typeof ext !== 'undefined' ? ext.key() : '';
     if (F._castKey !== ck) { F._castKey = ck; F._cast = cfgOn && SGm ? SGm.plan(ext.st.artist, ext.st.name) : null; for (const m of F._cast || []) if (!m.id) R.artistFigures.request(m.name); }
-    const cast = !hideActors && !empty && !(action === 'board' && pose.p > .86) ? F._cast : null, star = cast && cast[0];
+    const cast = !hideActors && !empty && !(action === 'board' && pose.p > .86) ? F._cast : null, star = cast && (shot.filmMode || cast.length === 1 ? cast[0] : cast[(b.li || 0) % cast.length]);   // en una colaboración, cada verso lo canta uno de los créditos
     if (star) {
       c.save(); c.globalAlpha = starAlpha;
       const figAct = objectAction ? ({ board: 'walk', give: 'wave' }[action] || null) : act === 'cry' || ((b.li || 0) % 4 === 3 && !act) ? 'look' : act === 'sleep' ? null : act === 'sing' || !act ? 'sing' : act;
-      const sc = 1.0 * (figAct === 'look' ? .9 : 1), pst = sv && sv.partner !== 'absent' && !hideActors ? sv.partner : null, dirP = cx < 800 ? 1 : -1;
+      const sc = 1.0 * (figAct === 'look' ? .9 : 1), pst = null, dirP = cx < 800 ? 1 : -1;
       const targetGap = pst ? { near: 240, with: 215, embrace: 130, apart: 380 }[pst] || 230 : 1100, gapP0 = tween('gapP', targetGap, 2.4);
       const gapP = gapP0, hugDx = pst === 'embrace' && figAct === 'hug' && Math.abs(gapP - targetGap) < 25 ? dirP * gapP / sc : 0, arriving = Math.abs(gapP - targetGap) > 12;
       const lineOn = !!(IN.lines[b.li] && now >= IN.lines[b.li].t - .1 && now < IN.lines[b.li].t + Math.max(1.2, b.duration * .88)), en1 = reduced ? 0 : Math.max(0, Math.min(1, R.A?.e ?? .4)), hit1 = reduced ? 0 : R.A?.beat || 0;
-      const turnS = tween('turnS', figAct === 'look' ? 1 : 0, .7), sxS = Math.max(.07, Math.abs(Math.cos(turnS * Math.PI)));
+      const turnS = tween('turnS', figAct === 'look' ? 1 : 0, .7), sxS = 1;
       const turnP = tween('turnP', pst === 'apart' || (pst === 'with' && figAct === 'look') ? 1 : 0, .8), sxP = Math.max(.07, Math.abs(Math.cos(turnP * Math.PI)));
       if (gapP < 1000 && (pst || arriving)) {                                                                          // el otro: llega, camina al lado, se abraza o se queda lejos, de espaldas
         const pAct = arriving ? 'walk' : pst === 'with' ? figAct : pst === 'embrace' ? (figAct === 'hug' ? 'hug' : null) : pst === 'near' && (figAct === 'walk' || figAct === 'dance') ? figAct : null;
@@ -107,7 +107,7 @@
       }
       const talk = lineOn && figAct === 'sing' && !reduced ? Math.min(1, en1 * 1.7 * (.35 + .65 * Math.abs(Math.sin(now * 10.7 + Math.sin(now * 3.1) * 2)))) : 0;
       c.save(); c.translate(left, 0); c.scale(sxS, 1); c.translate(-left, 0);
-      R.artistFigures.draw(K, star.name, star.id, left, ground, sc, { time: now + star.h % 7, bpm, hug: hugDx, energy: en1, hit: hit1, look: pst ? dirP * Math.min(1, (gapP < 600 ? 1 : 0)) : 0, act: figAct === 'look' ? null : figAct, back: turnS > .5, active: figAct === 'sing' && lineOn && !reduced, open: talk, instrument: star.instrument, album: typeof ext !== 'undefined' ? ext.st.album || '' : '' });
+      R.artistFigures.draw(K, star.name, star.id, left, ground, sc, { time: now + star.h % 7, bpm, hug: hugDx, energy: en1, hit: hit1, look: pst ? dirP * Math.min(1, (gapP < 600 ? 1 : 0)) : 0, act: figAct === 'look' ? null : figAct, back: false, active: figAct === 'sing' && lineOn && !reduced, open: talk, instrument: star.instrument, album: typeof ext !== 'undefined' ? ext.st.album || '' : '' });
       c.restore();
       if (cast.length > 1 && star.band) cast.filter(m => m !== star).slice(0, 2).forEach((m, i) => R.artistFigures.draw(K, m.name, m.id, left + (i ? 200 : -200), ground, sc * .86, { time: now + m.h % 7, bpm, act: figAct === 'look' ? null : figAct, instrument: m.instrument, active: false, album: typeof ext !== 'undefined' ? ext.st.album || '' : '' }));
       c.restore();

@@ -13,11 +13,12 @@ guard let data = FileManager.default.contents(atPath: a[1]), let rep = NSBitmapI
 
 let w = CGFloat(cg.width), h = CGFloat(cg.height)
 let caras = VNDetectFaceRectanglesRequest()
+let calidad = VNDetectFaceCaptureQualityRequest()
 let persona = VNGeneratePersonSegmentationRequest()
 persona.qualityLevel = .accurate
 persona.outputPixelFormat = kCVPixelFormatType_OneComponent8
 let handler = VNImageRequestHandler(cgImage: cg, options: [:])
-do { try handler.perform([caras, persona]) } catch { fallo("Vision falló: \(error.localizedDescription)", 1) }
+do { try handler.perform([caras, calidad, persona]) } catch { fallo("Vision falló: \(error.localizedDescription)", 1) }
 guard let cara = (caras.results ?? []).max(by: { $0.boundingBox.width * $0.boundingBox.height < $1.boundingBox.width * $1.boundingBox.height }) else { fallo("sin cara", 2) }
 
 // la cara en píxeles (Vision usa coordenadas normalizadas con el origen abajo a la izquierda)
@@ -44,4 +45,7 @@ guard let bytes = png.representation(using: .png, properties: [:]) else { fallo(
 do { try bytes.write(to: URL(fileURLWithPath: a[2])) } catch { fallo("no se pudo escribir la salida", 1) }
 // posición y tamaño de la cara dentro del recorte, normalizados (para encajarla en la figura)
 let cxn = (fx + fw / 2 - rect.minX) * escala / imagen.extent.width, cyn = 1 - (fy + fh / 2 - rect.minY) * escala / imagen.extent.height, wn = fw * escala / imagen.extent.width
-print(String(format: "{\"cx\":%.4f,\"cy\":%.4f,\"w\":%.4f,\"ancho\":%d,\"alto\":%d}", cxn, cyn, wn, Int(imagen.extent.width), Int(imagen.extent.height)))
+// calidad de la toma (nitidez, luz, cara sin tapar) y giro de la cabeza: sirven para elegir la mejor foto entre varias
+let q = Double((calidad.results ?? []).max(by: { $0.boundingBox.width * $0.boundingBox.height < $1.boundingBox.width * $1.boundingBox.height })?.faceCaptureQuality ?? 0)
+let yaw = abs(cara.yaw?.doubleValue ?? 0), frac = Double(fw / w)
+print(String(format: "{\"cx\":%.4f,\"cy\":%.4f,\"w\":%.4f,\"ancho\":%d,\"alto\":%d,\"q\":%.3f,\"yaw\":%.3f,\"fr\":%.3f}", cxn, cyn, wn, Int(imagen.extent.width), Int(imagen.extent.height), q, yaw, frac))

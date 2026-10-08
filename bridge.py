@@ -5,7 +5,7 @@ GET  /now          -> estado de Música en JSON (se refresca 4 veces por segundo
 GET  /art          -> carátula de la canción actual
 POST /cmd?c=...    -> playpause | seek:+5 | seek:-5 | start
 """
-import hashlib, json, os, queue, re, shutil, signal, socket, socketserver, subprocess, sys, threading, time, tempfile, urllib.request, urllib.parse
+import hashlib, unicodedata, json, os, queue, re, shutil, signal, socket, socketserver, subprocess, sys, threading, time, tempfile, urllib.request, urllib.parse
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
@@ -305,29 +305,67 @@ CARAS_BUSY = {}
 MUSICO = re.compile(r'singer|rapper|musician|band|songwriter|\bDJ\b|producer|vocalist|guitarist|drummer|pianist|composer|cantante|rapero|m[uú]sic|grupo', re.I)
 
 
-def _wiki_foto(name):
-    """devuelve la URL de una foto de un músico con ese nombre, o None si no hay un artículo claro con foto"""
-    def summary(title):
-        return get_json('https://en.wikipedia.org/api/rest_v1/page/summary/' + urllib.parse.quote(title.strip().replace(' ', '_')))
-    def valido(d):
-        return d and d.get('type') == 'standard' and (d.get('thumbnail') or {}).get('source') and MUSICO.search((d.get('description') or '') + ' ' + (d.get('extract') or '')[:240])
-    cand = [summary(name)]
-    if not valido(cand[0]):
-        q = get_json('https://en.wikipedia.org/w/rest.php/v1/search/title?limit=3&q=' + urllib.parse.quote(name)) or {}
-        cand = [summary(p.get('key') or p.get('title')) for p in (q.get('pages') or [])[:3] if p.get('key') or p.get('title')]
-    for d in cand:
-        if valido(d):
-            return re.sub(r'/\d+px-', '/960px-', d['thumbnail']['source'].split('?')[0])
-    return None
+def _norm_nombre(t):
+    return re.sub(r'[^a-z0-9]+', '', unicodedata.normalize('NFD', str(t).lower()).encode('ascii', 'ignore').decode())
 
 
-def cara_de(name):
+def _mismo_nombre(buscado, titulo):
+    """el título del artículo (sin «(rapper)» ni «The») tiene que ser el mismo nombre: «Sech» no es «Sechskies» ni «Duki» es «Duko»"""
+    def base(t):
+        t = re.sub(r'\s*\(.*?\)', '', str(t)).strip()
+        return _norm_nombre(re.sub(r'^the\s+', '', t, flags=re.I))
+    return bool(base(buscado)) and base(buscado) == base(titulo)
+
+
+def _fotos_candidatas(name, solo_wiki=False):
+    """URLs de fotos del artista por orden de fiabilidad: Wikipedia (en y es), y la imagen oficial de Deezer; devuelve (fuente, url)"""
+    out = []
+    for lang in ('en', 'es'):
+        def summary(title):
+            return get_json(f'https://{lang}.wikipedia.org/api/rest_v1/page/summary/' + urllib.parse.quote(title.strip().replace(' ', '_')))
+        def valido(d):
+            return d and d.get('type') == 'standard' and (d.get('thumbnail') or {}).get('source') and MUSICO.search((d.get('description') or '') + ' ' + (d.get('extract') or '')[:260])
+        cand = [summary(name)]
+        if not valido(cand[0]):
+            q = get_json(f'https://{lang}.wikipedia.org/w/rest.php/v1/search/title?limit=4&q=' + urllib.parse.quote(name)) or {}
+            cand = [summary(p.get('key') or p.get('title')) for p in (q.get('pages') or [])[:4] if p.get('key') or p.get('title')]
+            if not any(valido(d) for d in cand):                        # «Duki» o «Travis Scott»: el artículo a veces se llama «Duki (rapper)»
+                q = get_json(f'https://{lang}.wikipedia.org/w/rest.php/v1/search/title?limit=4&q=' + urllib.parse.quote(name + (' singer' if lang == 'en' else ' cantante'))) or {}
+                cand += [summary(p.get('key') or p.get('title')) for p in (q.get('pages') or [])[:4] if p.get('key') or p.get('title')]
+        for d in cand:
+            if valido(d) and _mismo_nombre(name, d.get('title', '')):
+                out.append(('wiki', re.sub(r'/\d+px-', '/960px-', d['thumbnail']['source'].split('?')[0])))
+                m = get_json(f'https://{lang}.wikipedia.org/api/rest_v1/page/media-list/' + urllib.parse.quote((d.get('title') or name).replace(' ', '_'))) or {}
+                vistas = {out[-1][1].rsplit('/', 1)[-1].split('px-', 1)[-1]}
+                for it in (m.get('items') or []):                               # el resto de fotos del artículo: la mejor de frente gana
+                    sr = (it.get('srcset') or [{}])[-1].get('src') if it.get('type') == 'image' else None
+                    if not sr or re.search(r'\.(svg|gif|webm|ogv|ogg|pdf)', sr, re.I) or len(out) >= 6:
+                        continue
+                    u = re.sub(r'/\d+px-', '/960px-', ('https:' + sr if sr.startswith('//') else sr).split('?')[0]); k = u.rsplit('/', 1)[-1].split('px-', 1)[-1]
+                    if k not in vistas:
+                        vistas.add(k); out.append(('wiki', u))
+                break
+    if not solo_wiki:
+        d = get_json('https://api.deezer.com/search/artist?limit=3&q=' + urllib.parse.quote(name)) or {}
+        for a in d.get('data') or []:
+            if a.get('picture_xl') and _mismo_nombre(name, a.get('name', '')):
+                out.append(('deezer', a['picture_xl']))
+                break
+    return out
+
+
+def cara_de(name, solo_wiki=False):
     """(png, meta) de la cara recortada de un artista, o None; se guarda en disco, también los intentos fallidos"""
     key = hashlib.sha1(' '.join(name.lower().split()).encode()).hexdigest()[:16]
     png, meta, no = (os.path.join(CARAS_DIR, key + e) for e in ('.png', '.json', '.no'))
+    def guardada():
+        m = json.load(open(meta))
+        return None if solo_wiki and m.get('fuente') == 'deezer' else (open(png, 'rb').read(), m)
     if os.path.exists(png) and os.path.exists(meta):
-        return open(png, 'rb').read(), json.load(open(meta))
-    if os.path.exists(no) and time.time() - os.path.getmtime(no) < 7 * 86400:
+        r = guardada()
+        if r or os.path.exists(no):
+            return r
+    if os.path.exists(no) and time.time() - os.path.getmtime(no) < 7 * 86400 and not os.path.exists(png):
         return None
     if not os.path.exists(ROSTRO_BIN):
         return None
@@ -335,24 +373,33 @@ def cara_de(name):
         lock = CARAS_BUSY.setdefault(key, threading.Lock())
     with lock:
         if os.path.exists(png) and os.path.exists(meta):
-            return open(png, 'rb').read(), json.load(open(meta))
+            return guardada()
         os.makedirs(CARAS_DIR, exist_ok=True)
-        try:
-            url = _wiki_foto(name)
-            if not url:
-                raise RuntimeError('sin foto')
-            req = urllib.request.Request(url, headers={'User-Agent': 'Lumora/1.0 (aplicacion personal de letras)'})
-            with tempfile.TemporaryDirectory() as d:
-                src = os.path.join(d, 'in.img')
-                open(src, 'wb').write(urllib.request.urlopen(req, timeout=25).read())
-                r = subprocess.run([ROSTRO_BIN, src, png], capture_output=True, text=True, timeout=60)
-                if r.returncode != 0 or not os.path.exists(png):
-                    raise RuntimeError('sin cara')
-                json.dump(json.loads(r.stdout), open(meta, 'w'))
-            return open(png, 'rb').read(), json.load(open(meta))
-        except Exception:
-            open(no, 'w').write('1')
-            return None
+        mejor = None                                                          # (puntuación, bytes, meta): de frente, nítida y grande
+        for fuente, url in _fotos_candidatas(name, solo_wiki):
+            if fuente == 'deezer' and mejor and mejor[0] >= .6:
+                break
+            try:
+                req = urllib.request.Request(url, headers={'User-Agent': 'Lumora/1.0 (aplicacion personal de letras)'})
+                with tempfile.TemporaryDirectory() as d:
+                    src, out = os.path.join(d, 'in.img'), os.path.join(d, 'out.png')
+                    open(src, 'wb').write(urllib.request.urlopen(req, timeout=25).read())
+                    r = subprocess.run([ROSTRO_BIN, src, out], capture_output=True, text=True, timeout=60)
+                    if r.returncode != 0 or not os.path.exists(out):
+                        continue
+                    m = json.loads(r.stdout); m['fuente'] = fuente
+                    sc = float(m.get('q', 0)) + min(.25, float(m.get('fr', 0)) * .9) - float(m.get('yaw', 0)) * .6
+                    if not mejor or sc > mejor[0]:
+                        mejor = (sc, open(out, 'rb').read(), m)
+                if mejor and mejor[0] >= .78:
+                    break
+            except Exception:
+                continue
+        if mejor and mejor[0] >= .15:                                            # una foto de perfil, borrosa o tapada se descarta: mejor el retrato vectorial
+            open(png, 'wb').write(mejor[1]); json.dump(mejor[2], open(meta, 'w'))
+            return mejor[1], mejor[2]
+        open(no, 'w').write('1')
+        return None
 
 
 # ---------- oído: niveles del audio del sistema (tools/oido, ScreenCaptureKit) ----------
@@ -710,7 +757,7 @@ class Handler(SimpleHTTPRequestHandler):
             return self.send_json({'ready': guion.available(), 'model': guion.MODEL})
         if path == '/cara':                                     # la cara real del artista, recortada y sin fondo (PNG con su posición en la cabecera X-Cara)
             name = parse_qs(urlparse(self.path).query).get('name', [''])[0][:80]
-            res = cara_de(name) if name.strip() else None
+            res = cara_de(name, parse_qs(urlparse(self.path).query).get('src', [''])[0] == 'wiki') if name.strip() else None
             if not res:
                 return self.send_json({'none': True}, 404)
             body, meta = res

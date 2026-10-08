@@ -124,7 +124,7 @@ class H(SimpleHTTPRequestHandler):
         if p == '/cara':                                          # misma cara recortada que el puente real
             try:
                 import bridge
-                res = bridge.cara_de(q.get('name', '')) if q.get('name', '').strip() else None
+                res = bridge.cara_de(q.get('name', ''), q.get('src') == 'wiki') if q.get('name', '').strip() else None
             except Exception: res = None
             if not res: return self.j({'none': True}, 404)
             body, meta = res; self.send_response(200); self.send_header('Content-Type', 'image/png'); self.send_header('Content-Length', str(len(body))); self.send_header('X-Cara', json.dumps(meta)); self.end_headers(); self.wfile.write(body); return
