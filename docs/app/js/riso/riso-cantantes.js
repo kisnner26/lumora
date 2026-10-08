@@ -27,7 +27,7 @@
       if (sg.id === 'the_weeknd') {
         // la figura completa sustituye al cantante genérico; conserva entrada y ritmo.
         R.props.drawProp(K, sg.id, x, y - 240 * k, 1.24 * k, 1, { seed: s.seed + i, ph: sg.h % 6, rot: sin(kt * 1.6 + i * 2) * (active ? .018 : .008) });
-      } else R.artistFigures.draw(K, sg.name, sg.id, x, y, k, { time: kt + i * 2, active, open });
+      } else R.artistFigures.draw(K, sg.name, sg.id, x, y, k, { time: kt + i * 2, active, open, album: window.ext?.st?.album || '' });
       // etiqueta con el nombre
       K.c.save(); K.c.translate(x, ground + 52); K.c.rotate((i % 2 ? .012 : -.012));
       const nm = sg.name.toUpperCase().slice(0, 26), w = Math.min(330, K.measure(nm, { font: 'display', size: 34 * Math.min(1, k + .1), w: 800, stretch: 'condensed' }) + 40);

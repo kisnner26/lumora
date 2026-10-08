@@ -151,13 +151,13 @@
     { p: 'M-34 138 L-22 128 V176', s: 7, i: 1 }, { c: [14, 146, 14], f: -1, s: 7, i: 1 }, { p: 'M28 146 C28 164 24 172 10 176', s: 7, i: 1 },
     { c: [-48, -24, 11], f: 3, ft: .55, s: 6 }, { c: [48, -24, 11], f: 3, ft: .55, s: 6 },
     { c: [0, -98, 48], f: 1, ft: .95, s: 0 },
-    ...Array.from({ length: 11 }, (_, k) => { const a = Math.PI * (1 + k / 10), x = Math.cos(a) * 66, y = -74 + Math.sin(a) * 60; return { c: [x, y, 24 + (k % 3) * 3], f: 1, ft: .95, s: 6 }; }),
-    ...Array.from({ length: 9 }, (_, k) => { const a = Math.PI * (1.06 + k / 10.5), x = Math.cos(a) * 58, y = -78 + Math.sin(a) * 50; return { c: [x, y, 9], f: 2, ft: .85, s: 0, m: 'pulse', a: .06, o: [x, y], ph: k }; }),
+    ...Array.from({ length: 11 }, (_, k) => { const a = Math.PI * (1 + k / 10), x = Math.cos(a) * 66, y = -74 + Math.sin(a) * 60; return { c: [x, y, 24 + (k % 3) * 3], f: 1, ft: .95, s: 6, steps: 11 }; }),
+    ...Array.from({ length: 9 }, (_, k) => { const a = Math.PI * (1.06 + k / 10.5), x = Math.cos(a) * 58, y = -78 + Math.sin(a) * 50; return { c: [x, y, 9], f: 2, ft: .85, s: 0, steps: 8, m: 'pulse', a: .06, o: [x, y], ph: k }; }),
     { p: 'M-44 -58 C-44 -8 -28 42 0 46 C28 42 44 -8 44 -58 C44 -92 -44 -92 -44 -58 Z', f: 3, ft: .55, s: 8 },
     { c: [-18, -26, 4.5], f: 1, s: 0 }, { c: [18, -26, 4.5], f: 1, s: 0 }, { p: 'M-30 -42 H-9 M9 -42 H30', s: 5 }, { p: 'M0 -22 L-6 0 H6', s: 3 }, { p: 'M-12 22 H12', s: 4 },
     { p: 'M-47 -56 C-22 -68 22 -68 47 -56', s: 10, i: 2 },
-    ...[-38, -20, 0, 20, 38].map((x, k) => ({ c: [x, -72 - (k % 2) * 4, 13], f: 1, ft: .95, s: 5 })),
-    ...[-28, 6, 30].map((x, k) => ({ c: [x, -74, 6], f: 2, ft: .85, s: 0, m: 'pulse', a: .06, o: [x, -74], ph: k })),
+    ...[-38, -20, 0, 20, 38].map((x, k) => ({ c: [x, -72 - (k % 2) * 4, 13], f: 1, ft: .95, s: 5, steps: 8 })),
+    ...[-28, 6, 30].map((x, k) => ({ c: [x, -74, 6], f: 2, ft: .85, s: 0, steps: 8, m: 'pulse', a: .06, o: [x, -74], ph: k })),
   ]);
   A('maradona', 'MARADONA', /\b(maradona|diego maradona|diego armando|la mano de dios|d10s|el pelusa)\b/i, [
     { p: 'M-60 100 V-20 C-60 -60 -30 -80 0 -80 C30 -80 60 -60 60 -20 V100 Z', f: 3, ft: .6, s: 9 }, { p: 'M-60 -20 H60 M-60 20 H60 M-60 60 H60', s: 12, i: 2 }, { p: 'M40 -70 C80 -140 130 -140 150 -110 L170 -160', s: 9 }, { p: 'M150 -110 C180 -100 190 -70 170 -50', f: -1, s: 6 },
