@@ -3,25 +3,42 @@
   const R = window.RISO, F = R?.film; if (!F) return;
   const mix = (a, b, t) => a + (b - a) * t;
   F.draw = function (K, shot, elapsed, options = {}) {
-    const b = shot.narrative, reduced = !!window.CFG?.reduceMotion, pose = this.pose(b, elapsed, reduced), state = this.stateAt(b, elapsed, reduced);
-    const cx = shot.flip ? 470 : 1130, ground = 710, camera = this.camera(b, elapsed, cx, reduced), c = K.c;
-    const action = b.action === 'hold' ? null : b.action, gap = b.cast === 2 || ['give', 'reach'].includes(action) ? 120 : 0;
-    const left = cx - gap + pose.x, right = cx + gap;
-    c.save(); c.beginPath(); c.rect(cx - 330, 120, 660, 640); c.clip();
-    c.translate(cx, 450); c.scale(camera.reverse ? -camera.z : camera.z, camera.z); c.translate(-camera.x, -camera.y);
-    // decorado persistente. no gira de escenario durante una misma acción.
-    K.line(cx - 390, ground, cx + 390, ground, 1, 5);
-    if (R.world?.enabled) R.world.draw(K,R.world.profile(b.place),b.t+elapsed,{cx,ground});
-    else if (b.place === 'cuarto') {
-      K.rect(cx - 300, 150, 600, 560, { s: 3, lw: 4 });
-      K.rect(cx - 250, 215, 135, 160, { f: 3, ft: .10, s: 3, lw: 3 });
-      K.line(cx - 182, 215, cx - 182, 375, 3, 3); K.line(cx - 250, 295, cx - 115, 295, 3, 3);
-    } else if (b.place === 'ciudad') {
-      for (let i = -3; i <= 3; i++) { const h = 210 + (i * i % 3) * 55; K.rect(cx + i * 110 - 45, ground - h - 80, 85, h, { f: 3, ft: .18, s: 3, lw: 3 }); }
-      K.line(cx - 390, 745, cx + 390, 745, 2, 5);
-    } else if (b.place === 'bosque') {
-      for (const sd of [-1, 1]) { K.line(cx + sd * 275, ground, cx + sd * 275, 230, 3, 8); K.ell(cx + sd * 275, 250, 70, 120, .12 * sd, { f: 3, ft: .35, s: 1, lw: 4 }); }
-    } else K.circ(cx + 240, 235, 68, { f: 3, ft: .3, s: 1, lw: 4 });
+    const b = shot.narrative, reduced = !!window.CFG?.reduceMotion, pose0 = this.pose(b, elapsed, reduced), state = this.stateAt(b, elapsed, reduced);
+    const cx = shot.flip ? 470 : 1130, ground = 710, c = K.c, now = (b.t ?? 0) + elapsed;
+    // lo que dice la letra: lugar, clima, hora y qué hace quien canta
+    const A = R.atmos; if (A && typeof IN !== 'undefined') A.plan(IN.lines);
+    const at = (A && A.at(b.li)) || {}, action = b.action === 'hold' ? null : b.action, openDoor = action === 'open' || action === 'return' || b.motif === 'puerta_entreabierta';
+    const act = action ? null : at.act || ((b.li || 0) % 3 === 1 ? 'walk' : null), bpm = Math.max(70, Math.min(180, (typeof IN !== 'undefined' && IN.bpm) || 110)), ph = now * bpm / 60;
+    const FALL = ['ciudad', 'costa', 'bosque', 'desierto', 'espacio'], fallback = FALL[(R.world ? R.world.hash((typeof ext !== 'undefined' ? ext.key() : 'lumora') + '|' + (b.visualChapter || 0)) : 0) % FALL.length];
+    const place = openDoor ? 'cuarto' : at.place || (b.place !== 'cuarto' ? b.place : fallback);
+    const pose = { ...pose0 }, bob = act === 'dance' ? Math.abs(Math.sin(ph * Math.PI)) * 34 : act === 'run' ? Math.abs(Math.sin(now * 9)) * 16 : act === 'walk' && !reduced ? Math.abs(Math.sin(now * 6.5)) * 5 : (reduced || action ? 0 : Math.sin(now * 1.6) * 3);
+    if (!reduced) {
+      if (act === 'dance') { pose.handY = -250 - Math.sin(ph * Math.PI) * 34; pose.handX = 34 + Math.sin(ph * Math.PI * .5) * 30; pose.head = Math.sin(ph * Math.PI * .5) * .18; pose.gait = Math.sin(ph * Math.PI) * 10; }
+      else if (act === 'run') pose.gait = Math.sin(now * 14) * 26;
+      else if (act === 'walk') pose.gait = Math.sin(now * 6.5) * 15;
+    }
+    if (act === 'cry') { pose.head = .24; pose.handY = -212; pose.handX = 18; }
+    if (act === 'sleep') { pose.head = .36; pose.handY = -120; }
+    if (act === 'sing') { pose.handY = -218; pose.handX = 14; pose.head = -.06 + (reduced ? 0 : Math.sin(ph * Math.PI * .5) * .05); }
+    const gap = b.cast === 2 || ['give', 'reach'].includes(action) ? 120 : 0, left = cx - gap + pose.x, right = cx + gap;
+    // cámara: el plano se adapta a lo que pasa y respira con el ritmo
+    const camBeat = act && ['medium', 'wide'].includes(b.camera) ? { ...b, camera: { cry: 'close', sing: 'close', sleep: 'close', drive: 'wide', run: 'wide', dance: 'medium' }[act] } : b;
+    const camera = this.camera(camBeat, elapsed, cx, reduced), beat = reduced ? 0 : (typeof IN !== 'undefined' && IN.beat) || 0;
+    const dolly = reduced ? 0 : (pose.p - .5) * .1 * ((b.li || 0) % 2 ? 1 : -1), sway = reduced ? 0 : Math.sin(now * .7) * 12 + Math.sin(now * 1.9) * 4, lift = reduced ? 0 : Math.cos(now * .6) * 8;
+    const roll = reduced ? 0 : Math.sin(now * .35) * .012 * (.6 + (b.section?.energy || 5) / 10), punch = beat * .022;
+    // ---------- fondo a pantalla completa: el mundo del lugar, el cielo y el clima ----------
+    c.save();
+    const interior = place === 'cuarto', wz = interior ? 1 : 1.32, bx = interior ? cx : 800, par = .45;
+    c.translate(800, ground); c.scale(wz * (1 + dolly * .5 + punch * .6), wz * (1 + dolly * .5 + punch * .6)); c.rotate(roll * .6); const drift = reduced ? 0 : act === 'walk' ? Math.sin(now * .22) * 150 : act === 'run' ? Math.sin(now * .5) * 260 : 0;
+    c.translate(-800 - (camera.x - cx) * par - sway * .4 - drift, -ground - (camera.y - 460) * par - lift * .4);
+    if (!interior) A?.sky(K, at.time, now, beat, 520);
+    K.line(-300, ground, 1900, ground, 1, 5);
+    if (R.world?.enabled) R.world.draw(K, R.world.profile(place), now, { cx: bx, ground });
+    if (interior) A?.sky(K, at.time, now, beat, 520);
+    A?.weather(K, at.weather || (act === 'cry' && !interior ? null : null), now, beat, ground);
+    c.restore();
+    // ---------- los actores, con su propia cámara ----------
+    c.save(); c.translate(cx, 450); c.rotate(roll); c.scale((camera.reverse ? -1 : 1) * camera.z * 1.1 * (1 + dolly + punch), camera.z * 1.1 * (1 + dolly + punch)); c.translate(-camera.x - sway, -camera.y - lift);
     // puerta articulada: el ancho visible del panel cambia con la apertura.
     if (action === 'open' || action === 'return' || b.motif === 'puerta_entreabierta') {
       const dx = cx + 165, top = ground - 350, w = 120, opened = state.door;
@@ -32,15 +49,15 @@
       if (opened > .05) K.poly([[edge, ground - rise], [dx + w, ground], [dx + w + opened * 90, ground + 60], [edge - opened * 50, ground + 60]], { f: 2, ft: .16 });
     }
     const actor = (px, second) => {
-      const lean = second ? 0 : pose.head, gait = second ? 0 : pose.gait, ink = second ? 3 : 2;
-      c.save(); c.translate(px, ground);
-      K.ell(0, 4, 40, 7, 0, { f: 1, ft: .16 });
+      const lean = second ? (act === 'dance' ? -pose.head : 0) : pose.head, gait = second ? (act === 'dance' || act === 'run' ? -pose.gait : 0) : pose.gait, ink = second ? 3 : 2;
+      c.save(); c.translate(px, ground - bob);
+      K.ell(0, 4 + bob, 40 - bob * .4, 7, 0, { f: 1, ft: .16 });
       K.line(-12, -105, -22 - gait, -4, 1, 11); K.line(12, -105, 22 + gait, -4, 1, 11);
       K.line(-22 - gait, -4, -38 - gait, -4, 1, 7); K.line(22 + gait, -4, 38 + gait, -4, 1, 7);
       K.poly([[-28, -205], [28, -205], [36, -100], [-36, -100]], { f: ink, ft: .75, s: 1, lw: 5 });
       K.line(-24, -190, -40, -136, ink, 13);
       const hx = second ? -45 - (action === 'give' ? pose.move * 35 : action === 'reach' ? pose.move * 25 : 0) : pose.handX;
-      const hy = second ? -155 : pose.handY, elbow = second ? -48 : 40;
+      const hy = second ? (act === 'dance' ? pose.handY + 12 : -155) : pose.handY, elbow = second ? -48 : 40;
       K.line(second ? -24 : 24, -190, elbow, -170, ink, 13); K.line(elbow, -170, hx, hy, ink, 11);
       K.circ(hx, hy, 7, { f: -1, s: 1, lw: 3 });
       c.save(); c.translate(0, -235); c.rotate(lean);
@@ -51,8 +68,37 @@
       K.line(second ? -21 : 20, 4, second ? -25 : 25, 10, 1, 2); c.restore(); c.restore();
     };
     const empty = b.place === 'cuarto' && (action === 'leave' ? pose.p >= .98 : state.empty >= .99);
-    if (!empty && !(action === 'board' && pose.p > .86)) actor(left, false);
-    if (!empty && gap) actor(right, true);
+    const hideActors = act === 'drive';
+    if (!empty && !hideActors && !(action === 'board' && pose.p > .86)) actor(left, false);
+    if (!empty && !hideActors && (gap || (act === 'dance' && at.place !== 'espacio'))) actor(gap ? right : left + 190, true);
+    // lo que hace quien canta, dibujado encima
+    const note = (x, y, k = 1, i = 2) => { K.ell(x, y, 9 * k, 6.5 * k, -.4, { f: i, ft: .95, s: 1, lw: 2 }); K.line(x + 8 * k, y - 2 * k, x + 8 * k, y - 34 * k, 1, 3); K.path(cc => { cc.moveTo(x + 8 * k, y - 34 * k); cc.quadraticCurveTo(x + 24 * k, y - 28 * k, x + 20 * k, y - 14 * k); }, { s: 1, lw: 3 }); };
+    if (act === 'drive') {
+      const tx = cx - 20, wob = reduced ? 0 : Math.sin(now * 18) * 2.5, spin = now * 9;
+      for (let i = 0; i < 9; i++) { const px = ((i * 230 - now * 880) % 2100 + 2100) % 2100 - 300 - cx + 800 - 800; K.rect(cx + px - 300, ground - 150, 14, 150, { f: 3, ft: .5, s: 1, lw: 3 }); }
+      K.line(cx - 700, ground + 28, cx + 700, ground + 28, 2, 5); for (let i = 0; i < 12; i++) { const px = ((i * 170 - now * 880) % 2040 + 2040) % 2040 - 1000; K.rect(cx + px, ground + 50, 90, 8, { f: -1, s: 1, lw: 2 }); }
+      c.save(); c.translate(tx, wob);
+      K.ell(0, ground - 4, 210, 12, 0, { f: 1, ft: .22 });
+      K.poly([[-190, ground - 80], [-120, ground - 88], [-70, ground - 168], [90, ground - 168], [150, ground - 92], [215, ground - 82], [215, ground - 24], [-190, ground - 24]], { f: 2, ft: .88, s: 1, lw: 6 });
+      K.poly([[-58, ground - 156], [80, ground - 156], [128, ground - 92], [-100, ground - 92]], { f: -1, s: 1, lw: 4 });
+      K.ell(-18, ground - 122, 22, 25, 0, { f: -1, s: 1, lw: 4 }); K.ell(-18, ground - 140, 22, 9, -.1, { f: 1, s: 1, lw: 3 }); K.line(12, ground - 150, 70, ground - 118, 1, 3, .6);
+      for (const dx of [-105, 135]) { K.circ(dx, ground - 24, 32, { f: 1, s: 1, lw: 6 }); K.circ(dx, ground - 24, 13, { f: -1, s: 1, lw: 3 }); for (let k = 0; k < 4; k++) { const a = spin + k * Math.PI / 2; K.line(dx, ground - 24, dx + Math.cos(a) * 28, ground - 24 + Math.sin(a) * 28, -1, 3); } }
+      K.glow(2, 240, ground - 62, 130 + beat * 40, .7); K.circ(214, ground - 62, 9, { f: -1, s: 1, lw: 3 });
+      for (let i = 0; i < 5; i++) K.line(-210 - i * 36 - ((now * 600) % 36), ground - 40 - i * 13, -290 - i * 52, ground - 40 - i * 13, 1, 3, .5);
+      c.restore();
+    } else if (act === 'cry') {
+      for (let i = 0; i < 3; i++) { const q = reduced ? .5 : (now * 1.3 + i * .37) % 1, hx = left + 4 + (i % 2) * 14, hy = ground - 222 + q * 180; K.path(cc => { cc.moveTo(hx, hy - 12); cc.quadraticCurveTo(hx + 7, hy + 2, hx, hy + 6); cc.quadraticCurveTo(hx - 7, hy + 2, hx, hy - 12); }, { f: 3, ft: .9 - q * .5, s: 1, lw: 2 }); }
+    } else if (act === 'sing') {
+      K.line(left + 18, ground - 214, left + 36, ground - 232, 1, 4); K.circ(left + 42, ground - 238, 11, { f: 1, s: 1, lw: 3 });
+      for (let i = 0; i < 4; i++) { const q = reduced ? .4 : (now * .5 + i * .26) % 1; note(left + 60 + i * 34 + Math.sin(now + i) * 14, ground - 250 - q * 260, .9 - q * .3, i % 2 ? 2 : 3); }
+    } else if (act === 'dance') {
+      for (let i = 0; i < 18; i++) { const q = reduced ? .5 : (now * .45 + i * .071) % 1, x = left - 360 + ((i * 163) % 760), y = ground - 520 + q * 600; K.rect(x, y, 10, 5, { f: i % 3 + 1, ft: .9, s: 1, lw: 1.5 }); }
+      note(left + 150, ground - 330 - (reduced ? 0 : Math.abs(Math.sin(ph * Math.PI)) * 40), 1.1, 2);
+    } else if (act === 'run') {
+      for (let i = 0; i < 6; i++) K.line(left - 80 - i * 44 - ((now * 500) % 44), ground - 80 - i * 28, left - 170 - i * 64, ground - 80 - i * 28, 1, 3, .5);
+    } else if (act === 'sleep') {
+      for (let i = 0; i < 3; i++) { const q = reduced ? .4 : (now * .35 + i * .33) % 1; K.txt('z', left + 40 + i * 22, ground - 270 - q * 150, { font: 'display', size: 34 - i * 6, w: 800, i: 3 }); }
+    }
     const id = shot.props?.[0]?.id || b.motif;
     if (action === 'board' || id === 'taxi') {
       const tx = cx + 140;
