@@ -12,8 +12,8 @@
 #cvMenu[data-tab=sonido] .cv-pane[data-pane=sonido]{display:block;animation:cvPane .25s cubic-bezier(.2,.8,.2,1)}
 .cv-sound h5{margin:14px 0 8px}.cv-sound h5:first-child{margin-top:0}.cv-sound .cv-segs{flex-wrap:wrap;gap:2px}.cv-sound .cv-segs button{flex:1 1 30%;min-height:34px}
 .cv-sound label{display:grid;grid-template-columns:96px 1fr;align-items:center;gap:10px;margin:8px 0;font:400 10px 'Martian Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
-.cv-sound input[type=range]{width:100%;accent-color:#f4c983}.cv-sound .cv-line{display:flex;gap:6px;margin-top:10px}.cv-sound .cv-line button{flex:1;padding:9px 0;border-radius:9px;background:rgba(246,238,226,.08);color:var(--paper);font:400 10px 'Martian Mono',monospace;letter-spacing:.06em;text-transform:uppercase;box-shadow:inset 0 0 0 1px rgba(246,238,226,.12)}
-.cv-sound .cv-line button:hover{background:rgba(246,238,226,.16)}.cv-sound .cv-state{margin:0 0 10px;font:400 10px/1.5 'Martian Mono',monospace;color:var(--faint)}#cvSndErr{color:#ff9a8a}`;
+.cv-sound input[type=range]{width:100%;accent-color:#f4c983}.cv-sound .cv-sound-actions{display:flex;gap:6px;margin-top:10px}.cv-sound .cv-sound-actions button{flex:1;padding:9px 0;border-radius:9px;background:rgba(246,238,226,.08);color:var(--paper);font:400 10px 'Martian Mono',monospace;letter-spacing:.06em;text-transform:uppercase;box-shadow:inset 0 0 0 1px rgba(246,238,226,.12)}
+.cv-sound .cv-sound-actions button:hover{background:rgba(246,238,226,.16)}.cv-sound .cv-state{margin:0 0 10px;font:400 10px/1.5 'Martian Mono',monospace;color:var(--faint)}#cvSndErr{color:#ff9a8a}`;
   document.head.appendChild(css);
   const canvas = document.createElement('canvas'), veil = document.createElement('div');
   canvas.className = 'cv-world'; canvas.width = 640; canvas.height = 360; canvas.setAttribute('aria-hidden', 'true'); veil.className = 'cv-world-veil';
@@ -25,13 +25,13 @@
   pane.innerHTML = `<p class="cv-state" id="cvSndState"></p><h5>ambiente acústico</h5>${seg('amb', Object.entries(E.presets).map(([k, p]) => [k, p.label]))}
     <label>eco<input type="range" min="0" max="1" step=".01" data-snd="echo" aria-label="eco"></label><label>reverb<input type="range" min="0" max="1" step=".01" data-snd="room" aria-label="reverberación"></label><label>espacio<input type="range" min="0" max="1" step=".01" data-snd="space" aria-label="espacio binaural"></label>
     <h5>universo</h5>${seg('bio', Object.entries(labels))}
-    <div class="cv-line"><button id="cvSndNext">otro universo</button><button id="cvSndHome">el original</button><button id="cvSndSys">audio del mac</button></div><p class="cv-state" id="cvSndErr" role="alert"></p>`;
+    <div class="cv-sound-actions"><button id="cvSndNext">otro universo</button><button id="cvSndHome">el original</button><button id="cvSndSys">audio del mac</button></div><p class="cv-state" id="cvSndErr" role="alert"></p>`;
   const $ = id => document.getElementById(id);
   function sync() {
     const s = E.settings, w = U.settings();
     $('cvSndState').textContent = E.kind === 'none' ? 'sin fuente procesable: conecta el audio del mac para usar eco y espacio' : E.label + (E.monitor ? ' · salida procesada' : ' · solo análisis');
-    pane.querySelectorAll('[data-amb]').forEach(b => b.classList.toggle('on', b.dataset.amb === s.preset));
-    pane.querySelectorAll('[data-bio]').forEach(b => b.classList.toggle('on', b.dataset.bio === w.biome));
+    pane.querySelectorAll('[data-amb]').forEach(b => { const on = b.dataset.amb === s.preset; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
+    pane.querySelectorAll('[data-bio]').forEach(b => { const on = b.dataset.bio === w.biome; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
     pane.querySelectorAll('[data-snd]').forEach(i => { if (document.activeElement !== i) i.value = s[i.dataset.snd]; });
     $('cvSndSys').disabled = E.kind === 'system';
   }

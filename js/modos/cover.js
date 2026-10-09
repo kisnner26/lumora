@@ -454,6 +454,7 @@ const cvSeg = k => `<div class="cv-seg">${CV_OPTS[k].map(([v, t]) => `<button da
   cover.append(shelf, drift, main, float, clock, trata, next, poster);
   // nada dentro de la carátula la cierra por accidente: todo pasa por aquí
   cover.addEventListener('click', e => {
+    if (e.target.closest('#cvPaneSonido')) return;
     e.stopImmediatePropagation();
     const bar = e.target.closest('#cvBar');
     if (bar) { const r = bar.getBoundingClientRect(); return ext.cmd('goto:' + (clamp((e.clientX - r.left) / r.width) * (ext.st.dur || 0)).toFixed(2)); }
@@ -484,6 +485,10 @@ const cvSeg = k => `<div class="cv-seg">${CV_OPTS[k].map(([v, t]) => `<button da
     if (b.id === 'cvFs') return document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.();
     if (b.id === 'cvBack') { cover.classList.remove('menu'); $('cvMenuBtn').classList.remove('on'); return toggleCover(false); }
   }, true);
+
+  cover.addEventListener('keydown', e => {
+    if (e.key !== 'Escape' && e.target.closest('.cv-menu')) e.stopPropagation();
+  });
 
   const menuEl = float.querySelector('.cv-menu');
   menuEl.addEventListener('mouseover', e => { const o = e.target.closest('[data-style], [data-lyr], [data-size], [data-hint]'); cvDesc(menuEl.contains(o) ? o : null); });
