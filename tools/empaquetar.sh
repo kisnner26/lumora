@@ -8,11 +8,12 @@ cd "$(dirname "$0")/.."
 
 # entorno de empaquetado local (PyInstaller); no se instala nada global
 if [ ! -x .venv-empaque/bin/pyinstaller ]; then
-  python3 -m venv .venv-empaque
+  "${LUMORA_BUILD_PYTHON:-python3}" -m venv .venv-empaque
   .venv-empaque/bin/pip install --quiet pyinstaller
 fi
 
 tools/crear_app.sh
+python3 tools/verificar_app.py app/build/Lumora.app
 APP=app/build/Lumora.app
 DMG=app/build/Lumora.dmg
 ID="${DEVELOPER_ID:--}"                       # "-" = firma ad-hoc
