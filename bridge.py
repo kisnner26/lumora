@@ -5,7 +5,7 @@ GET  /now          -> estado de Música en JSON (se refresca 4 veces por segundo
 GET  /art          -> carátula de la canción actual
 POST /cmd?c=...    -> playpause | seek:+5 | seek:-5 | start
 """
-import hashlib, unicodedata, json, os, queue, re, shutil, signal, socket, socketserver, subprocess, sys, threading, time, tempfile, urllib.request, urllib.parse
+import hashlib, unicodedata, json, os, queue, re, select, shutil, signal, socket, socketserver, subprocess, sys, threading, time, tempfile, urllib.request, urllib.parse
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
@@ -469,10 +469,44 @@ def cara_de(name, modo='verificado'):
 # ---------- oído: niveles del audio del sistema (tools/oido, ScreenCaptureKit) ----------
 OIDO_BIN = os.path.join(TOOLS, 'oido')
 TOMADOR_BIN = os.path.join(TOOLS, 'tomador')
-TOMADOR = {'proc': None}
+TOMADOR = {'proc': None, 'session': '', 'cancelled': {}}
 TOMADOR_LOCK = threading.Lock()
+PCM_START_TIMEOUT = 8
+PCM_IDLE_TIMEOUT = 3
 AUDIO = {'clients': [], 'error': '', 'running': False}
 AUDIO_LOCK = threading.Lock()
+
+
+def parar_tomador(pr):
+    if pr and pr.poll() is None:
+        pr.terminate()
+        try:
+            pr.wait(2)
+        except subprocess.TimeoutExpired:
+            pr.kill()
+            pr.wait()
+
+
+def pcm_read(pr, connection, size, timeout):
+    """espera muestras sin perder de vista el cierre del navegador ni dejar un tap mudo colgado."""
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        ready, _, _ = select.select([connection, pr.stdout], [], [], min(.2, max(0, deadline - time.monotonic())))
+        if connection in ready and not connection.recv(1, socket.MSG_PEEK):
+            raise BrokenPipeError('el reproductor se desconectó')
+        if pr.stdout in ready:
+            return pr.stdout.read1(size)
+    raise TimeoutError('el tomador dejó de entregar audio')
+
+
+def navegador_audio(user_agent):
+    """el proceso de audio del navegador es compartido: no puede entrar en su propio tap."""
+    for marker, bundle in [('Edg/', 'com.microsoft.edgemac'), ('OPR/', 'com.operasoftware.opera'),
+                           ('Firefox/', 'org.mozilla.firefox'), ('Chrome/', 'com.google.chrome'),
+                           ('Safari/', 'com.apple.safari')]:
+        if marker in user_agent:
+            return bundle
+    return ''
 
 
 def oido_permitido(pedir=False):
@@ -914,35 +948,55 @@ class Handler(SimpleHTTPRequestHandler):
             if not os.path.exists(TOMADOR_BIN):
                 return self.send_json({'error': 'esta versión no incluye el tomador de audio'}, 501)
             solo = parse_qs(urlparse(self.path).query).get('solo', [''])[0]
+            session = parse_qs(urlparse(self.path).query).get('session', [''])[0][:80]
             cmd = [TOMADOR_BIN] + (['--solo', solo] if re.fullmatch(r'[a-zA-Z0-9._-]{1,40}', solo) else [])
+            browser = navegador_audio(self.headers.get('User-Agent', ''))
+            if browser:
+                cmd += ['--exclude-bundle', browser]
             with TOMADOR_LOCK:
-                old = TOMADOR['proc']
-                if old and old.poll() is None:
-                    old.terminate()
-                    try: old.wait(2)
-                    except Exception: old.kill()
+                TOMADOR['cancelled'] = {k: t for k, t in TOMADOR['cancelled'].items() if time.monotonic() - t < 30}
+                if session and session in TOMADOR['cancelled']:
+                    return self.send_json({'error': 'captura cancelada'}, 409)
+                parar_tomador(TOMADOR['proc'])
                 pr = TOMADOR['proc'] = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            first = pr.stdout.read(4)
-            if len(first) < 4:
-                err = (pr.stderr.read() or b'').decode(errors='replace').strip()
-                return self.send_json({'error': err or 'el tomador no arrancó', 'permiso': pr.wait() == 3}, 503)
-            self.send_response(200)
-            self.send_header('Content-Type', 'application/octet-stream')
-            self.send_header('Cache-Control', 'no-store')
-            self.end_headers()
+                TOMADOR['session'] = session
+            started = False
             try:
+                first = b''
+                deadline = time.monotonic() + PCM_START_TIMEOUT
+                while len(first) < 4:
+                    chunk = pcm_read(pr, self.connection, 4 - len(first), max(0, deadline - time.monotonic()))
+                    if not chunk:
+                        parar_tomador(pr)
+                        err = (pr.stderr.read() or b'').decode(errors='replace').strip()
+                        return self.send_json({'error': err or 'el tomador no arrancó', 'permiso': pr.returncode == 3}, 503)
+                    first += chunk
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/octet-stream')
+                self.send_header('Cache-Control', 'no-store')
+                self.end_headers()
+                started = True
                 self.wfile.write(first)
+                self.wfile.flush()
                 while True:
-                    chunk = pr.stdout.read1(65536)
+                    chunk = pcm_read(pr, self.connection, 65536, PCM_IDLE_TIMEOUT)
                     if not chunk:
                         break
                     self.wfile.write(chunk)
                     self.wfile.flush()
+            except TimeoutError as e:
+                if not started:
+                    self.send_json({'error': str(e)}, 503)
             except (BrokenPipeError, ConnectionResetError, OSError):
                 pass
             finally:
-                if pr.poll() is None:
-                    pr.terminate()
+                parar_tomador(pr)
+                pr.stdout.close()
+                pr.stderr.close()
+                with TOMADOR_LOCK:
+                    if TOMADOR['proc'] is pr:
+                        TOMADOR['proc'] = None
+                        TOMADOR['session'] = ''
             return
         if path == '/lights':
             if parse_qs(urlparse(self.path).query).get('scan'):
@@ -974,6 +1028,17 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         u = urlparse(self.path)
+        if u.path == '/pcm/stop':
+            session = parse_qs(u.query).get('session', [''])[0][:80]
+            if not session:
+                return self.send_json({'error': 'falta la sesión de audio'}, 400)
+            with TOMADOR_LOCK:
+                cancelled = {k: t for k, t in TOMADOR['cancelled'].items() if time.monotonic() - t < 30}
+                cancelled[session] = time.monotonic()
+                TOMADOR['cancelled'] = dict(list(cancelled.items())[-64:])
+                if TOMADOR['session'] == session:
+                    parar_tomador(TOMADOR['proc'])
+            return self.send_json({'ok': True})
         if u.path == '/log':                                   # errores de la página, para depurar
             n = int(self.headers.get('Content-Length') or 0)
             msg = self.rfile.read(min(n, 2000)).decode('utf-8', 'replace')
