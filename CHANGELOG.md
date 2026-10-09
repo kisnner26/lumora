@@ -1,5 +1,14 @@
 # historial de cambios
 
+## 2026-10-09
+
+- repara los controles de sonido de carátula, su navegación por teclado y el foco del menú de herramientas.
+- cancela las capturas pcm al desconectar, cambiar de fuente o agotar el tiempo de arranque; excluye el navegador reproductor para evitar realimentación.
+- saca la escritura al pipe del callback de core audio y conserva el audio original mientras el tap no se lee.
+- corrige el remuestreo, la limpieza del recuerdo y la exclusión entre grabaciones; verifica exportación real con imagen y audio.
+- sincroniza la distribución web con los universos, explorar, carátula y experiencia de audio; informa las funciones que requieren la app de mac.
+- comprueba los mínimos de macos de todos los binarios empaquetados y reconstruye el dmg con un runtime compatible.
+
 ## 2026-10-08
 
 - añade guion visual local con continuidad entre versos y composiciones que vuelven en el estribillo.
