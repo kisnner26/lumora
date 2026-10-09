@@ -40,11 +40,14 @@ if args.contains("--lista") {
     exit(0)
 }
 let solo = args.firstIndex(of: "--solo").flatMap { $0 + 1 < args.count ? args[$0 + 1].lowercased() : nil }
+let excluded = args.enumerated().compactMap { i, arg in
+    arg == "--exclude-bundle" && i + 1 < args.count ? args[i + 1].lowercased() : nil
+}
 
 // el audio de la propia lumora (WebKit incluido) no entra: se silenciaría y el sonido procesado no se oiría
 func propio(_ p: Proceso) -> Bool {
     let b = p.bundle.lowercased()
-    return p.pid == getpid() || b.contains("lumora") || b.hasPrefix("com.apple.webkit")
+    return p.pid == getpid() || b.contains("lumora") || b.hasPrefix("com.apple.webkit") || excluded.contains { b == $0 || b.hasPrefix($0 + ".") }
 }
 let todos = procesos()
 let desc: CATapDescription
@@ -97,36 +100,52 @@ var cabecera = rate
 withUnsafeBytes(of: &cabecera) { _ = fwrite($0.baseAddress, 1, 4, stdout) }
 fflush(stdout)
 
-var salidaBuf = [Float32](repeating: 0, count: 8192)
+// el callback de Core Audio solo copia a memoria preasignada; el pipe puede bloquear al escritor, nunca al reloj de audio.
+final class SalidaPCM {
+    private let slots = 8, maxFrames = 16384
+    private let lock = NSLock(), available = DispatchSemaphore(value: 0)
+    private var buffers: [UnsafeMutablePointer<Float32>]
+    private var sizes = [Int](repeating: 0, count: 8)
+    private var read = 0, write = 0, pending = 0
+
+    init() {
+        let capacity = maxFrames * 2
+        buffers = (0..<slots).map { _ in UnsafeMutablePointer<Float32>.allocate(capacity: capacity) }
+        DispatchQueue(label: "lumora.pipe", qos: .userInitiated).async { [self] in
+            while true {
+                available.wait()
+                lock.lock(); let index = read, size = sizes[index]; lock.unlock()
+                let written = fwrite(buffers[index], 1, size, stdout)
+                if written != size || fflush(stdout) != 0 { kill(getpid(), SIGTERM); return }
+                lock.lock(); read = (read + 1) % slots; pending -= 1; lock.unlock()
+            }
+        }
+    }
+
+    func push(_ bufs: UnsafeMutableAudioBufferListPointer) {
+        guard !bufs.isEmpty, let data = bufs[0].mData else { return }
+        let channels = max(1, Int(bufs[0].mNumberChannels)), planar = channels == 1 && bufs.count > 1
+        var frames = Int(bufs[0].mDataByteSize) / 4 / channels
+        if planar { frames = min(frames, Int(bufs[1].mDataByteSize) / 4 / max(1, Int(bufs[1].mNumberChannels))) }
+        guard frames > 0, frames <= maxFrames, !planar || bufs[1].mData != nil, lock.try() else { return }
+        guard pending < slots else { lock.unlock(); return }  // lector atrasado: se descarta el bloque, no se bloquea Core Audio
+        let output = buffers[write], left = data.assumingMemoryBound(to: Float32.self)
+        let right = planar ? bufs[1].mData!.assumingMemoryBound(to: Float32.self) : left
+        let rightStride = planar ? max(1, Int(bufs[1].mNumberChannels)) : channels
+        for i in 0..<frames {
+            output[i * 2] = left[i * channels]
+            output[i * 2 + 1] = planar ? right[i * rightStride] : left[i * channels + (channels > 1 ? 1 : 0)]
+        }
+        sizes[write] = frames * 8; write = (write + 1) % slots; pending += 1
+        lock.unlock(); available.signal()
+    }
+}
+let writer = SalidaPCM()
 let cola = DispatchQueue(label: "lumora.tap", qos: .userInteractive)
 let ok = AudioDeviceCreateIOProcIDWithBlock(&proc, agg, cola) { _, entrada, _, _, _ in
-    let lista = UnsafeMutableAudioBufferListPointer(UnsafeMutablePointer(mutating: entrada))
-    guard lista.count > 0 else { return }
-    let bufs = Array(lista)
-    var frames = 0, canales = 0
-    if bufs.count >= 2 {                                  // planar: un buffer por canal
-        canales = 2; frames = Int(bufs[0].mDataByteSize) / 4
-    } else {
-        canales = max(1, Int(bufs[0].mNumberChannels)); frames = Int(bufs[0].mDataByteSize) / 4 / canales
-    }
-    if frames == 0 { return }
-    if salidaBuf.count < frames * 2 { salidaBuf = [Float32](repeating: 0, count: frames * 2) }
-    for i in 0..<frames {
-        let l: Float32, r: Float32
-        if bufs.count >= 2 {
-            l = bufs[0].mData!.assumingMemoryBound(to: Float32.self)[i]; r = bufs[1].mData!.assumingMemoryBound(to: Float32.self)[i]
-        } else {
-            let d = bufs[0].mData!.assumingMemoryBound(to: Float32.self)
-            l = d[i * canales]; r = canales > 1 ? d[i * canales + 1] : l
-        }
-        salidaBuf[i * 2] = l; salidaBuf[i * 2 + 1] = r
-    }
-    let escritos = salidaBuf.withUnsafeBytes { fwrite($0.baseAddress, 1, frames * 8, stdout) }
-    fflush(stdout)
-    if escritos < frames * 8 { limpiar(); exit(0) }       // el lector se fue
+    writer.push(UnsafeMutableAudioBufferListPointer(UnsafeMutablePointer(mutating: entrada)))
 }
 guard ok == noErr else { limpiar(); fallo("no se pudo iniciar la lectura del tap") }
-guard AudioDeviceStart(agg, proc) == noErr else { limpiar(); fallo("no se pudo arrancar el tap") }
 
 // al terminar, siempre destruir el tap: si no, el audio quedaría silenciado
 var fuentes: [DispatchSourceSignal] = []
@@ -136,4 +155,5 @@ for s in [SIGTERM, SIGINT, SIGHUP, SIGPIPE] {
     fuente.setEventHandler { limpiar(); exit(0) }
     fuente.resume(); fuentes.append(fuente)
 }
+guard AudioDeviceStart(agg, proc) == noErr else { limpiar(); fallo("no se pudo arrancar el tap") }
 dispatchMain()
