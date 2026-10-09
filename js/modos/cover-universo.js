@@ -33,7 +33,7 @@
     pane.querySelectorAll('[data-amb]').forEach(b => { const on = b.dataset.amb === s.preset; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
     pane.querySelectorAll('[data-bio]').forEach(b => { const on = b.dataset.bio === w.biome; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
     pane.querySelectorAll('[data-snd]').forEach(i => { if (document.activeElement !== i) i.value = s[i.dataset.snd]; });
-    $('cvSndSys').disabled = E.kind === 'system';
+    $('cvSndSys').disabled = !!window.WEB || E.kind === 'system';
   }
   pane.addEventListener('click', e => {
     e.stopPropagation(); const b = e.target.closest('button'); if (!b) return;

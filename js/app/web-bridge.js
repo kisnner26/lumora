@@ -13,7 +13,7 @@
   window.WEB = true;
   const CFG = window.LUMORA_WEB || {};
   const nativeFetch = window.fetch.bind(window);
-  const J = o => new Response(JSON.stringify(o), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  const J = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'Content-Type': 'application/json' } });
   const ls = { get: k => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch {} } };
   const cid = () => (CFG.clientId || ls.get('tc_cid') || '').replace(/^"|"$/g, '').trim();
   const tok = () => { try { return JSON.parse(ls.get('tc_tok')); } catch { return null; } };
@@ -99,7 +99,9 @@
           return Promise.resolve(J(JSON.parse(localStorage.getItem('lumora_autor_' + u.searchParams.get('key')) || '{}')));
         } catch { return Promise.resolve(J({ error: 'no se pudo guardar en este navegador' })); }
       }
-      case '/bpm': case '/next': case '/like': case '/lights': case '/convert': case '/wiki': return Promise.resolve(J({}));
+      case '/cara': case '/artista': case '/voces': return Promise.resolve(J({ error: 'esta función necesita el puente de macos' }, 501));
+      case '/convert': return Promise.resolve(J({ error: 'la conversión a mp4 necesita la app de macos; guarda el formato nativo del navegador' }, 501));
+      case '/bpm': case '/next': case '/like': case '/lights': case '/wiki': return Promise.resolve(J({}));
       default: return Promise.resolve(J({}));
     }
   };

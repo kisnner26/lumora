@@ -107,7 +107,7 @@
     $('xpMonitor').checked=E.monitor;$('xpFollow').checked=s.follow;d.querySelectorAll('[data-preset]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.preset===s.preset)));
     for(const input of d.querySelectorAll('[data-audio]')){input.value=s[input.dataset.audio];fill(input);d.querySelector(`[data-output="${input.dataset.audio}"]`).textContent=['bass','air'].includes(input.dataset.audio)?(s[input.dataset.audio]>0?'+':'')+s[input.dataset.audio]+' db':Math.round(s[input.dataset.audio]*100)+'%';}
     $('xpSeed').value=w.seed;$('xpSeedTag').textContent='semilla '+w.seed.slice(0,10);d.querySelectorAll('[data-biome]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.biome===w.biome)));$('xpDensity').value=w.density;fill($('xpDensity'));$('xpDensityValue').textContent=w.density.toFixed(2)+'×';
-    $('xpFileBox').hidden=E.kind!=='file';$('xpPlay').disabled=E.kind!=='file';$('xpTimeline').disabled=E.kind!=='file';$('xpDisconnect').disabled=!on;$('xpCapture').disabled=!navigator.mediaDevices?.getDisplayMedia;$('xpSystem').disabled=E.kind==='system';
+    $('xpFileBox').hidden=E.kind!=='file';$('xpPlay').disabled=E.kind!=='file';$('xpTimeline').disabled=E.kind!=='file';$('xpDisconnect').disabled=!on;$('xpCapture').disabled=!navigator.mediaDevices?.getDisplayMedia;$('xpSystem').disabled=!!window.WEB||E.kind==='system';
   }
   const bars=[...d.querySelectorAll('#xpVu i')];
   function paint(now){if(!d.open)return;const f=E.kind==='none'?null:E.features,v=f?[f.low,(f.low+f.mid)/2,f.mid,(f.mid+f.high)/2,f.high]:[0,0,0,0,0];bars.forEach((b,i)=>{b.style.transform=`scaleY(${Math.max(.08,Math.min(1,v[i]*1.6+(f?f.pulse*.15:0))).toFixed(3)})`;});
