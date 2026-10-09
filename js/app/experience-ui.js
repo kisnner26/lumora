@@ -77,7 +77,8 @@
     <nav aria-label="secciones de experiencia">${[['fuente','01','música'],['sonido','02','sonido'],['universo','03','universo']].map(([id,n,label])=>`<button data-xp-tab="${id}" aria-pressed="false"><b>${n}</b><span>${label}</span></button>`).join('')}</nav>
     <div class="xp-body">
     <section data-xp-pane="fuente"><p class="xp-lead">lumora procesa el sonido de verdad: lo toma, le pone espacio y te lo devuelve. elige de dónde viene.</p>
-      <button id="xpSystem" class="xp-hero"><span><strong>audio del mac</strong><small>spotify, música, el navegador · el original se silencia y lo oyes procesado</small></span><span class="xp-arrow" aria-hidden="true">↗</span></button>
+      <button id="xpSystem" class="xp-hero"><span><strong>audio del mac</strong><small>spotify, música y otras apps · el original se silencia y lo oyes procesado</small></span><span class="xp-arrow" aria-hidden="true">↗</span></button>
+      <p class="xp-note">el audio del navegador que reproduce lumora queda fuera de la captura. para música en ese mismo navegador, comparte su pestaña. al apagar la salida procesada del mac se desconecta la captura y vuelve el original.</p>
       <div class="xp-grid3">
         <label class="xp-card"><span class="xp-micro">a · archivo</span><b>música local</b><p>mp3, flac, wav, m4a · con barra de tiempo</p><input id="xpFile" type="file" accept="audio/*,.flac,.wav,.mp3,.m4a,.ogg,.aac" aria-label="abrir música local"></label>
         <button class="xp-card" id="xpCapture"><span class="xp-micro">b · pestaña</span><b>pestaña con audio</b><p>comparte una pestaña del navegador con sonido</p></button>
