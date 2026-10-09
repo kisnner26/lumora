@@ -17,9 +17,9 @@ const ext = (() => {
     if (!hasServer) return;
     try {
       const t0 = performance.now();
-      const r = await fetch('/now', { cache: 'no-store' });
-      if (!r.ok) throw new Error(r.status);
-      const j = await r.json();
+      let j;
+      if (window.LMAUDIO?.localMeta) j=LMAUDIO.syncMeta();
+      else { const r=await fetch('/now',{cache:'no-store'});if(!r.ok)throw new Error(r.status);j=await r.json(); }
       const lat = (performance.now() - t0) / 2000;
       const playing = j.state === 'playing';
       const age = Math.max(0, (j.server || 0) - (j.at || 0));
@@ -30,7 +30,7 @@ const ext = (() => {
       const prevState = st.state, prevKey = key;
       Object.assign(st, { bridge: true, src: j.src || 'music', state: j.state, name: j.name || '', artist: j.artist || '', album: j.album || '', dur: j.dur || 0, error: j.error || '' });
       key = st.state === 'off' || st.state === 'stopped' ? '' : st.src + '|' + st.name + '|' + st.artist;
-      if (j.art !== st.art) { st.art = j.art; artUrl = j.art ? (/^https?:/.test(j.art) ? j.art : '/art?' + j.art) : ''; onArt(artUrl); }
+      if (j.art !== st.art) { st.art = j.art; artUrl = j.art ? (/^(?:https?:|data:|blob:)/.test(j.art) ? j.art : '/art?' + j.art) : ''; onArt(artUrl); }
       if (ext.active()) paused = st.state === 'paused';
       react(prevState, prevKey);
     } catch (e) { st.bridge = false; }
@@ -46,7 +46,8 @@ const ext = (() => {
     now: () => st.pos + (st.state === 'playing' ? (performance.now() - st.at) / 1000 : 0),
     dur: () => st.dur,
     key: () => key,
-    cmd: c => fetch('/cmd?c=' + encodeURIComponent(c), { method: 'POST' }).then(poll).catch(() => {}),
+    refresh: poll,
+    cmd: async c => { if (window.LMAUDIO?.localMeta) { await LMAUDIO.localCommand(c); return poll(); } return fetch('/cmd?c=' + encodeURIComponent(c), { method: 'POST' }).then(poll).catch(() => {}); },
   };
 
   // ---------- arranque automático: dale play y empieza ----------

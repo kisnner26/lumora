@@ -285,6 +285,7 @@
   // teclado y gamepad
   // ============================================================
   addEventListener('keydown', e => {
+    if (typeof coverOpen !== 'undefined' && coverOpen) return;
     const typing = /TEXTAREA|INPUT|SELECT/.test(document.activeElement?.tagName || '') && document.activeElement.type !== 'range';
     if (e.metaKey || e.ctrlKey || e.altKey || typing) return;
     const k = e.key;

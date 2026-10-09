@@ -38,7 +38,7 @@
 
   // ---------- tomas ----------
   const meta = () => { const s = window.ext?.st || {}; return { title: (s.name || proc.title || '').replace(/\s*[\(\[](feat|ft|with)\.?[^)\]]*[\)\]]/i, '').trim() || 'sin título', artist: (s.artist || proc.artist || '').split(/,|&/)[0].trim(), album: s.album || '' }; };
-  const timeNow = () => (ext.active() ? ext.now() : T);
+  const timeNow = () => (ext.active() ? ext.now() : typeof audio !== 'undefined' && audio.src ? audio.currentTime : T);
   const lineIdx = time => { const lt = time + .2 + (IN.off || 0); let li = -1; for (let i = 0; i < IN.lines.length; i++) if (IN.lines[i].t <= lt) li = i; else break; if (li >= 0 && (!IN.lines[li].text || lt - IN.lines[li].t > 12)) li = -1; return li; };
   const secOf = time => IN.cuts.length > 1 ? Math.max(0, IN.cuts.findLastIndex(c => c <= time)) : Math.floor(time / (proc.secLen || 9));
   const storyOf = text => (typeof STORY !== 'undefined' && STORY.on && STORY.forText(text)) || null;
@@ -50,21 +50,29 @@
     for (const [id, rx] of Object.entries(R.SCENE_RX || {})) { if (!R.scenes[id]) continue; if (id === 'ella' && !['romantico', 'feliz', 'euforico', 'sereno', 'nostalgico'].includes(mood)) continue; const g = new RegExp(rx.source, 'gi'); const n = (text.match(g) || []).length * 2 + (block ? Math.min(2, (block.match(g) || []).length) * .5 : 0); if (n > bs) { bs = n; best = id; } }
     return bs >= 1.5 || (bs >= 1 && !text) ? best : null;
   }
+  // modo película: una toma continua por sección, con el mundo, los personajes y la cámara vivos; la letra va encima y no corta la acción
+  const songMood = () => { const m = new Map(); for (const x of R.film?.result?.beats || []) if (x?.mood) m.set(x.mood, (m.get(x.mood) || 0) + 1); return [...m.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || 'sereno'; };
+  const filmOn = () => !!(R.story && R.film && R.world?.enabled && window.CFG && CFG.film === true);
+  const beatAt = time => { const b = R.film.plan(IN.lines, IN.cuts, SEM.plans, proc.dur).beats, lt = time + .2 + (IN.off || 0); let out = null; for (const x of b) { if (!x || !IN.lines[x.li]) continue; if (IN.lines[x.li].t <= lt) out = x; else break; } return out || b.find(Boolean) || null; };
   function makeShot(li, sec, time, why, force) {
-    const plan = SEM.plans[sec] || null, text = li >= 0 ? IN.lines[li].text : '', L = text ? storyOf(text) : null, seed = hash(ext.key() + '|' + li + '|' + sec + '|' + (li < 0 ? Math.floor(time / 4) : 0) + (RC.salt || ''));
-    const narrative = li >= 0 ? (R.film ? R.film.plan(IN.lines, IN.cuts, SEM.plans, proc.dur).beats[li] : R.narrative?.plan(IN.lines)[li]) : null;
+    const plan = SEM.plans[sec] || null, text = li >= 0 ? IN.lines[li].text : '', L = text ? storyOf(text) : null, seed = hash(ext.key() + '|' + li + '|' + sec + '|' + (li < 0 ? Math.floor(time / 4) : 0) + (RC.salt || '') + '|' + (R.world?.settings().seed || ''));
+    const film = filmOn() && why !== 'title' && why !== 'outro' && !force;
+    const narrative = film ? beatAt(time) : li >= 0 ? (R.film ? R.film.plan(IN.lines, IN.cuts, SEM.plans, proc.dur).beats[li] : R.narrative?.plan(IN.lines)[li]) : null;
     const r = rngS(seed), mood = plan?.mood || narrative?.mood || 'sereno', energy = narrative?.section?.role === 'climax' ? Math.max(8, plan?.energy ?? 5) : narrative?.section?.role === 'bridge' ? Math.min(4, plan?.energy ?? 5) : plan?.energy ?? 5, inkList = MOOD_INKS[mood] || [0, 1, 2];
     const shot = { kind: 'prop', li, sec, t0: timeNow(), k0: st.t, seed, plan, mood, energy, inks: inkList[(sec + (plan?.color === 'oscuro' ? 1 : 0)) % inkList.length], bg: 'paper', layout: 0, why };
     const own = typeof LEX !== 'undefined' && text ? LEX.filter(([, re]) => re.test(text)).map(q => q[0]) : [];
     const named = (R.people && text ? R.people.detect(text, 3) : []), rr0 = R.rng(seed ^ 0x9e37);
     const objs = [...new Set([...(L?.objects || []), ...named, ...own, ...(plan?.objects || [])])].map(id => PROP_OF[id] || id).filter(hasProp);
     const prev = RC.kindHist.slice(-2), blockTxt = IN.lines.filter(l => l.text && l.t >= (IN.cuts[sec] ?? 0) && l.t < (IN.cuts[sec + 1] ?? 1e9)).map(l => l.text).join(' ');
-    const byWords = sceneByWords(text, blockTxt, mood), recent = RC.recentScenes || (RC.recentScenes = []), cfgOn = !window.CFG || CFG.singers !== false, singers = cfgOn && R.singers ? R.singers.plan(window.ext?.st?.artist, window.ext?.st?.name) : null;
+    const byWords = sceneByWords(text, blockTxt, mood), recent = RC.recentScenes || (RC.recentScenes = []), cfgOn = !window.CFG || CFG.singers !== false, singers0 = cfgOn && R.singers ? R.singers.plan(window.ext?.st?.artist, window.ext?.st?.name) : null;
+    for (const m of singers0 || []) R.artistFigures?.faceOf(m.name);
+    if (singers0 && singers0.length > 1) R.voices?.ensure(singers0);                    // en una colaboración se busca quién canta cada verso                     // las fotos de todos los créditos se piden por adelantado
+    const singers = singers0 && (window.CFG?.faces === false || singers0.some(m => R.artistFigures?.hasFace(m.name))) ? singers0 : null;   // sin ninguna foto lista, el plano de cantante espera
     let kind;
     if (why === 'title') kind = 'title'; else if (why === 'outro') kind = 'outro';
     else if (li < 0) kind = singers && time > 5 && r() < .38 ? 'singer' : objs.length && r() < .5 ? 'prop' : 'scene';
     else if (named.some(id => ['famosos', 'paises', 'banderas'].includes(R.catalog?.info[id]?.cat)) && r() < .92) kind = 'prop';                 // lo que el verso nombra (país, persona, objeto del catálogo) manda sobre la palabra gigante y las escenas
-    else if (narrative?.action && (narrative.action !== 'hold' || li % 4 !== 3) && !L?.big) kind = 'tableau';
+    else if (narrative?.action && (narrative.action !== 'hold' || li % 3 === 0) && !L?.big) kind = 'tableau';              // la historia manda cuando pasa algo; mientras sigue la misma acción, el resto del repertorio
     else if (L?.big && keyWord(text, L)) kind = 'giant';
     else if (li >= 0 && singers && prev[1] !== 'singer' && r() < (energy >= 7 ? .7 : .5) + (RC.count ? 0 : .3)) kind = 'singer';        // retrato del artista que figura en los créditos
     else if (byWords && !recent.slice(-2).includes(byWords) && prev[1] !== 'scene' && r() < .8) kind = 'scene';
@@ -74,9 +82,11 @@
       kind = r() * (w.prop + w.scene) < w.prop ? 'prop' : 'scene';
     }
     if (narrative?.kind && narrative.kind !== 'auto') kind = narrative.kind;
+    if (R.pov && !L?.big && kind !== 'title' && kind !== 'outro' && text && R.pov.ids.some(id => R.pov.rx[id].test(text)) && r() < .5) kind = 'scene';        // la letra pide mirar con los ojos de quien canta
     if (kind === 'singer' && !singers) kind = 'tableau';
     if (narrative?.manual && narrative.kind === 'auto') kind = 'tableau';
     if (force) kind = force;
+    if (film && narrative && kind !== 'title' && kind !== 'outro') { kind = 'tableau'; shot.filmMode = true; }
     shot.narrative = narrative;
     shot.kind = kind; RC.kindHist.push(kind); if (RC.kindHist.length > 6) RC.kindHist.shift();
     shot.cut = energy >= 7 ? ['h', 'spin', 'v'][(r() * 3) | 0] : energy <= 3 ? ['zin', 'zout'][(r() * 2) | 0] : ['h', 'v', 'zin', 'zout'][(r() * 4) | 0];
@@ -103,10 +113,14 @@
       let id = (R.scenes[plan?.scene] ? plan.scene : SCENE_MAP[plan?.scene]) || byWords || (narrative?.action ? narrative.place : null) || MOOD_SCENE[mood] || 'ciudad';
       if (R.scenes.ella && !byWords && /eyes|woman|couple/.test((objs || []).join(',')) && ['romantico', 'feliz', 'euforico', 'sereno'].includes(mood)) id = 'ella'; else if (!byWords && (/eyes|man/.test((objs || []).join(',')) || (mood === 'romantico' && r() < .4))) id = 'retrato';
       if (!byWords && !plan?.scene && !narrative?.action && li >= 0 && RC.lastScene === id && r() < .6) { const alt = R.order.filter(x => x !== id); id = alt[(r() * alt.length) | 0]; }
+      if (R.world?.enabled && !plan?.scene && !byWords && !narrative?.action && r() < .28) { shot.worldPlace = id; id = 'universo'; }   // el mundo procedural es una escena más del repertorio, no la única   // el mundo hereda el lugar que pedía la letra o el ánimo
+      const gd = R.gd?.detect(ext.st?.name, ext.st?.artist, ext.st?.album); if (gd && !byWords && r() < .5) { R.gd.level = gd; id = R.gd.scene(gd, r); }
+      const pv = R.pov ? R.pov.pick(text, mood, r, plan?.scene ? 0 : .2) : null; if (pv && R.scenes[pv]) id = pv;        // lo que dice el verso manda sobre el plan; el ánimo solo cuando el plan no fija escena
       shot.scene = id; RC.lastScene = id; recent.push(id); if (recent.length > 6) recent.shift(); shot.inks = R.scenes[id].inks;
       if (r() < .45) shot.inks = inkList[(sec + 1) % inkList.length];
     }
     if (kind === 'giant') { shot.word = (keyWord(text, L) || (text.split(/\s+/).map(w => w.replace(/[^\p{L}\p{N}'’-]/gu, '')).sort((a, b) => b.length - a.length)[0] || '')).toUpperCase(); shot.bg = r() < .5 ? 'burst' : 'flood'; shot.cut = 'zin'; }
+    if (shot.filmMode) { shot.flip = (hash(ext.key()) & 1) === 1; shot.layout = 0; shot.bg = 'paper'; shot.cut = 'zin'; shot.inks = (MOOD_INKS[songMood()] || [0])[0]; }
     if (kind === 'title' || kind === 'outro') { shot.cut = 'zout'; shot.inks = 0; }
     shot.notes = pickNotes(r, kind);
     return shot;
@@ -236,6 +250,7 @@
         R.props.drawProp(K, p.id, cxp + off[0], cy + off[1], sc * (i === 0 ? 1 : .55), easeOut(k), { seed: s.seed + i * 7, ph: p.ph, rot: p.rot }); });
       if (s.props.length > 1 || s.bg === 'paper') K.tape(cxp - 190, cy - 240, 120, 38, -.5);
       K.screen(() => {
+        if (s.prevText && s.filmMode && showText && time - s.prevText.until < .45 && s.prevText.li !== s.text?.li) { const pw = (v.w - m * 2) * .46, px = s.flip ? v.r - m - pw - 10 : v.l + m + 10; K.c.save(); K.c.globalAlpha = Math.max(0, 1 - (time - s.prevText.until) / .45); writeLine(s.prevText.text, px, v.t + m + 96, pw, v.h * .5, 99, 4, { align: s.flip ? 'right' : 'left', keyPaper: s.bg === 'flood' }); K.c.restore(); }
         let wlh = v.h * .4; if (showText) { const w = (v.w - m * 2) * .46, x = s.flip ? v.r - m - w - 10 : v.l + m + 10; if (window.CFG?.textBox) { const ft = fitText(text, w, v.h * .5, { size: 104 * clamp(CFG.lyricSize || 1, .7, 1.6), w: 600, font: 'hand' }); K.rect(x - 16, v.t + m + 88, w + 32, ft.lines.length * ft.size * 1.12 + 26, { f: -1, s: 1, lw: 3.5 }); } wlh = writeLine(text, x, v.t + m + 96, w, v.h * .5, age, dur, { align: s.flip ? 'right' : 'left', keyPaper: s.bg === 'flood' }).h; }
         if (s.text?.tr && showText) { const w = (v.w - m * 2) * .46, x = s.flip ? v.r - m - w - 10 : v.l + m + 10, yy = v.t + m + 96 + wlh + 18; trBox(s.text.tr, s.flip ? x + w : x, Math.min(yy, v.b - m - 330), w, s.flip ? 'right' : 'left'); }
       });
@@ -315,6 +330,7 @@
     const li = lineIdx(time); if (li < 0 || !IN.lines[li]) { if (s.text && time > s.text.t + s.text.dur + 1.5) s.text = null; return; }
     if (s.text && s.text.li === li) return;
     const l = IN.lines[li], next = IN.lines.slice(li + 1).find(q => q.text), dur = next ? Math.max(1, next.t - l.t) : 4, tr = IN.trMode === 'orig' ? '' : (IN.tr?.[li] || '');
+    if (s.text && s.filmMode) s.prevText = { ...s.text, until: time };
     s.text = { li, t: l.t, text: l.text, dur, tr: IN.trMode === 'es' && tr ? '' : tr };
     if (IN.trMode === 'es' && IN.tr?.[li]) s.text.text = IN.tr[li];
   }
@@ -332,7 +348,7 @@
     if (st.sceneId !== 'clip') st.setScene('clip', { instant: true });
     const grief = R.grief?.detect(ext.st?.name, ext.st?.artist, ext.st?.id);
     if (grief && (!window.CFG || CFG.clip !== 'portada')) {
-      RC.grief = true; RC.geometry = null;
+      RC.grief = true;
       if (RC.mix?.on) RC.mix.finish();
       RC.shot = null; RC.pending = null; st.cut = null;
       const lyric = li >= 0 && IN.show !== false ? IN.lines[li] : null;
@@ -343,18 +359,6 @@
     }
     if (RC.grief) R.grief?.stop();
     RC.grief = false;
-    const geometry = R.geometry?.detect(ext.st?.name, ext.st?.artist, ext.st?.album);
-    if (geometry && (!window.CFG || CFG.clip !== 'portada')) {
-      RC.geometry = geometry;
-      if (RC.mix?.on) RC.mix.finish();
-      RC.shot = null; RC.pending = null; st.cut = null;
-      const l = li >= 0 && IN.show !== false ? IN.lines[li] : null;
-      const text = l ? (IN.trMode === 'es' && IN.tr?.[li] ? IN.tr[li] : l.text) : '';
-      R.geometry.render(x, W, H, geometry, time, { reduced: !!window.CFG?.reduceMotion, duration: ext.st?.dur || proc.dur || 0, text });
-      if (RC.afterFrame) RC.afterFrame(time);
-      return;
-    }
-    RC.geometry = null;
     if (RC.mix && RC.mix.tick(dt)) {                                               // mezcla entre canciones: las tomas normales esperan
       st.margin = 34; st.notes = false; st.lyric = true; st.speed = 1; st.auto = true; st.setDetail(window.LOWFX ? 1 : 2, true);
       st.frame(Math.max(.001, dt)); x.drawImage(st.canvas, 0, 0, W, H); return;
@@ -372,7 +376,8 @@
       if (dur && time > dur - 6 && cur.kind !== 'outro') why = 'outro';
       else if (cur.kind === 'title' && (IN.preparing ? false : ((time > 4.5 || li >= 0) && st.t - cur.k0 > 1.8))) why = 'next';
       else if (cur.kind !== 'title' && cur.kind !== 'outro') {
-        if (sec !== cur.sec) why = 'sec';
+        if (cur.filmMode) { const b = beatAt(time); if (b) { cur.narrative = b; cur.li = b.li; } if (sec !== cur.sec) why = 'sec'; }
+        else if (sec !== cur.sec) why = 'sec';
         else if (li !== cur.li && (li >= 0 || age > 2.5) && (age > 3.6 || cur.kind === 'tableau' || cur.kind === 'giant' || (li >= 0 && cur.li < 0))) why = 'line';
         else if (age > 9) why = 'age';
       }
@@ -382,6 +387,11 @@
       if (why === 'outro') window.dispatchEvent(new CustomEvent('riso:outro'));
       if (poster && next.kind === 'title') next.notes = ['code', 'circuit'];
       if (!cur) { RC.shot = next; RC.count = 1; }
+      else if (next.filmMode && cur.filmMode) {
+        const sd = R.story.data, a = sd?.secs[cur.sec]?.place, b2 = sd?.secs[next.sec]?.place, interior = a === 'cuarto' || b2 === 'cuarto';
+        next.k0 = cur.k0;                                                      // la toma sigue: nada de lo que ya estaba en pantalla vuelve a empezar
+        if (interior && a !== b2) { RC.pending = next; st.cutTo(() => { RC.shot = next; RC.pending = null; RC.count++; }, 'zin'); } else { RC.shot = next; RC.count++; }
+      }
       else { if (why === 'sec' && R.fx) { const k = R.fx.pickCut(next, cur); if (k) next.cut = k; } RC.pending = next; st.cutTo(() => { RC.shot = next; RC.pending = null; RC.count++; }, next.cut); }
     }
     if (RC.shot) keepShotText(RC.shot, time);
@@ -396,7 +406,7 @@
   RC.h = { writeLine, drawBg, fitText, trBox, scribble, keyWord, storyOf, meta, fmt, hash, secOf, lineIdx, timeNow, pad2, wrap, artCanvas, notes };
 
   // ---------- conexión con el video de siempre ----------
-  const enabled = () => !window.CFG || CFG.clip !== 'clasico' || !!R.geometry?.detect(ext.st?.name, ext.st?.artist, ext.st?.album) || !!R.grief?.detect(ext.st?.name, ext.st?.artist, ext.st?.id);
+  const enabled = () => !window.CFG || CFG.clip !== 'clasico' || !!R.grief?.detect(ext.st?.name, ext.st?.artist, ext.st?.id);
   // el título clásico y el fondo viejo no llegan a pintarse: el videoclip se enciende en el mismo instante que arranca el video
   const _tc = titleCard;
   titleCard = function (title, artist) {

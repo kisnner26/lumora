@@ -14,6 +14,7 @@ const AUD = window.AUD = { live: false, level: 0, low: 0, pulse: 0, hit: false, 
   let fast = 0, slow = 0, lowAvg = 0, lowVar = 0, lastHit = 0, peak = .02;
   const es = new EventSource('/audio');
   es.onmessage = ev => {
+    if (window.LMAUDIO?.metering) return;
     const d = JSON.parse(ev.data), now = performance.now();
     if (d.inst) { if (typeof INST !== 'undefined') INST.feed(d.inst); return; }   // instrumentos reconocidos (instruments.js)
     AUD.lastMsg = now; AUD.live = true; AUD.status = 'sonido real';
