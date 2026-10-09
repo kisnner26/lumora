@@ -121,14 +121,16 @@ class H(SimpleHTTPRequestHandler):
             return
         u = urlparse(self.path); q = {k: v[0] for k, v in parse_qs(u.query).items()}; p = u.path
         if p == '/now': return self.j(snapshot())
-        if p == '/cara':                                          # misma cara recortada que el puente real
+        if p == '/cara':                                          # la integración real se activa expresamente
+            if os.environ.get('LUMORA_MOCK_REAL_ARTISTS') != '1': return self.j({'none': True}, 404)
             try:
                 import bridge
                 res = bridge.cara_de(q.get('name', ''), {'wiki': 'wiki', 'wide': 'amplio'}.get(q.get('src', ''), 'verificado')) if q.get('name', '').strip() else None
             except Exception: res = None
             if not res: return self.j({'none': True}, 404)
             body, meta = res; self.send_response(200); self.send_header('Content-Type', 'image/png'); self.send_header('Content-Length', str(len(body))); self.send_header('X-Cara', json.dumps(meta)); self.end_headers(); self.wfile.write(body); return
-        if p == '/artista':                                       # mismo generador de rasgos que el puente real (usa Claude si está disponible)
+        if p == '/artista':
+            if os.environ.get('LUMORA_MOCK_REAL_ARTISTS') != '1': return self.j({'error': 'generador externo desactivado en pruebas'}, 503)
             try:
                 import guion
                 return self.j({'look': guion.artist_look(q.get('name', ''))})
@@ -179,7 +181,8 @@ class H(SimpleHTTPRequestHandler):
         return super().do_GET()
     def do_POST(self):
         u = urlparse(self.path); n = int(self.headers.get('Content-Length') or 0); body = self.rfile.read(n) if n else b''
-        if u.path == '/voces':                                    # el mismo atribuidor de voces que el puente real
+        if u.path == '/voces':
+            if os.environ.get('LUMORA_MOCK_REAL_ARTISTS') != '1': return self.j({'bloques': [], 'fuente': 'prueba sin servicios externos'})
             try:
                 import guion
                 return self.j(guion.quien_canta(json.loads(body or b'{}')))
@@ -201,6 +204,8 @@ class H(SimpleHTTPRequestHandler):
         return self.j({'ok': True})
 
 if __name__ == '__main__':
+    ThreadingHTTPServer.daemon_threads = True
+    ThreadingHTTPServer.request_queue_size = 128
     ThreadingHTTPServer.daemon_threads = True
     ThreadingHTTPServer.request_queue_size = 128  # la página precarga decenas de scripts a la vez
     print('puente simulado en http://127.0.0.1:%d/index.html' % PORT)
