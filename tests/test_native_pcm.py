@@ -20,6 +20,7 @@ class NativePCMTests(unittest.TestCase):
         writer = source[source.index('final class SalidaPCM'):source.index('let writer = SalidaPCM()')]
         fixture = '''
 let writer = SalidaPCM()
+writer.start(rate: 48000)
 let samples = UnsafeMutablePointer<Float32>.allocate(capacity: 2048)
 for i in 0..<2048 { samples[i] = Float32(i % 16) / 16 }
 let slow = CommandLine.arguments.contains("slow")
@@ -55,6 +56,7 @@ dispatchMain()
     def test_mono_is_duplicated_as_stereo(self):
         pr = self.run_writer()
         self.assertTrue(select.select([pr.stdout], [], [], 3)[0])
+        self.assertEqual(struct.unpack('f', pr.stdout.read(4))[0], 48000)
         out = struct.unpack('16f', pr.stdout.read(64))
         self.assertEqual(out, tuple(v / 16 for i in range(8) for v in [i, i]))
 

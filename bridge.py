@@ -5,7 +5,7 @@ GET  /now          -> estado de Música en JSON (se refresca 4 veces por segundo
 GET  /art          -> carátula de la canción actual
 POST /cmd?c=...    -> playpause | seek:+5 | seek:-5 | start
 """
-import hashlib, unicodedata, json, os, queue, re, select, shutil, signal, socket, socketserver, subprocess, sys, threading, time, tempfile, urllib.request, urllib.parse
+import hashlib, unicodedata, json, os, platform, queue, re, select, shutil, signal, socket, socketserver, subprocess, sys, threading, time, tempfile, urllib.request, urllib.parse
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
@@ -945,6 +945,8 @@ class Handler(SimpleHTTPRequestHandler):
                     AUDIO['clients'].remove(q)
             return
         if path == '/pcm':                                      # audio del sistema (tap de Core Audio) para que la página lo procese
+            if sys.platform == 'darwin' and tuple(int(n) for n in platform.mac_ver()[0].split('.')[:2]) < (14, 2):
+                return self.send_json({'error': 'el procesamiento del audio del mac necesita macos 14.2 o posterior'}, 501)
             if not os.path.exists(TOMADOR_BIN):
                 return self.send_json({'error': 'esta versión no incluye el tomador de audio'}, 501)
             solo = parse_qs(urlparse(self.path).query).get('solo', [''])[0]

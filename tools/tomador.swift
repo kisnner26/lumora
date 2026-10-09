@@ -60,7 +60,8 @@ if let solo = solo {
 }
 desc.name = "lumora"
 desc.isPrivate = true
-desc.muteBehavior = .muted
+// conserva la salida original hasta que otro cliente lea realmente el tap.
+desc.muteBehavior = .mutedWhenTapped
 
 var tap = AudioObjectID(kAudioObjectUnknown)
 let st = AudioHardwareCreateProcessTap(desc, &tap)
@@ -96,14 +97,11 @@ var fmt: AudioStreamBasicDescription = leer(tap, kAudioTapPropertyFormat, AudioS
 let nominal: Float64 = leer(agg, kAudioDevicePropertyNominalSampleRate, Float64(0)) ?? 0
 if args.contains("--diagnostico") { FileHandle.standardError.write(Data("tap \(fmt.mSampleRate) agregado \(nominal)\n".utf8)) }
 let rate = Float32(nominal > 0 ? nominal : (fmt.mSampleRate > 0 ? fmt.mSampleRate : 48000))
-var cabecera = rate
-withUnsafeBytes(of: &cabecera) { _ = fwrite($0.baseAddress, 1, 4, stdout) }
-fflush(stdout)
 
 // el callback de Core Audio solo copia a memoria preasignada; el pipe puede bloquear al escritor, nunca al reloj de audio.
 final class SalidaPCM {
     private let slots = 8, maxFrames = 16384
-    private let lock = NSLock(), available = DispatchSemaphore(value: 0)
+    private let lock = NSLock(), available = DispatchSemaphore(value: 0), started = DispatchSemaphore(value: 0)
     private var buffers: [UnsafeMutablePointer<Float32>]
     private var sizes = [Int](repeating: 0, count: 8)
     private var read = 0, write = 0, pending = 0
@@ -112,6 +110,7 @@ final class SalidaPCM {
         let capacity = maxFrames * 2
         buffers = (0..<slots).map { _ in UnsafeMutablePointer<Float32>.allocate(capacity: capacity) }
         DispatchQueue(label: "lumora.pipe", qos: .userInitiated).async { [self] in
+            started.wait()
             while true {
                 available.wait()
                 lock.lock(); let index = read, size = sizes[index]; lock.unlock()
@@ -120,6 +119,13 @@ final class SalidaPCM {
                 lock.lock(); read = (read + 1) % slots; pending -= 1; lock.unlock()
             }
         }
+    }
+
+    func start(rate: Float32) {
+        var header = rate
+        withUnsafeBytes(of: &header) { _ = fwrite($0.baseAddress, 1, 4, stdout) }
+        fflush(stdout)
+        started.signal()
     }
 
     func push(_ bufs: UnsafeMutableAudioBufferListPointer) {
@@ -141,12 +147,6 @@ final class SalidaPCM {
     }
 }
 let writer = SalidaPCM()
-let cola = DispatchQueue(label: "lumora.tap", qos: .userInteractive)
-let ok = AudioDeviceCreateIOProcIDWithBlock(&proc, agg, cola) { _, entrada, _, _, _ in
-    writer.push(UnsafeMutableAudioBufferListPointer(UnsafeMutablePointer(mutating: entrada)))
-}
-guard ok == noErr else { limpiar(); fallo("no se pudo iniciar la lectura del tap") }
-
 // al terminar, siempre destruir el tap: si no, el audio quedaría silenciado
 var fuentes: [DispatchSourceSignal] = []
 for s in [SIGTERM, SIGINT, SIGHUP, SIGPIPE] {
@@ -155,5 +155,13 @@ for s in [SIGTERM, SIGINT, SIGHUP, SIGPIPE] {
     fuente.setEventHandler { limpiar(); exit(0) }
     fuente.resume(); fuentes.append(fuente)
 }
+DispatchQueue.global(qos: .userInitiated).async {
+let ok = AudioDeviceCreateIOProcIDWithBlock(&proc, agg, nil) { _, entrada, _, _, _ in
+    writer.push(UnsafeMutableAudioBufferListPointer(UnsafeMutablePointer(mutating: entrada)))
+}
+guard ok == noErr else { limpiar(); fallo("no se pudo iniciar la lectura del tap") }
+
 guard AudioDeviceStart(agg, proc) == noErr else { limpiar(); fallo("no se pudo arrancar el tap") }
+writer.start(rate: rate)
+}
 dispatchMain()
