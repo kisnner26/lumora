@@ -80,10 +80,12 @@ async function hudLights() {
 {
   const btn = document.getElementById('hudMoreBtn'), menu = document.getElementById('hudMore');
   if (btn && menu) {
-    const set = open => { menu.hidden = !open; btn.setAttribute('aria-expanded', String(open)); };
+    const set = (open, restore = false) => { menu.hidden = !open; btn.setAttribute('aria-expanded', String(open)); if (open) menu.querySelector('button')?.focus(); else if (restore) btn.focus(); };
     btn.addEventListener('click', e => { e.stopPropagation(); set(menu.hidden); });
     menu.addEventListener('click', e => { if (e.target.closest('button') && e.target.closest('button').id !== 'recFmt') setTimeout(() => set(false), 0); });
+    menu.addEventListener('keydown', e => { if (e.key !== 'Escape') e.stopPropagation(); });
+    menu.addEventListener('focusout', e => { if (e.relatedTarget && !menu.contains(e.relatedTarget) && e.relatedTarget !== btn) set(false); });
     document.addEventListener('click', e => { if (!menu.hidden && !e.target.closest('.hud-more-wrap')) set(false); });
-    addEventListener('keydown', e => { if (e.key === 'Escape' && !menu.hidden) { e.stopImmediatePropagation(); set(false); } }, true);
+    addEventListener('keydown', e => { if (e.key === 'Escape' && !menu.hidden) { e.stopImmediatePropagation(); set(false, true); } }, true);
   }
 }
