@@ -3,7 +3,7 @@ import {servidor,abrir,BASE} from './lib.mjs';
 const srv=await servidor(),{b,p,errores}=await abrir(1600,1000);
 try{
  await p.goto(BASE+'/index.html?menu=0');await p.waitForFunction('window.RISO?.film?.draw && window.RISOCLIP');
- await p.evaluate(async()=>{ext.st={...ext.st,name:'cine qa',artist:'twenty one pilots',album:'Clancy',state:'paused',duration:40};mode='proc';proc.dur=40;IN.lines=['Open the door','Give you a letter','I tear the photo','The flower withers','I leave the room','Come back home','Board the taxi'].map((text,i)=>({text,t:i*5}));IN.cuts=[0,15,25];SEM.plans={};await openAutor();});
+ await p.evaluate(async()=>{ext.st={...ext.st,name:'cine qa',artist:'twenty one pilots',album:'Clancy',state:'paused',duration:40};mode='proc';proc.dur=40;IN.lines=['Open the door','Give you a letter','I tear the photo','The flower withers','I leave the room','Come back home','Board the taxi'].map((text,i)=>({text,t:i*5}));IN.cuts=[0,15,25];SEM.plans=[];await openAutor();});
  await p.locator('[data-cine-line="1"]').click();
  const box=await p.locator('#cineBoard canvas').first().boundingBox();assert.equal(box.width,120);assert.equal(box.height,70);
  await p.waitForFunction(()=>{const c=document.querySelector('#cineBoard canvas'),d=c.getContext('2d').getImageData(0,0,c.width,c.height).data;return new Set(d).size>10;});

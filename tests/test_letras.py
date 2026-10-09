@@ -1,5 +1,6 @@
 """la letra propia del usuario manda sobre lrclib:  python3 -m unittest discover -s tests"""
 import importlib, os, sys, tempfile, unittest
+from unittest.mock import patch
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -8,14 +9,16 @@ class LetraPropia(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.tmp = tempfile.TemporaryDirectory()
-        os.environ['HOME'] = cls.tmp.name                    # LETRAS_DIR se calcula al importar
         sys.path.insert(0, RAIZ)
         cls.bridge = importlib.import_module('bridge')
-        cls.dir = cls.bridge.LETRAS_DIR
+        cls.dir = os.path.join(cls.tmp.name, 'letras')
+        cls.letras = patch.object(cls.bridge, 'LETRAS_DIR', cls.dir)
+        cls.letras.start()
         os.makedirs(cls.dir)
 
     @classmethod
     def tearDownClass(cls):
+        cls.letras.stop()
         cls.tmp.cleanup()
 
     def escribir(self, nombre, texto):
