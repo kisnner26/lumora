@@ -74,6 +74,7 @@ function recLoop() {
   REC.raf = requestAnimationFrame(recLoop);
 }
 function startRec() {
+  if (REC.busy) return setTag('espera a que termine el recuerdo');
   const m = recMime();
   if (!m) { setTag('este navegador no puede grabar video'); return; }
   if (recFormat() === 'horizontal') { REC.canvas.width = 1920; REC.canvas.height = 1080; } else { REC.canvas.width = 720; REC.canvas.height = 1280; }
