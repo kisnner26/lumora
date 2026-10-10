@@ -345,6 +345,8 @@
     if (RC.songKey === skey || !RC.songKey) { const s = ext.st; RC.prevMeta = { name: (s.name || '').replace(/\s*[\(\[](feat|ft|with)\.?[^)\]]*[\)\]]/i, '').trim(), artist: (s.artist || '').split(/,|&/)[0].trim(), dur: s.dur || 0, time }; }
     RC.songKey = skey;
     if (RC.lastKey !== key) { RC.lastKey = key; RC.recentScenes = []; RC.shot = null; RC.pending = null; RC.kindHist.length = 0; RC.sceneState = {}; RC.lastScene = ''; RC.count = 0; }
+    RC.framesFootage = CFG.clip !== 'portada' && !!window.LMFRAMES?.before(x, W, H, time);
+    if (RC.framesFootage) { R.grief?.stop(); if (RC.mix?.on) RC.mix.finish(); RC.shot=null; RC.pending=null; st.cut=null; return; }
     if (window.CFG?.clip === 'fabula' && R.fabula) {
       R.grief?.stop(); RC.grief = false;
       if (RC.mix?.on) RC.mix.finish();
@@ -440,7 +442,7 @@
     if (!on) { R.grief?.stop(); return _pf(t, dt); }
     const real = dt || .016; if (!ext.active() && !paused) T += real;
     if (st.w !== innerWidth || st.h !== innerHeight) st.resize(innerWidth, innerHeight);
-    try { frame(paused ? 0 : real); } catch (e) { if (!RC.err) { RC.err = 1; console.warn('videoclip riso:', e.message, e.stack); } }
+    try { frame(paused ? 0 : real); if (CFG.clip !== 'portada' && !RC.framesFootage) window.LMFRAMES?.after(x,W,H,timeNow()); } catch (e) { if (!RC.err) { RC.err = 1; console.warn('videoclip riso:', e.message, e.stack); } }
     bar.style.width = proc.dur ? (timeNow() / proc.dur * 100) + '%' : '0';
     if (typeof hudTick === 'function') hudTick(timeNow(), proc.dur);
   };
