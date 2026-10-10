@@ -7,19 +7,21 @@ try{
  const failures=[];let cases=0;
  for(const size of [{width:1680,height:1050},{width:1024,height:768},{width:390,height:844}]){
   await p.setViewportSize(size);
-  for(const theme of ['fabula','risografia'])for(const layout of ['editorial','centrado','inmersivo'])for(const style of ['difuminado','cassette','vinilo','cd'])for(const artSize of ['s','m','l']){
-   const result=await p.evaluate(({theme,layout,style,artSize})=>{
-    CFG.clip=theme==='fabula'?'fabula':'cine';document.body.classList.toggle('fabula',theme==='fabula');Object.assign(CV,{layout,style,size:artSize});cvPaint();
+  for(const theme of ['fabula','risografia'])for(const layout of ['editorial','centrado','inmersivo'])for(const style of ['difuminado','cassette','vinilo','cd'])for(const artSize of ['s','m','l'])for(const lyr of ['linea','completa']){
+   const result=await p.evaluate(({theme,layout,style,artSize,lyr})=>{
+    CFG.clip=theme==='fabula'?'fabula':'cine';document.body.classList.toggle('fabula',theme==='fabula');Object.assign(CV,{layout,style,size:artSize,lyr});cvPaint();
     const rect=el=>{const r=el.getBoundingClientRect();return{x:r.x,y:r.y,right:r.right,bottom:r.bottom,width:r.width,height:r.height};};
-    const image=rect(document.getElementById('coverImg')),verse=rect(document.querySelector('.cv-line')),dock=rect(document.querySelector('.cv-player'));
+    const image=rect(document.getElementById('coverImg')),verse=rect(document.querySelector(lyr==='completa'?'.cv-full':'.cv-line')),dock=rect(document.querySelector('.cv-player'));
+    const selector=style==='vinilo'?'.cv-deck,.cv-arm i,.cv-armbox .post':style==='cd'?'.cv-cd':style==='cassette'?'.cv-cass':null;
+    const ornaments=selector?[...document.querySelectorAll(selector)].map(rect):[];
     const inside=r=>r.x>=-1&&r.y>=-1&&r.right<=innerWidth+1&&r.bottom<=innerHeight+1;
-    return{image:inside(image),dock:inside(dock),overlap:image.x<verse.right&&image.right>verse.x&&image.y<verse.bottom&&image.bottom>verse.y,bounds:{image,verse,dock}};
-   },{theme,layout,style,artSize});cases++;
-   if(!result.image||!result.dock||result.overlap)failures.push({size,theme,layout,style,artSize,...result});
+    return{image:[image,...ornaments].every(inside),dock:inside(dock),overlap:[image,...ornaments].some(r=>r.x<verse.right&&r.right>verse.x&&r.y<verse.bottom&&r.bottom>verse.y),bounds:{image,verse,dock,ornaments}};
+   },{theme,layout,style,artSize,lyr});cases++;
+   if(!result.image||!result.dock||result.overlap)failures.push({size,theme,layout,style,artSize,lyr,...result});
   }
  }
- assert.equal(failures.length,0,JSON.stringify(failures.map(({size,theme,layout,style,artSize,bounds})=>({w:size.width,h:size.height,theme,layout,style,artSize,image:bounds.image,verse:bounds.verse}))));
- await p.setViewportSize({width:1680,height:1050});await p.evaluate(()=>{CFG.clip='fabula';document.body.classList.add('fabula');Object.assign(CV,{layout:'editorial',style:'cassette',size:'l',tab:'letra'});cvPaint();document.getElementById('cover').classList.add('menu');});
+ assert.equal(failures.length,0,JSON.stringify(failures.map(({size,theme,layout,style,artSize,lyr,bounds})=>({w:size.width,h:size.height,theme,layout,style,artSize,lyr,image:bounds.image,verse:bounds.verse,ornaments:bounds.ornaments}))));
+ await p.setViewportSize({width:1680,height:1050});await p.evaluate(()=>{CFG.clip='fabula';document.body.classList.add('fabula');Object.assign(CV,{layout:'editorial',style:'cassette',size:'l',tab:'letra',lyr:'linea'});cvPaint();document.getElementById('cover').classList.add('menu');});
  const colors=await p.evaluate(()=>{const m=document.getElementById('cvMenu'),player=document.querySelector('.cv-player');return{menu:getComputedStyle(m).backgroundColor,player:getComputedStyle(player).backgroundColor,text:getComputedStyle(m.querySelector('.cv-type-range')).color};});
  assert.equal(colors.menu,'rgba(17, 20, 26, 0.96)');assert.equal(colors.player,'rgba(17, 20, 26, 0.91)');assert.equal(colors.text,'rgb(246, 241, 232)');
  assert.ok((await p.locator('[data-font=novela]').boundingBox()).height>=28);
