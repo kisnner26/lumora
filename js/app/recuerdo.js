@@ -4,7 +4,13 @@
   const E = window.LMAUDIO, U = window.RISO?.world; if (!E || !U || typeof REC === 'undefined') return;
   const SECONDS = 10; let busy = false;
   const slug = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-  function label(w, h, seed, biome) {              // etiqueta riso en la esquina: papel crema, tinta azul, texto mono
+  function label(w, h, seed, biome, style) {
+    if (style === 'fabula') {
+      const u = Math.min(w / 1200, h / 800), p = RISO.fabula?.book?.palette || { gold: '#b29351' };
+      rc.save(); rc.fillStyle = p.gold; rc.textAlign = 'right';
+      rc.font = `italic ${16 * u}px "Iowan Old Style", Georgia, serif`;
+      rc.fillText(`lumora · fábula · ${seed.slice(0, 12)}`, w - 26 * u, h - 22 * u); rc.restore(); return;
+    }
     const u = Math.min(w, h * 1.2) / 900, x = 28 * u, bw = Math.min(w - 56 * u, 560 * u), bh = 74 * u, y = h - bh - 26 * u;
     rc.save(); rc.fillStyle = 'rgba(33,43,128,.35)'; rc.fillRect(x + 6 * u, y + 6 * u, bw, bh); rc.fillStyle = '#faf3e4'; rc.fillRect(x, y, bw, bh);
     rc.strokeStyle = '#212b80'; rc.lineWidth = 4 * u; rc.strokeRect(x, y, bw, bh);
@@ -16,7 +22,7 @@
     if (busy || REC.on) return;
     const m = recMime(); if (!m) return setTag('este navegador no puede grabar video');
     busy = REC.busy = true;
-    const w = U.settings(), prof = U.profile(w.biome === 'auto' ? (window.RISOCLIP?.shot?.narrative?.place || 'costa') : w.biome), seed = w.seed, title = ext.st.name;
+    const w = U.settings(), prof = U.profile(w.biome === 'auto' ? (window.RISOCLIP?.shot?.narrative?.place || 'costa') : w.biome), seed = w.seed, title = ext.st.name, style = window.CFG?.clip || 'riso';
     const badge = $('recBadge');
     let stream, dest, master, rec, timer, frame, withAudio = false, cancelled = false;
     const stop = () => { try { if (rec && rec.state !== 'inactive') rec.stop(); } catch (e) {} };
@@ -38,7 +44,7 @@
       timer = setTimeout(stop, SECONDS * 1000);
       (function loop() {
         if (rec.state !== 'recording') return;
-        try { composeFrame(); label(REC.canvas.width, REC.canvas.height, seed, prof.biome); }
+        try { composeFrame(); label(REC.canvas.width, REC.canvas.height, seed, prof.biome, style); }
         catch (e) { cancelled = true; stop(); return; }
         badge.textContent = 'recuerdo ' + Math.max(0, Math.ceil(SECONDS - (performance.now() - t0) / 1000)) + ' s';
         frame = requestAnimationFrame(loop);
@@ -54,8 +60,8 @@
         if (!r.headers.get('Content-Type')?.startsWith('video/mp4')) throw Error('la conversión no devolvió un video mp4');
         blob = await r.blob(); extension = 'mp4';
       }
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `lumora-${slug(title) || 'recuerdo'}-${slug(seed).slice(0, 10)}.${extension}`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-      try { await navigator.clipboard.writeText(`universo ${prof.biome} · semilla ${seed} · lumora`); } catch (e) {}
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `lumora-${style === 'fabula' ? 'fabula-' : ''}${slug(title) || 'recuerdo'}-${slug(seed).slice(0, 10)}.${extension}`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+      try { await navigator.clipboard.writeText(`${style === 'fabula' ? 'fábula' : 'universo ' + prof.biome} · semilla ${seed} · lumora`); } catch (e) {}
       setTag(`recuerdo guardado en ${extension} ${withAudio ? 'con el audio procesado' : 'sin audio'} · semilla copiada`);
     } catch (e) {
       setTag('no se pudo guardar el recuerdo: ' + e.message);
