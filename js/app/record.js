@@ -26,6 +26,7 @@ const recFormat = () => (window.CFG && CFG.recFormat) || 'horizontal';
 function composeFrame() {
   const hz = recFormat() === 'horizontal', W9 = REC.canvas.width, H9 = REC.canvas.height, u = hz ? 1.25 : 1;   // u: escala del texto
   if (coverOpen && window.LMCOVER) { LMCOVER.render(rc, W9, H9); return; }
+  if (mode === 'proc' && CFG.clip !== 'clasico' && CFG.clip !== 'portada' && window.LMFRAMES?.before(rc,W9,H9,RISOCLIP.h.timeNow())) return;
   if (CFG.clip === 'fabula' && window.RISO?.fabula && mode === 'proc') {
     const time = RISOCLIP.h.timeNow() + .2 + (IN.off || 0), li = RISOCLIP.h.lineIdx(RISOCLIP.h.timeNow());
     const lyric = li >= 0 && IN.show !== false ? IN.lines[li] : null, tr = lyric ? IN.tr?.[li] || '' : '';
@@ -36,6 +37,7 @@ function composeFrame() {
         duration: proc.dur, bpm: IN.bpm, album: ext.st.album, artist: proc.artist || ext.st.artist, cuts: IN.cuts, plans: SEM.plans,
         edits: RISO.film.plan(IN.lines, IN.cuts, SEM.plans, proc.dur) && RISO.film.edits,
     });
+    window.LMFRAMES?.after(rc,W9,H9,RISOCLIP.h.timeNow());
     return;
   }
   rc.fillStyle = '#000'; rc.fillRect(0, 0, W9, H9);
