@@ -356,7 +356,7 @@
         title: meta().title, text: line ? (IN.trMode === 'es' && translated ? translated : line.text) : '',
         translation: IN.trMode === 'ambas' ? translated : '', showText: IN.show !== false,
         reduced: !!CFG.reduceMotion,
-        duration: proc.dur, artist: proc.artist || ext.st.artist, cuts: IN.cuts, plans: SEM.plans,
+        duration: proc.dur, bpm: IN.bpm, album: ext.st.album, artist: proc.artist || ext.st.artist, cuts: IN.cuts, plans: SEM.plans,
         edits: RISO.film.plan(IN.lines, IN.cuts, SEM.plans, proc.dur) && RISO.film.edits,
         safeBottom: (() => {const el=document.getElementById('hud');return el?.classList.contains('show') ? (innerHeight-el.getBoundingClientRect().top)*H/innerHeight+12 : 0;})(),
       });
