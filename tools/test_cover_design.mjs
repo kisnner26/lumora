@@ -1,0 +1,30 @@
+import assert from 'node:assert/strict';
+import {servidor,abrir,mock,BASE} from './lib.mjs';
+const srv=await servidor(),{b,p,errores}=await abrir(1440,900);
+try{
+ await mock('song=a&pos=24&state=paused');await p.goto(BASE+'/index.html',{waitUntil:'domcontentloaded'});await p.waitForFunction(()=>window.LMCOVER&&window.ext?.artUrl);
+ await p.getByRole('button',{name:'modo carátula',exact:true}).click();await p.waitForFunction(()=>document.getElementById('coverImg').naturalWidth>0);
+ await p.evaluate(()=>{mode='proc';IN.lines=[{t:0,text:'la ciudad guarda una carta para nosotros'},{t:20,text:'cada luz nos devuelve un recuerdo'},{t:40,text:'mañana volveremos a cruzar el puente'}];IN.tr=['the city keeps a letter for us','every light brings a memory back','tomorrow we will cross the bridge again'];IN.trMode='ambas';IN.off=0;cvPaint();});
+ await p.locator('#cvMenuBtn').click();await p.locator('#cvMenu [data-tab=letra]').click();
+ await p.locator('[data-font=novela]').focus();await p.keyboard.press('Enter');assert.equal(await p.locator('[data-font=novela]').getAttribute('aria-pressed'),'true');
+ await p.locator('#cvType-lineSize').fill('52');await p.locator('#cvType-leading').fill('1.5');await p.locator('#cvType-trSize').fill('22');
+ assert.equal(await p.locator('#cvLine').evaluate(el=>getComputedStyle(el).fontSize),'52px');
+ assert.match(await p.locator('#cvLine').evaluate(el=>getComputedStyle(el).fontFamily),/Iowan/);
+ await p.locator('#cvMenu [data-tab=diseno]').click();await p.locator('[data-cv-action=save]').click();
+ await p.locator('[data-cv-preset=noche]').click();assert.equal(await p.evaluate(()=>CV.focus),true);
+ await p.locator('[data-cv-action=restore]').click();assert.equal(await p.evaluate(()=>CV.lineSize),52);assert.equal(await p.evaluate(()=>CV.focus),false);assert.equal(await p.evaluate(()=>CV.style),'difuminado');
+ const exported=await p.evaluate(()=>{const c=document.createElement('canvas');c.width=1280;c.height=720;const x=c.getContext('2d');LMCOVER.render(x,1280,720);const before=c.toDataURL();CV.lineSize=24;LMCOVER.render(x,1280,720);const after=c.toDataURL();CV.lineSize=52;return before!==after;});assert.equal(exported,true);
+ const download=p.waitForEvent('download');await p.locator('[data-cv-action=capture]').click();assert.equal((await download).suggestedFilename(),'lumora-caratula.png');
+ await p.keyboard.press('Escape');await p.waitForTimeout(650);await p.screenshot({path:'/tmp/lumora-cover-editorial.png'});
+ await p.locator('#cvMenuBtn').click();await p.locator('#cvMenu [data-tab=diseno]').click();await p.locator('[data-cv-preset=lectura]').click();await p.keyboard.press('Escape');
+ await p.waitForFunction(()=>document.querySelectorAll('#cvList button.cv-verse').length===3);
+ await p.evaluate(()=>{window.__seek='';ext.cmd=async c=>{window.__seek=c;};});await p.locator('#cvList .cv-verse').nth(2).focus();await p.keyboard.press('Enter');assert.equal(await p.evaluate(()=>window.__seek),'goto:39.85');
+ await p.screenshot({path:'/tmp/lumora-cover-reading.png'});
+ await p.locator('#cvMenuBtn').click();await p.locator('#cvMenu [data-tab=letra]').click();await p.waitForTimeout(650);await p.screenshot({path:'/tmp/lumora-cover-type.png'});
+ await p.reload({waitUntil:'domcontentloaded'});await p.waitForFunction(()=>window.LMCOVER);assert.equal(await p.evaluate(()=>CV.font),'novela');assert.equal(await p.evaluate(()=>CV.listSize),38);
+ await p.setViewportSize({width:390,height:844});await p.evaluate(()=>{toggleCover(true);mode='proc';IN.lines=[{t:0,text:'la ciudad guarda una carta para nosotros'},{t:40,text:'mañana volveremos a cruzar el puente'}];IN.tr=['the city keeps a letter for us','tomorrow we will cross the bridge again'];IN.trMode='ambas';CV.lyr='linea';CV.layout='editorial';cvPaint();});await p.waitForTimeout(700);await p.screenshot({path:'/tmp/lumora-cover-mobile.png'});
+ await p.waitForFunction(()=>document.getElementById('cvLine').textContent.includes('carta'));
+ await p.evaluate(()=>{CFG.reduceMotion=true;});await p.waitForFunction(()=>document.getElementById('cover').dataset.reduced==='1');
+ const bounds=await p.locator('.cv-player').boundingBox();assert.ok(bounds.x>=0&&bounds.x+bounds.width<=391);
+ assert.deepEqual(errores,[]);console.log('carátula: tipografía, presets, persistencia, teclado, seek, escena exportada y móvil: ok');
+}finally{await b.close();srv.stop();}
