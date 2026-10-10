@@ -11,31 +11,75 @@
     { paper:'#d3c6b5', light:'#eddfc8', gold:'#b7a072', rust:'#804c54', ink:'#34333d', green:'#455855', mist:'#9caba9', skin:'#c69b85' },
     { paper:'#d6c6a0', light:'#f3e2b5', gold:'#b29450', rust:'#994b35', ink:'#333c32', green:'#4c624b', mist:'#a6b48b', skin:'#cda078' },
   ];
-  const PLACES = ['taller','jardin','mar','torre'];
-  const NAMES = { taller:'el taller de los recuerdos', jardin:'el jardín que escucha', mar:'la orilla de lo que vuelve', torre:'la casa de las historias' };
+  const PLACES = Object.keys(R.fabulaWorld.names), NAMES=R.fabulaWorld.names;
+  const sceneOf=text=>RULES.find(([,rx])=>rx.test(text))?.[0]||Object.entries(R.SCENE_RX||{}).find(([id,rx])=>PLACES.includes(id)&&rx.test(text))?.[0];
   const RULES = [
     ['mar', /\b(sea|ocean|shore|boat|river|water|mar|oceano|orilla|barco|rio|agua|sail)\b/],
-    ['jardin', /\b(forest|garden|flower|tree|woods|bird|bosque|jardin|flor|flores|arbol|pajaro|primavera)\b/],
-    ['torre', /\b(home|house|door|window|book|castle|tower|casa|hogar|puerta|ventana|libro|castillo|torre)\b/],
-    ['taller', /\b(paint|art|portrait|face|memory|remember|pintar|arte|retrato|rostro|recuerdo|recordar)\b/],
+    ['jardin', /\b(garden|flower|jardin|flor|flores|primavera)\b/],
+    ['bosque', /\b(forest|tree|woods|bird|bosque|arbol|pajaro)\b/],
+    ['torre', /\b(book|castle|tower|libro|castillo|torre)\b/],
+    ['cuarto', /\b(home|house|door|window|bed|casa|hogar|puerta|ventana|cama)\b/],
+    ['taller', /\b(paint|portrait|pintar|retrato)\b/],
+    ['ciudad', /\b(city|street|taxi|car|ciudad|calle|coche|drive)\b/],
+    ['teatro', /\b(dance|party|stage|sing|bailar|fiesta|escenario|cantar)\b/],
+    ['estacion', /\b(train|station|leaving|tren|estacion|partir)\b/],
+    ['puente', /\b(bridge|cross|puente|cruzar)\b/],
+    ['desierto', /\b(desert|sand|desierto|arena)\b/],
+    ['cielo', /\b(stars|space|moon|sky|estrellas|espacio|luna|cielo)\b/],
   ];
-  function compile(lines = [], key = '') {
-    const seed = hash(key), rng = R.rng(seed);
-    let place = 'taller', chapter = 0;
-    const beats = lines.map((line, i) => {
-      const text = norm(line.text), next = RULES.find(([, rule]) => rule.test(text))?.[0];
-      if (next && next !== place) { place = next; chapter++; }
-      const sad = /\b(alone|gone|lost|goodbye|cry|tears|solo|sola|adios|llorar|lagrimas|sin ti)\b/.test(text);
-      const hope = /\b(love|light|hope|sun|together|amor|luz|esperanza|sol|juntos)\b/.test(text);
-      return { t:Number(line.t) || 0, li:i, place, chapter, mood:sad?'ausencia':hope?'encuentro':'memoria', motif:sad?'polilla':hope?'flor':'estrella' };
-    });
-    return { key, seed, palette:PALETTES[seed % PALETTES.length], hair: rng() > .5, curl:rng(), ornament:rng(), beats };
+  function namedObjects(text,key,index){
+    const out=[];
+    for(const [id,rx] of R.people?.RX||[]){
+      const cat=R.catalog?.info[id]?.cat;
+      if(window.CFG?.catOn?.[cat]===false||window.CFG?.symbols===false&&cat==='banderas')continue;
+      rx.lastIndex=0;const m=text.match(rx);
+      if(m&&!/[a-z]/.test(text[m.index-1]||'')&&!/[a-z]/.test(text[m.index+m[0].length]||'')&&(hash(key+'|'+index+'|'+id)%1000)/1000<(window.CFG?.catFreq??1))out.push(id);
+      if(out.length===3)break;
+    }
+    return out;
   }
-  function at(book, time) {
-    let lo=0, hi=book.beats.length;
-    while(lo<hi) { const mid=(lo+hi)>>>1; if(book.beats[mid].t<=time)lo=mid+1;else hi=mid; }
-    return book.beats[lo-1] || {t:0,li:-1,place:'taller',chapter:0,mood:'memoria',motif:'estrella'};
+  function atmosphere(lines){
+    if(!R.atmos)return [];
+    const {key,rows}=R.atmos,result=R.atmos.plan(lines);
+    // una vista previa no debe cambiar el clima del motor que está reproduciendo música.
+    R.atmos.key=key;R.atmos.rows=rows;return result;
   }
+  function compile(lines = [], key = '', o={}) {
+    const seed=hash(key),rng=R.rng(seed),duration=Math.max(o.duration||0,(lines.at(-1)?.t||0)+12,60);
+    // instrumentales y pausas también reciben tomas: el motor nunca depende de encontrar una palabra.
+    const film=R.film?.compile(lines,o.cuts||[],o.plans||[],duration,o.edits||{}), atmos=atmosphere(lines);
+    const cast=(window.CFG?.singers===false?[]:R.singers?.plan(o.artist||'',o.title||'')||[]).map(v=>R.artistFigures?.profile(v.name,v.id,o.album||'')||{});
+    const shots=[],beats=[],reprises=new Map();let lastPlace='',chapter=-1;
+    const count=Math.ceil(duration/8);
+    for(let i=0;i<count;i++){
+      const t=i*8;let li=-1;for(let j=0;j<lines.length&&lines[j].t<=t;j++)li=j;
+      const text=norm(lines[li]?.text),n=film?.beats[li],env=atmos[li]||{},literal=sceneOf(text);
+      const section=n?.section?.role|| (i===0?'intro':i===count-1?'outro':'verse');
+      const route=['ciudad','puente','jardin','bosque','mar','torre','estacion','cuarto','desierto','cielo','teatro'];
+      let place=literal||route[(Math.floor(i/2)+seed)%route.length];
+      // el estribillo retoma su escenario principal entre nuevas escenas del mismo viaje.
+      if(section==='chorus'||section==='climax'){if(!reprises.has(text))reprises.set(text,literal||'teatro');place=i%4===0?reprises.get(text):['teatro','ciudad','puente','jardin','mar'][Math.floor(i/2)%5];}
+      if(place!==lastPlace){chapter++;lastPlace=place;}
+      const sad=/\b(alone|gone|lost|goodbye|cry|tears|solo|sola|adios|llorar|lagrimas)\b/.test(text);
+      const named=namedObjects(text,key,i);
+      const action=n?.action&&n.action!=='hold'?n.action:env.act|| (place==='teatro'?'dance':sad?'remember':['walk','wait','reach'][i%3]);
+      const motif=(n?.manual?n.motif:null)||named[0]||n?.motif|| (sad?'foto_rota':'flowers');
+      const camera=n?.manual?(n.kind==='prop'?'detail':n.camera):named.length&&i%3===1?'detail':['wide','medium','close','wide','reverse'][i%5];
+      shots.push({t,li,place,chapter,seed:hash(key+'|'+i),camera,action,motif,named,weather:env.weather,daytime:env.time,section,mood:sad?'ausencia':'encuentro',narrative:n||null});
+    }
+    // las decisiones manuales y los cambios semánticos empiezan exactamente en el verso.
+    for(let li=0;li<lines.length;li++){
+      const t=Number(lines[li].t)||0,base=shots[Math.min(count-1,Math.max(0,Math.floor(t/8)))],n=film?.beats[li];
+      const literal=sceneOf(norm(lines[li].text));
+      const text=norm(lines[li].text),env=atmos[li]||{},named=namedObjects(text,key,li);
+      const action=n?.manual?n.action:n?.action&&n.action!=='hold'?n.action:env.act||base.action;
+      const camera=n?.manual?(n.kind==='prop'?'detail':n.camera):n?.action&&n.action!=='hold'?n.camera:named.length&&li%3===1?'detail':base.camera;
+      beats.push({...base,t,li,place:literal||base.place,action,camera,named,weather:env.weather,daytime:env.time,narrative:n||null,motif:(n?.manual?n.motif:null)||named[0]||n?.motif||base.motif});
+    }
+    const timeline=[...shots,...beats].sort((a,b)=>a.t-b.t); // el verso gana los empates mediante orden estable.
+    return {key,seed,palette:PALETTES[seed%PALETTES.length],hair:rng()>.5,curl:rng(),ornament:rng(),cast,beats,timeline,duration};
+  }
+  function at(book,time){const rows=book.timeline;let lo=0,hi=rows.length;while(lo<hi){const m=(lo+hi)>>>1;if(rows[m].t<=time)lo=m+1;else hi=m;}return rows[Math.max(0,lo-1)];}
   function path(c, d, fill, stroke, width=2) { const p = new Path2D(d); if(fill) {c.fillStyle=fill;c.fill(p);} if(stroke) {c.strokeStyle=stroke;c.lineWidth=width;c.stroke(p);} }
   function ellipse(c,x,y,rx,ry,fill,rotation=0) { c.beginPath();c.ellipse(x,y,rx,ry,rotation,0,TAU);c.fillStyle=fill;c.fill(); }
   function line(c,x,y,xx,yy,color,width=2) { c.beginPath();c.moveTo(x,y);c.lineTo(xx,yy);c.strokeStyle=color;c.lineWidth=width;c.stroke(); }
@@ -65,34 +109,15 @@
     c.restore();
   }
   function scenery(c,book,beat) {
-    const p=book.palette, rng=R.rng(book.seed+beat.chapter);
+    const p=book.palette;
     c.fillStyle=gradient(c,0,0,0,900,[p.ink,p.green,p.paper]);c.fillRect(0,0,1600,900);
     medallion(c,p,book.seed);
-    if(beat.place==='jardin') {
-      for(let layer=0;layer<3;layer++) { c.globalAlpha=.18+layer*.16;
-        for(let i=0;i<8;i++){const x=i*250-100+rng()*80,y=450+layer*80;path(c,`M${x} 800 Q${x+30} ${y} ${x-70} -40 L${x+15} -40 Q${x+120} ${y} ${x+60} 800`,p.ink);}
-      }c.globalAlpha=1;
-      for(let i=0;i<24;i++){const x=130+rng()*1340,y=580+rng()*190;leaf(c,x,y,18+rng()*30,rng()*2-1,p);}
-    } else if(beat.place==='mar') {
-      c.fillStyle=gradient(c,0,410,0,800,[p.mist,p.green,p.ink]);c.fillRect(140,420,1320,390);
-      for(let i=0;i<35;i++){const y=435+i*10,x=160+rng()*300;line(c,x,y,1100+rng()*340,y,p.paper,1);}
-      path(c,'M1020 570 Q1120 620 1240 570 L1210 611 L1060 611Z',p.ink,p.gold,2);
-      path(c,'M1140 385 L1140 570 L1030 555 Q1070 470 1140 385',p.light,p.gold,2);
-      line(c,1140,375,1140,583,p.ink,4);
-    } else if(beat.place==='torre') {
-      for(let i=0;i<5;i++){const xx=170+i*280,y=310+rng()*80;c.fillStyle=p.green;c.fillRect(xx,y,110,390);
-        path(c,`M${xx-16} ${y} L${xx+55} ${y-130} L${xx+126} ${y}Z`,p.rust,p.gold,2);
-        for(let j=0;j<4;j++){path(c,`M${xx+32} ${y+65+j*70} v-25 q23 -42 46 0 v25Z`,p.light,p.ink,3);}
-      }
-      path(c,'M950 700 Q1030 520 1160 700 L1160 800 L950 800Z',p.ink,p.gold,5);
-    } else {
       c.fillStyle=gradient(c,0,630,0,850,[p.paper,p.ink]);c.fillRect(100,660,1400,240);
       for(let i=0;i<12;i++){const xx=100+i*125;line(c,800,600,xx,900,p.gold,1);}
       // pedestal del retrato que se está pintando.
       c.fillStyle=gradient(c,960,600,1210,740,[p.light,p.mist,p.green]);c.fillRect(940,570,265,250);
       path(c,'M925 565 L1190 565 L1222 585 L950 585Z',p.paper,p.gold,2);
       for(let i=0;i<9;i++)line(c,960+i*28,600,960+i*28,798,p.gold,.7);
-    }
     for(let i=0;i<6;i++){sprig(c,70+i*42,650+i*24,.8+i*.08,1,p,book.seed+i);sprig(c,1530-i*40,620+i*33,.9+i*.07,-1,p,book.seed+i+19);}
     // marco grabado de la página.
     c.strokeStyle=p.gold;c.lineWidth=2;c.strokeRect(46,32,1508,818);c.strokeRect(55,41,1490,800);
@@ -154,7 +179,7 @@
     c.restore();
     c.restore();
   }
-  let cacheKey='', book=null, linesRef=null, texture=null;
+  let cacheKey='', book=null, linesRef=null, texture=null, directorKey='';
   const pages=new Map();
   function paper(seed) {
     const canvas=document.createElement('canvas');canvas.width=1000;canvas.height=625;
@@ -163,13 +188,14 @@
     for(let i=0;i<700;i++){const x=rng()*1000,y=rng()*625;line(c,x,y,x+4+rng()*12,y+rng()*2,'rgba(239,221,178,.045)',.7);}
     return canvas;
   }
-  function prepare(lines,key) {
-    if(cacheKey!==key || linesRef!==lines) {cacheKey=key;linesRef=lines;book=compile(lines,key);pages.clear();texture=paper(book.seed);}
+  function prepare(lines,key,o={}) {
+    const signature=JSON.stringify([o.duration,o.artist,o.album,o.cuts,o.plans,o.edits,window.CFG?.catOn,window.CFG?.catFreq,window.CFG?.singers,window.CFG?.symbols]);
+    if(cacheKey!==key || linesRef!==lines || directorKey!==signature) {directorKey=signature;cacheKey=key;linesRef=lines;book=compile(lines,key,o);pages.clear();texture=paper(book.seed);}
     return book;
   }
   function page(b,beat) {
-    const key=beat.place+'|'+beat.chapter;
-    if(!pages.has(key)) {const cv=document.createElement('canvas');cv.width=1600;cv.height=900;scenery(cv.getContext('2d'),b,beat);pages.set(key,cv);if(pages.size>2)pages.delete(pages.keys().next().value);}
+    const key=beat.place+'|'+beat.seed;
+    if(!pages.has(key)) {const cv=document.createElement('canvas');cv.width=1600;cv.height=900;if(beat.place==='taller')scenery(cv.getContext('2d'),b,beat);else R.fabulaWorld.background(cv.getContext('2d'),b,beat);pages.set(key,cv);if(pages.size>2)pages.delete(pages.keys().next().value);}
     return pages.get(key);
   }
   function wrapped(c,text,width,size,maxLines=3) {
@@ -178,36 +204,49 @@
     return {rows,size:Math.max(14,size)};
   }
   function render(c,w,h,time,o={}) {
-    const b=prepare(o.lines||EMPTY,o.key||o.title||'lumora'),beat=at(b,time),p=b.palette;
+    const b=prepare(o.lines||EMPTY,o.key||o.title||'lumora',o),beat=at(b,time),p=b.palette;
     const reduced=!!o.reduced||matchMedia('(prefers-reduced-motion: reduce)').matches, t=reduced?0:time;
     const energy=reduced?0:clamp((window.AUD?.live?window.AUD.level:window.LMAUDIO?.features?.rms||0)*(window.CFG?.intensity||1));
-    c.save();c.setTransform(1,0,0,1,0,0);c.globalAlpha=1;c.globalCompositeOperation='source-over';
+    c.save();c.setTransform(c.canvas.width/w,0,0,c.canvas.height/h,0,0);c.globalAlpha=1;c.globalCompositeOperation='source-over';
     c.fillStyle=p.ink;c.fillRect(0,0,w,h);
-    const footer=o.wallpaper?0:Math.max(h*.24,Math.min(170,h*.34)),artH=h-footer,scale=Math.max(w/1600,artH/900);
+    const safe=Math.max(0,Math.min(h*.35,o.safeBottom||0)),footer=o.wallpaper?0:Math.max(h*.22,Math.min(170,h*.34)),artH=h-footer-safe,scale=Math.max(w/1600,artH/900);
     c.save();c.beginPath();c.rect(0,0,w,artH);c.clip();c.translate(w/2,artH/2);
     // respiración del encuadre; respeta cámara y movimiento reducido.
     const move=!reduced&&window.CFG?.camera!==false, amount=clamp(window.CFG?.cameraAmt??1,.2,2), zoom=move?1+Math.sin(t*.08)*.008*amount:1;
     c.scale(scale*zoom,scale*zoom);c.translate(-800+(move?Math.sin(t*.12)*4*amount:0),-450);
-    const chapterStart=b.beats.find(v=>v.chapter===beat.chapter), previous=chapterStart&&at(b,chapterStart.t-.001);
-    const progress=reduced||window.CFG?.transitions==='ninguna'?1:clamp((time-(chapterStart?.t||0))/1.8);
-    if(previous && previous.chapter!==beat.chapter && progress<1) {
-      c.drawImage(page(b,previous),0,0);c.globalAlpha=progress;c.drawImage(page(b,beat),0,0);c.globalAlpha=1;
-    } else c.drawImage(page(b,beat),0,0);
-    if(beat.place==='taller') {c.globalAlpha=progress;bust(c,p,beat.mood==='ausencia');c.globalAlpha=1;}
-    person(c,b,t,energy,beat.place);
-    if(beat.place!=='taller') {c.save();c.translate(1070,540);c.rotate(Math.sin(t*.4)*.03);
-      path(c,'M-90 90 Q-170 10 -118 -59 Q-140 -137 -61 -125 Q-22 -190 31 -118 Q109 -111 70 -39 Q138 37 52 90Z',p.green,p.gold,2);
-      if(beat.motif==='flor')for(let i=0;i<7;i++){const a=i*TAU/7;ellipse(c,Math.cos(a)*22,-51+Math.sin(a)*22,14,24,p.rust,a);}
-      else if(beat.motif==='polilla'){ellipse(c,-22,-62,25,13,p.paper,-.4);ellipse(c,22,-62,25,13,p.paper,.4);}
-      else {path(c,'M0 -100 L10 -70 L42 -60 L10 -50 L0 -20 L-10 -50 L-42 -60 L-10 -70Z',p.light);}
-      c.restore();
-    }
+    // cada toma nace del tiempo absoluto: búsqueda, exportación y reproducción comparten la imagen.
+    const previous=at(b,beat.t-.001),progress=reduced||window.CFG?.transitions==='ninguna'?1:clamp((time-beat.t)/.65);
+    const drawShot=(shot,alpha)=>{
+      c.save();c.globalAlpha=alpha;
+      const z=window.CFG?.camera===false?1:({wide:1,medium:1.18,close:1.8,detail:1.25,reverse:1.15}[shot.camera]||1);
+      const focusX=shot.camera==='detail'?800:shot.camera==='close'?760:800, focusY=shot.camera==='close'?480:450;
+      c.translate(800,450);c.scale(z,z);if(shot.camera==='reverse')c.scale(-1,1);c.translate(-focusX,-focusY);
+      c.drawImage(page(b,shot),0,0);R.fabulaWorld.setPieces(c,b,shot,t);
+      if(shot.place==='taller'&&shot.camera!=='detail'){bust(c,p,shot.mood==='ausencia');person(c,b,t,energy,'taller');}
+      else if(shot.camera==='detail'){
+        ellipse(c,800,520,270,180,p.ink+'88');
+        R.fabulaWorld.object(c,b,shot,800,455,1.1+energy*.05,t,energy,reduced);
+      }else{
+        const walk=['walk','run','leave','return','board'].includes(shot.action)?Math.sin(t*.18)*140:0;
+        const poseTime=reduced?0:t;
+        R.fabulaWorld.actor(c,b,shot,760+walk,790,1.35,poseTime,energy);
+        if(['give','reach','dance'].includes(shot.action))R.fabulaWorld.actor(c,b,shot,1040,780,1.16,poseTime+1,energy,true);
+        if(shot.action==='open'){
+          const open=reduced?1:clamp((time-shot.t)/3);c.save();c.translate(1070,300);c.scale(1-open*.7,1);path(c,'M0 0 L175 0 L175 490 L0 490Z',p.rust,p.gold,5);ellipse(c,145,250,8,8,p.gold);c.restore();
+        }
+        if(shot.action==='board')R.fabulaWorld.prop(c,'taxi',1160,710,.85,p,t,energy);
+        for(let i=0;i<Math.min(2,shot.named.length);i++)if(shot.named[i]!==shot.motif)R.fabulaWorld.prop(c,shot.named[i],330+i*920,710,.45,p,t,energy);
+      }
+      R.fabulaWorld.motion(c,b,shot,t,energy);c.restore();
+    };
+    if(progress<1&&previous!==beat)drawShot(previous,1);
+    drawShot(beat,progress);
     for(let i=0;i<20;i++){const rng=R.rng(b.seed+i*711),xx=rng()*1600,yy=rng()*800;
       c.globalAlpha=.15+(Math.sin(t*.5+i)+1)*.1;ellipse(c,xx+Math.sin(t*.2+i)*9,yy-Math.sin(t*.3+i)*12,1.5,2.7,p.light);}
     c.globalAlpha=.85;c.drawImage(texture,0,0,1600,900);c.globalAlpha=1;
     const vignette=c.createRadialGradient(800,380,150,800,450,870);vignette.addColorStop(0,'#18181200');vignette.addColorStop(1,'#181812a0');c.fillStyle=vignette;c.fillRect(0,0,1600,900);c.restore();
     if(o.wallpaper) { c.restore(); return beat; }
-    c.fillStyle=p.ink;c.fillRect(0,artH,w,footer);line(c,w*.07,artH+1,w*.93,artH+1,p.gold,1);
+    c.fillStyle=p.ink;c.fillRect(0,artH,w,footer+safe);line(c,w*.07,artH+1,w*.93,artH+1,p.gold,1);
     const narrow=w<600,margin=Math.max(20,w*.08),labelSize=narrow?10:12;
     c.fillStyle=p.gold;c.textAlign='center';c.font=`500 ${labelSize}px "Iowan Old Style", Georgia, serif`;
     const caption=`${String(beat.chapter+1).padStart(2,'0')} / ${NAMES[beat.place]}`;c.fillText(caption,w/2,artH+24);

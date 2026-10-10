@@ -29,7 +29,7 @@
   body.fabula :is(#home,#panel) > canvas:not(.fabula-backdrop) { visibility:hidden; }
   canvas.fabula-backdrop { position:absolute !important; inset:0; width:100%; height:100%; pointer-events:none; }
   body:not(.fabula) canvas.fabula-backdrop { display:none !important; }
-  body.fabula #settings :is([data-row=fxCine],[data-row=typo],[data-row=letterAnim],[data-row=kinetic],[data-row=catOn],[data-row=catFreq],[data-row=singers],[data-row=palette],[data-row=textBox],[data-row=flashes],[data-row=instruments],[data-row=cards],[data-row=symbols],[data-row=echo],[data-row=variation],[data-row=poster],[data-row=posterGuardar]) { display:none !important; }
+  body.fabula #settings :is([data-row=fxCine],[data-row=typo],[data-row=letterAnim],[data-row=kinetic],[data-row=palette],[data-row=textBox],[data-row=flashes],[data-row=cards],[data-row=echo],[data-row=variation],[data-row=poster],[data-row=posterGuardar]) { display:none !important; }
   `;
   document.head.append(css);
 })();
