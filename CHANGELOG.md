@@ -2,6 +2,7 @@
 
 ## 2026-10-10
 
+- separa «fábula» de risografía: tema, fuentes, fondo de bienvenida, controles pertinentes y exportación propios. migra la selección anterior «cuento» y conserva la elección entre sesiones.
 - añade el estilo «cuento ilustrado»: protagonista procedural, vidriera ornamental, pintura sobre papel y cuatro escenarios (taller, jardín, mar y torre).
 - la letra dirige capítulos con continuidad, objetos simbólicos y transiciones suaves; la canción y la semilla mantienen su identidad visual al buscar o repetir.
 - integra el estilo en ajustes, looks, vista previa, letras traducidas y el lienzo que usan las exportaciones; respeta pausa y movimiento reducido.

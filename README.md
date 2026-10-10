@@ -26,7 +26,7 @@ lyric videos en vivo para lo que suena en tu mac. le das play en apple music o s
 ## qué tiene
 
 - **videoclip en risografía:** 31 escenas, más de 80 objetos que se dibujan solos y cortes con movimiento que siguen la energía de cada estrofa.
-- **cuento ilustrado:** pintura procedural sobre papel, protagonista y marcos ornamentales; la letra enlaza capítulos de taller, jardín, mar y torre. se elige en ajustes > estilo del video.
+- **fábula:** motor independiente de risografía, con pintura procedural, tipografía de novela y marcos ornamentales; la letra enlaza taller, jardín, mar y torre. se elige en ajustes > tipo de animación. también adapta la interfaz y las exportaciones.
 - **continuidad narrativa local:** personajes que esperan, se marchan y regresan; escenarios y símbolos que persisten entre versos y vuelven con el estribillo. 71 perfiles de artistas y 12 nuevos objetos para contar la historia ([capturas y validación](docs/QA/relato-2026-10-08.md)).
 - **la letra se escribe a mano**, palabra por palabra, con la palabra clave subrayada y la traducción debajo (en↔es, pt→es con el traductor de apple en el dispositivo).
 - **modo carátula:** la portada del álbum como protagonista, con ficha de la canción y póster del verso.
