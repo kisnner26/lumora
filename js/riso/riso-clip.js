@@ -346,6 +346,21 @@
     RC.songKey = skey;
     if (RC.lastKey !== key) { RC.lastKey = key; RC.recentScenes = []; RC.shot = null; RC.pending = null; RC.kindHist.length = 0; RC.sceneState = {}; RC.lastScene = ''; RC.count = 0; }
     if (st.sceneId !== 'clip') st.setScene('clip', { instant: true });
+    if (window.CFG?.clip === 'cuento' && R.cuento) {
+      R.grief?.stop(); RC.grief = false;
+      if (RC.mix?.on) RC.mix.finish();
+      RC.shot = null; RC.pending = null; st.cut = null;
+      const line = li >= 0 && IN.show !== false ? IN.lines[li] : null;
+      const translated = line ? IN.tr?.[li] || '' : '';
+      R.cuento.render(x, W, H, time + .2 + (IN.off || 0), {
+        key: key + '|' + (R.world?.settings().seed || 'original'), lines: IN.lines,
+        title: meta().title, text: line ? (IN.trMode === 'es' && translated ? translated : line.text) : '',
+        translation: IN.trMode === 'ambas' ? translated : '', showText: IN.show !== false,
+        reduced: !!CFG.reduceMotion,
+      });
+      if (RC.afterFrame) RC.afterFrame(time);
+      return;
+    }
     const grief = R.grief?.detect(ext.st?.name, ext.st?.artist, ext.st?.id);
     if (grief && (!window.CFG || CFG.clip !== 'portada')) {
       RC.grief = true;
