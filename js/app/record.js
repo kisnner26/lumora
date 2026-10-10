@@ -25,6 +25,7 @@ function wrap(ctx, text, maxW) {
 const recFormat = () => (window.CFG && CFG.recFormat) || 'horizontal';
 function composeFrame() {
   const hz = recFormat() === 'horizontal', W9 = REC.canvas.width, H9 = REC.canvas.height, u = hz ? 1.25 : 1;   // u: escala del texto
+  if (coverOpen && window.LMCOVER) { LMCOVER.render(rc, W9, H9); return; }
   if (CFG.clip === 'fabula' && window.RISO?.fabula && mode === 'proc') {
     const time = RISOCLIP.h.timeNow() + .2 + (IN.off || 0), li = RISOCLIP.h.lineIdx(RISOCLIP.h.timeNow());
     const lyric = li >= 0 && IN.show !== false ? IN.lines[li] : null, tr = lyric ? IN.tr?.[li] || '' : '';
