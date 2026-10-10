@@ -23,6 +23,6 @@ las preferencias se conservan al reiniciar. el movimiento reducido respeta tanto
 
 validación: `tools/test_cover_design.mjs` cubre ajustes, persistencia, estilo personal, teclado, salto al verso, png, exportación, móvil y movimiento reducido; `tools/test_cover.mjs` cubre las funciones existentes.
 
-`tools/test_cover_layout.mjs` cubre 216 combinaciones de ambos temas, tres composiciones, cuatro fondos, tres tamaños y tres ventanas; verifica recortes, solapamientos, legibilidad del menú y teclado.
+`tools/test_cover_layout.mjs` cubre 432 combinaciones de ambos temas, tres composiciones, cuatro fondos, tres tamaños, tres ventanas y letra en línea o completa; verifica recortes y solapamientos de la portada y sus adornos, legibilidad del menú y teclado.
 
 `tools/test_cover_controls.mjs` pulsa s/m/l y comprueba diferencias reales de ancho, persistencia, fondos, efectos, ancho de lectura móvil, concentración, exportación y navegación con desfase.
