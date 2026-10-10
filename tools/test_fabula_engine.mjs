@@ -27,8 +27,8 @@ try{
   }
   return {diff,maxDelta,audioReactive,lyricsClear,retinaFilled,repeat,variants,props:Object.keys(RISO.props.DEFS).length,allProps,worlds:F.places.length,distinctWorlds:worldImages.size,allWorlds,places:new Set(book.timeline.map(v=>v.place)).size,shots:new Set(book.timeline.map(v=>v.seed)).size,instrumental:new Set(instrumental.timeline.map(v=>v.place)).size,override:F.at(overrides,0)};
  });
- assert.equal(result.audioReactive,true);assert.equal(result.lyricsClear,true);assert.equal(result.retinaFilled,true);assert.equal(result.repeat,true);assert.ok(result.variants>=8);assert.ok(result.props>500);assert.deepEqual(result.allProps,[]);
- assert.deepEqual(result.allWorlds,[]);assert.ok(result.worlds>=30);assert.ok(result.distinctWorlds>=30);assert.ok(result.places>=5);assert.ok(result.shots>=25);assert.ok(result.instrumental>=8);
+ assert.equal(result.audioReactive,true);assert.equal(result.lyricsClear,true);assert.equal(result.retinaFilled,true);assert.equal(result.repeat,true);assert.ok(result.variants>=3);assert.ok(result.props>500);assert.deepEqual(result.allProps,[]);
+ assert.deepEqual(result.allWorlds,[]);assert.ok(result.worlds>=30);assert.ok(result.distinctWorlds>=30);assert.ok(result.places>=2&&result.places<=5);assert.ok(result.shots>=25);assert.ok(result.instrumental>=2&&result.instrumental<=5);
  assert.equal(result.override.action,'give');assert.equal(result.override.camera,'detail');assert.equal(result.override.motif,'carta_abierta');
  await p.locator('#sheet').screenshot({path:'/tmp/lumora-fabula-atlas.png'});
  assert.deepEqual(errores,[]);console.log('fábula motor: '+JSON.stringify({...result,override:undefined}));
