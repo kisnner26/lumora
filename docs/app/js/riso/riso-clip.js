@@ -341,18 +341,17 @@
     RC.time = time;
     // la mezcla: si cambió la canción, se prepara antes de que el clip se reinicie
     const skey = ext.key();
-    if (RC.songKey && skey && RC.songKey !== skey && RC.mix) RC.mix.onSongChange();
+    if (CFG.clip !== 'fabula' && RC.songKey && skey && RC.songKey !== skey && RC.mix) RC.mix.onSongChange();
     if (RC.songKey === skey || !RC.songKey) { const s = ext.st; RC.prevMeta = { name: (s.name || '').replace(/\s*[\(\[](feat|ft|with)\.?[^)\]]*[\)\]]/i, '').trim(), artist: (s.artist || '').split(/,|&/)[0].trim(), dur: s.dur || 0, time }; }
     RC.songKey = skey;
     if (RC.lastKey !== key) { RC.lastKey = key; RC.recentScenes = []; RC.shot = null; RC.pending = null; RC.kindHist.length = 0; RC.sceneState = {}; RC.lastScene = ''; RC.count = 0; }
-    if (st.sceneId !== 'clip') st.setScene('clip', { instant: true });
-    if (window.CFG?.clip === 'cuento' && R.cuento) {
+    if (window.CFG?.clip === 'fabula' && R.fabula) {
       R.grief?.stop(); RC.grief = false;
       if (RC.mix?.on) RC.mix.finish();
       RC.shot = null; RC.pending = null; st.cut = null;
       const line = li >= 0 && IN.show !== false ? IN.lines[li] : null;
       const translated = line ? IN.tr?.[li] || '' : '';
-      R.cuento.render(x, W, H, time + .2 + (IN.off || 0), {
+      R.fabula.render(x, W, H, time + .2 + (IN.off || 0), {
         key: key + '|' + (R.world?.settings().seed || 'original'), lines: IN.lines,
         title: meta().title, text: line ? (IN.trMode === 'es' && translated ? translated : line.text) : '',
         translation: IN.trMode === 'ambas' ? translated : '', showText: IN.show !== false,
@@ -361,6 +360,7 @@
       if (RC.afterFrame) RC.afterFrame(time);
       return;
     }
+    if (st.sceneId !== 'clip') st.setScene('clip', { instant: true });
     const grief = R.grief?.detect(ext.st?.name, ext.st?.artist, ext.st?.id);
     if (grief && (!window.CFG || CFG.clip !== 'portada')) {
       RC.grief = true;
@@ -422,16 +422,17 @@
 
   // ---------- conexión con el video de siempre ----------
   const enabled = () => !window.CFG || CFG.clip !== 'clasico' || !!R.grief?.detect(ext.st?.name, ext.st?.artist, ext.st?.id);
+  const rendererReady = () => CFG.clip === 'fabula' && !!R.fabula || st.ok;
   // el título clásico y el fondo viejo no llegan a pintarse: el videoclip se enciende en el mismo instante que arranca el video
   const _tc = titleCard;
   titleCard = function (title, artist) {
-    if (!(mode === 'proc' && enabled() && st.ok)) return _tc(title, artist);
+    if (!(mode === 'proc' && enabled() && rendererReady())) return _tc(title, artist);
     lyr.innerHTML = ''; document.body.classList.add('riso-clip');
-    try { x.fillStyle = '#f4ead4'; x.fillRect(0, 0, W, H); } catch (e) {}
+    try { x.fillStyle = CFG.clip === 'fabula' ? '#302f28' : '#f4ead4'; x.fillRect(0, 0, W, H); } catch (e) {}
   };
   const _pf = procFrame;
   procFrame = function (t, dt) {
-    const on = mode === 'proc' && enabled() && st.ok;
+    const on = mode === 'proc' && enabled() && rendererReady();
     if (on !== RC.on) { RC.on = on; document.body.classList.toggle('riso-clip', on); if (!on) { RC.shot = null; RC.lastKey = ''; if (st.sceneId === 'clip') st.sceneId = null; } else lyr.innerHTML = ''; }
     if (!on) { R.grief?.stop(); return _pf(t, dt); }
     const real = dt || .016; if (!ext.active() && !paused) T += real;

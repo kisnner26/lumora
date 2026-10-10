@@ -1,7 +1,8 @@
-// cuento ilustrado: composición procedural, capítulos semánticos y reloj de reproducción compartido.
+// fábula: composición procedural, capítulos semánticos y reloj de reproducción compartido.
 (() => {
   const R = window.RISO;
   if (!R) return;
+  const EMPTY = Object.freeze([]);
   const TAU = Math.PI * 2, clamp = R.clamp;
   const norm = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   const hash = s => { let h = 2166136261; for (const ch of String(s)) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return h >>> 0; };
@@ -173,22 +174,22 @@
   }
   function wrapped(c,text,width,size,maxLines=3) {
     const words=String(text||'').split(/\s+/);let rows=[];
-    for(;size>=14;size-=2) {c.font=`500 ${size}px "Cormorant Garamond", Georgia, serif`;rows=[''];for(const word of words){const i=rows.length-1,next=(rows[i]+' '+word).trim();if(c.measureText(next).width>width&&rows[i])rows.push(word);else rows[i]=next;}if(rows.length<=maxLines)break;}
+    for(;size>=14;size-=2) {c.font=`500 ${size}px "Iowan Old Style", "Palatino Linotype", Georgia, serif`;rows=[''];for(const word of words){const i=rows.length-1,next=(rows[i]+' '+word).trim();if(c.measureText(next).width>width&&rows[i])rows.push(word);else rows[i]=next;}if(rows.length<=maxLines)break;}
     return {rows,size:Math.max(14,size)};
   }
   function render(c,w,h,time,o={}) {
-    const b=prepare(o.lines||[],o.key||o.title||'lumora'),beat=at(b,time),p=b.palette;
+    const b=prepare(o.lines||EMPTY,o.key||o.title||'lumora'),beat=at(b,time),p=b.palette;
     const reduced=!!o.reduced||matchMedia('(prefers-reduced-motion: reduce)').matches, t=reduced?0:time;
-    const energy=reduced?0:clamp(window.AUD?.live?window.AUD.level:window.LMAUDIO?.features?.rms||0);
+    const energy=reduced?0:clamp((window.AUD?.live?window.AUD.level:window.LMAUDIO?.features?.rms||0)*(window.CFG?.intensity||1));
     c.save();c.setTransform(1,0,0,1,0,0);c.globalAlpha=1;c.globalCompositeOperation='source-over';
     c.fillStyle=p.ink;c.fillRect(0,0,w,h);
-    const footer=Math.max(h*.24,Math.min(170,h*.34)),artH=h-footer,scale=Math.max(w/1600,artH/900);
+    const footer=o.wallpaper?0:Math.max(h*.24,Math.min(170,h*.34)),artH=h-footer,scale=Math.max(w/1600,artH/900);
     c.save();c.beginPath();c.rect(0,0,w,artH);c.clip();c.translate(w/2,artH/2);
     // respiración del encuadre; respeta cámara y movimiento reducido.
-    const move=!reduced&&window.CFG?.camera!==false, zoom=move?1+Math.sin(t*.08)*.008:1;
-    c.scale(scale*zoom,scale*zoom);c.translate(-800+(move?Math.sin(t*.12)*4:0),-450);
+    const move=!reduced&&window.CFG?.camera!==false, amount=clamp(window.CFG?.cameraAmt??1,.2,2), zoom=move?1+Math.sin(t*.08)*.008*amount:1;
+    c.scale(scale*zoom,scale*zoom);c.translate(-800+(move?Math.sin(t*.12)*4*amount:0),-450);
     const chapterStart=b.beats.find(v=>v.chapter===beat.chapter), previous=chapterStart&&at(b,chapterStart.t-.001);
-    const progress=reduced?1:clamp((time-(chapterStart?.t||0))/1.8);
+    const progress=reduced||window.CFG?.transitions==='ninguna'?1:clamp((time-(chapterStart?.t||0))/1.8);
     if(previous && previous.chapter!==beat.chapter && progress<1) {
       c.drawImage(page(b,previous),0,0);c.globalAlpha=progress;c.drawImage(page(b,beat),0,0);c.globalAlpha=1;
     } else c.drawImage(page(b,beat),0,0);
@@ -205,17 +206,18 @@
       c.globalAlpha=.15+(Math.sin(t*.5+i)+1)*.1;ellipse(c,xx+Math.sin(t*.2+i)*9,yy-Math.sin(t*.3+i)*12,1.5,2.7,p.light);}
     c.globalAlpha=.85;c.drawImage(texture,0,0,1600,900);c.globalAlpha=1;
     const vignette=c.createRadialGradient(800,380,150,800,450,870);vignette.addColorStop(0,'#18181200');vignette.addColorStop(1,'#181812a0');c.fillStyle=vignette;c.fillRect(0,0,1600,900);c.restore();
+    if(o.wallpaper) { c.restore(); return beat; }
     c.fillStyle=p.ink;c.fillRect(0,artH,w,footer);line(c,w*.07,artH+1,w*.93,artH+1,p.gold,1);
     const narrow=w<600,margin=Math.max(20,w*.08),labelSize=narrow?10:12;
-    c.fillStyle=p.gold;c.textAlign='center';c.font=`500 ${labelSize}px "Martian Mono", monospace`;
+    c.fillStyle=p.gold;c.textAlign='center';c.font=`500 ${labelSize}px "Iowan Old Style", Georgia, serif`;
     const caption=`${String(beat.chapter+1).padStart(2,'0')} / ${NAMES[beat.place]}`;c.fillText(caption,w/2,artH+24);
     const text=o.showText===false?'':o.text||o.title||'una historia por escuchar', hasTr=o.showText!==false&&!!o.translation;
     const fit=wrapped(c,text,w-margin*2,Math.min(narrow?28:36,footer*.24)*(window.CFG?.lyricSize||1),hasTr?2:3);
-    c.fillStyle=p.light;c.font=`500 ${fit.size}px "Cormorant Garamond", Georgia, serif`;
+    c.fillStyle=p.light;c.font=`500 ${fit.size}px "Iowan Old Style", "Palatino Linotype", Georgia, serif`;
     fit.rows.forEach((row,i)=>c.fillText(row,w/2,artH+51+i*fit.size*1.08));
     if(hasTr) {const tr=wrapped(c,o.translation,w-margin*2,Math.min(18,footer*.13),2);c.font=`italic ${tr.size}px Georgia, serif`;c.fillStyle=p.paper;tr.rows.forEach((row,i)=>c.fillText(row,w/2,artH+54+fit.rows.length*fit.size*1.08+i*tr.size*1.1));}
     c.restore();
     return beat;
   }
-  R.cuento={compile,at,prepare,render,places:PLACES,get book(){return book;},get cachedPages(){return pages.size;}};
+  R.fabula={compile,at,prepare,render,places:PLACES,get book(){return book;},get cachedPages(){return pages.size;}};
 })();

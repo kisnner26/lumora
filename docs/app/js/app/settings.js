@@ -182,7 +182,7 @@ const OPTS = [
     ['rec', 'Modo grabación', 'sw', null, '30 fps estables y menos carga para grabar con OBS'],
     ['recFormat', 'Formato de los clips', 'seg', [['horizontal', '16:9'], ['vertical', '9:16']], 'horizontal para YouTube y pantallas; vertical para historias y TikTok'],
     ['fps', 'Mostrar FPS', 'sw'],
-    ['clip', 'estilo del video', 'seg', [['riso', 'risografía'], ['cuento', 'cuento ilustrado'], ['portada', 'portada'], ['clasico', 'clásico']], 'cuento ilustrado: pintura procedural, personajes, ornamentos y capítulos guiados por la letra. risografía: videoclip de tintas y objetos. portada: álbum y verso. clásico: escenarios originales'],
+    ['clip', 'tipo de animación', 'seg', [['riso', 'risografía'], ['fabula', 'fábula'], ['portada', 'portada'], ['clasico', 'clásico']], 'fábula: pintura, tipografía de novela y capítulos narrativos. es un estilo independiente de risografía. risografía: videoclip de tintas y objetos. portada: álbum y verso. clásico: escenarios originales'],
   ]],
   ['efectos', [
     ['intensity', 'Intensidad de capas', 'range', [.3, 1.5, .05]],
@@ -310,6 +310,8 @@ function paintLights() {
   paintLead();
 }
 function applyAll() {
+  if (CFG.clip === 'cuento') CFG.clip = 'fabula';
+  document.body.classList.toggle('fabula', CFG.clip === 'fabula');
   applyQuality();
   document.body.classList.toggle('show-fps', CFG.fps);
   lyr.classList.toggle('lite', !CFG.letterAnim);
