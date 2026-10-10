@@ -57,7 +57,7 @@
       const profile = U.profile(s.biome === 'auto' ? place : s.biome);
       const K = { ...RISO.K, c, d: 1 };
       c.fillStyle = '#000'; c.fillRect(0, 0, 640, 360); c.save(); c.scale(.4, .4);
-      U.draw(K, profile, ext.has() ? ext.now() : now / 1000, { cx: 800, ground: 740, detail: 1 });
+      U.draw(K, profile, cvReduced() ? 0 : ext.has() ? ext.now() : now / 1000, { cx: 800, ground: 740, detail: 1 });
       c.restore(); U.decode(c);
     } catch (err) { cover.dataset.style = 'difuminado'; }
   })(0);
