@@ -46,6 +46,7 @@ A_LINES = ['walking alone in the rain tonight', 'the city lights are burning in 
 B_LINES = ['midnight train to nowhere', 'the stars are falling in Paris', 'un baile en la playa con el mar', '', 'she is my queen and my angel', 'ella es mi cielo, mi todo',
            'the guitar cries in the dark', 'and the piano knows my name', '', 'fire in the sky, thunder in my soul', 'voy a volar lejos de aquí', 'free like a bird, free like the wind']
 SONGS = {
+    'gimme': dict(name='Gimme More', artist='Britney Spears', album='Blackout', dur=251, lines=None, bpm=113.32, genre='pop', art=2),
     'a': dict(name='Noche de Neón', artist='Los Ejemplos', album='Prueba I', dur=200, lines=A_LINES, bpm=104, genre='pop', art=1),
     'b': dict(name='Tren de Medianoche', artist='Banda Simulada', album='Prueba II', dur=185, lines=B_LINES, bpm=92, genre='rock', art=2),
     'c': dict(name='Ambiente sin Voz', artist='Instrumental Co.', album='Prueba III', dur=150, lines=None, bpm=78, genre='ambient', art=3),
@@ -137,6 +138,7 @@ class H(SimpleHTTPRequestHandler):
             except Exception as e: return self.j({'error': str(e)[:120]}, 503)
         if p == '/mock/estado': return self.j({**snapshot(), 'song': ST['song']})
         if p == '/mock':
+            with LOCK: ST['src'] = q.get('src', 'music') if q.get('src', 'music') in ('music', 'spotify') else 'music'
             scn = q.get('scn', '')
             if scn == 'normal': set_song('a', 0)
             elif scn == 'cambio': set_song('b', 0)
