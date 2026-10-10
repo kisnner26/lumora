@@ -2,6 +2,10 @@
 
 ![captura real de carátula](media/caratula-editorial.png)
 
+![opciones legibles con fábula y fondo cassette](media/caratula-opciones.png)
+
+carátula conserva su propio tema para que fábula y risografía no sobrescriban sus superficies. en ventanas amplias, las opciones reservan espacio junto a la vista previa.
+
 abre la carátula y entra al menú del reproductor:
 
 - **letra:** cuatro familias tipográficas, alineación, tamaño del verso, letra completa y traducción; ancho, interlineado, espaciado, posición vertical y verso siguiente.
@@ -17,3 +21,5 @@ la letra completa permite saltar al verso con clic o teclado. se actualizan trad
 las preferencias se conservan al reiniciar. el movimiento reducido respeta tanto macos como el ajuste de lumora. el diseño se adapta a ventanas estrechas.
 
 validación: `tools/test_cover_design.mjs` cubre ajustes, persistencia, estilo personal, teclado, salto al verso, png, exportación, móvil y movimiento reducido; `tools/test_cover.mjs` cubre las funciones existentes.
+
+`tools/test_cover_layout.mjs` cubre 216 combinaciones de ambos temas, tres composiciones, cuatro fondos, tres tamaños y tres ventanas; verifica recortes, solapamientos, legibilidad del menú y teclado.
