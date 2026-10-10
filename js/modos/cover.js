@@ -459,7 +459,7 @@ const cvSeg = k => `<div class="cv-seg">${CV_OPTS[k].map(([v, t]) => `<button da
     e.stopImmediatePropagation();
     const bar = e.target.closest('#cvBar');
     if (bar) { const r = bar.getBoundingClientRect(); return ext.cmd('goto:' + (clamp((e.clientX - r.left) / r.width) * (ext.st.dur || 0)).toFixed(2)); }
-    const p = e.target.closest('[data-t]'); if (p) return ext.cmd('goto:' + Math.max(0, +p.dataset.t - .15).toFixed(2));
+    const p = e.target.closest('[data-t]'); if (p) return ext.cmd('goto:' + Math.max(0, +p.dataset.t - (IN.off || 0) - .15).toFixed(2));
     const b = e.target.closest('button');
     if (!b && e.target.id === 'cvPosterBox') return cvPosterClose();
     if (!b) { if (!e.target.closest('.cv-menu')) { cover.classList.remove('menu'); $('cvMenuBtn').classList.remove('on'); } return; }
