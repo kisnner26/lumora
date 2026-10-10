@@ -78,8 +78,11 @@
   #cover[data-layout=editorial][data-lyr=no] .cv-main{grid-template-columns:minmax(0,1fr)}
   /* reserva el espacio real del disco o cassette que asoma detrás de la portada. */
   #cover[data-layout=editorial]:is([data-style=vinilo],[data-style=cd],[data-style=cassette]) .cv-art{--cv-art-cap:min(24vw,calc(100vh - 330px),400px);translate:-12% 0}
+  #cover[data-layout=editorial][data-style=vinilo] .cv-art{translate:-32% 0}
   #cover[data-layout=centrado] .cv-art{--cv-art-cap:min(44vmin,calc(100vh - 470px),480px)}
   #cover[data-layout=centrado] .cv-line{max-height:24vh}
+  #cover[data-lyr=completa][data-style=vinilo] .cv-art{translate:-32% 0}
+  #cover[data-lyr=completa]:is([data-style=cd],[data-style=cassette]) .cv-art{translate:-20% 0}
   #cover[data-layout=inmersivo] .coverbg{opacity:.35}#cover[data-layout=inmersivo] .cv-art{--cv-art-cap:min(40vmin,calc(100vh - 360px),400px)}
   #cover[data-layout=inmersivo] .cv-main{background:linear-gradient(transparent,#08090bc9);padding-bottom:130px}
   #cover[data-focus="1"] :is(.covermeta,.cv-clock,.cv-next,.cv-trata){opacity:0;pointer-events:none}
