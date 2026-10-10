@@ -1,5 +1,12 @@
 # historial de cambios
 
+## 2026-10-10
+
+- añade el estilo «cuento ilustrado»: protagonista procedural, vidriera ornamental, pintura sobre papel y cuatro escenarios (taller, jardín, mar y torre).
+- la letra dirige capítulos con continuidad, objetos simbólicos y transiciones suaves; la canción y la semilla mantienen su identidad visual al buscar o repetir.
+- integra el estilo en ajustes, looks, vista previa, letras traducidas y el lienzo que usan las exportaciones; respeta pausa y movimiento reducido.
+- repara el teclado de ajustes cuando el menú de bienvenida está abierto y anuncia la selección de estilo a lectores de pantalla.
+
 ## 2026-10-09
 
 - repara los controles de sonido de carátula, su navegación por teclado y el foco del menú de herramientas.
