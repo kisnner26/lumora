@@ -49,35 +49,7 @@
     // instrumentales y pausas también reciben tomas: el motor nunca depende de encontrar una palabra.
     const film=R.film?.compile(lines,o.cuts||[],o.plans||[],duration,o.edits||{}), atmos=atmosphere(lines);
     const cast=(window.CFG?.singers===false?[]:R.singers?.plan(o.artist||'',o.title||'')||[]).map(v=>R.artistFigures?.profile(v.name,v.id,o.album||'')||{});
-    const shots=[],beats=[],reprises=new Map();let lastPlace='',chapter=-1;
-    const count=Math.ceil(duration/8);
-    for(let i=0;i<count;i++){
-      const t=i*8;let li=-1;for(let j=0;j<lines.length&&lines[j].t<=t;j++)li=j;
-      const text=norm(lines[li]?.text),n=film?.beats[li],env=atmos[li]||{},literal=sceneOf(text);
-      const section=n?.section?.role|| (i===0?'intro':i===count-1?'outro':'verse');
-      const route=['ciudad','puente','jardin','bosque','mar','torre','estacion','cuarto','desierto','cielo','teatro'];
-      let place=literal||route[(Math.floor(i/2)+seed)%route.length];
-      // el estribillo retoma su escenario principal entre nuevas escenas del mismo viaje.
-      if(section==='chorus'||section==='climax'){if(!reprises.has(text))reprises.set(text,literal||'teatro');place=i%4===0?reprises.get(text):['teatro','ciudad','puente','jardin','mar'][Math.floor(i/2)%5];}
-      if(place!==lastPlace){chapter++;lastPlace=place;}
-      const sad=/\b(alone|gone|lost|goodbye|cry|tears|solo|sola|adios|llorar|lagrimas)\b/.test(text);
-      const named=namedObjects(text,key,i);
-      const action=n?.action&&n.action!=='hold'?n.action:env.act|| (place==='teatro'?'dance':sad?'remember':['walk','wait','reach'][i%3]);
-      const motif=(n?.manual?n.motif:null)||named[0]||n?.motif|| (sad?'foto_rota':'flowers');
-      const camera=n?.manual?(n.kind==='prop'?'detail':n.camera):named.length&&i%3===1?'detail':['wide','medium','close','wide','reverse'][i%5];
-      shots.push({t,li,place,chapter,seed:hash(key+'|'+i),camera,action,motif,named,weather:env.weather,daytime:env.time,section,mood:sad?'ausencia':'encuentro',narrative:n||null});
-    }
-    // las decisiones manuales y los cambios semánticos empiezan exactamente en el verso.
-    for(let li=0;li<lines.length;li++){
-      const t=Number(lines[li].t)||0,base=shots[Math.min(count-1,Math.max(0,Math.floor(t/8)))],n=film?.beats[li];
-      const literal=sceneOf(norm(lines[li].text));
-      const text=norm(lines[li].text),env=atmos[li]||{},named=namedObjects(text,key,li);
-      const action=n?.manual?n.action:n?.action&&n.action!=='hold'?n.action:env.act||base.action;
-      const camera=n?.manual?(n.kind==='prop'?'detail':n.camera):n?.action&&n.action!=='hold'?n.camera:named.length&&li%3===1?'detail':base.camera;
-      beats.push({...base,t,li,place:literal||base.place,action,camera,named,weather:env.weather,daytime:env.time,narrative:n||null,motif:(n?.manual?n.motif:null)||named[0]||n?.motif||base.motif});
-    }
-    const timeline=[...shots,...beats].sort((a,b)=>a.t-b.t); // el verso gana los empates mediante orden estable.
-    return {key,seed,palette:PALETTES[seed%PALETTES.length],hair:rng()>.5,curl:rng(),ornament:rng(),cast,beats,timeline,duration};
+    return R.fabulaDirector.arrange({key,seed,palette:PALETTES[seed%PALETTES.length],hair:rng()>.5,curl:rng(),ornament:rng(),cast,beats:[],timeline:[{mood:'memoria'}],duration},lines,film,o,sceneOf,namedObjects,atmos);
   }
   function at(book,time){const rows=book.timeline;let lo=0,hi=rows.length;while(lo<hi){const m=(lo+hi)>>>1;if(rows[m].t<=time)lo=m+1;else hi=m;}return rows[Math.max(0,lo-1)];}
   function path(c, d, fill, stroke, width=2) { const p = new Path2D(d); if(fill) {c.fillStyle=fill;c.fill(p);} if(stroke) {c.strokeStyle=stroke;c.lineWidth=width;c.stroke(p);} }
@@ -189,13 +161,13 @@
     return canvas;
   }
   function prepare(lines,key,o={}) {
-    const signature=JSON.stringify([o.duration,o.artist,o.album,o.cuts,o.plans,o.edits,window.CFG?.catOn,window.CFG?.catFreq,window.CFG?.singers,window.CFG?.symbols]);
+    const signature=JSON.stringify([o.duration,o.bpm,o.artist,o.album,o.cuts,o.plans,o.edits,window.CFG?.catOn,window.CFG?.catFreq,window.CFG?.singers,window.CFG?.symbols]);
     if(cacheKey!==key || linesRef!==lines || directorKey!==signature) {directorKey=signature;cacheKey=key;linesRef=lines;book=compile(lines,key,o);pages.clear();texture=paper(book.seed);}
     return book;
   }
   function page(b,beat) {
-    const key=beat.place+'|'+beat.seed;
-    if(!pages.has(key)) {const cv=document.createElement('canvas');cv.width=1600;cv.height=900;if(beat.place==='taller')scenery(cv.getContext('2d'),b,beat);else R.fabulaWorld.background(cv.getContext('2d'),b,beat);pages.set(key,cv);if(pages.size>2)pages.delete(pages.keys().next().value);}
+    const key=beat.place+'|'+(beat.environmentSeed??beat.seed)+'|'+beat.daytime;
+    if(!pages.has(key)) {const cv=document.createElement('canvas');cv.width=1600;cv.height=900;if(beat.place==='taller')scenery(cv.getContext('2d'),b,beat);else R.fabulaWorld.background(cv.getContext('2d'),b,{...beat,seed:beat.environmentSeed??beat.seed});pages.set(key,cv);if(pages.size>2)pages.delete(pages.keys().next().value);}
     return pages.get(key);
   }
   function wrapped(c,text,width,size,maxLines=3) {
@@ -222,20 +194,21 @@
       const focusX=shot.camera==='detail'?800:shot.camera==='close'?760:800, focusY=shot.camera==='close'?480:450;
       c.translate(800,450);c.scale(z,z);if(shot.camera==='reverse')c.scale(-1,1);c.translate(-focusX,-focusY);
       c.drawImage(page(b,shot),0,0);R.fabulaWorld.setPieces(c,b,shot,t);
-      if(shot.place==='taller'&&shot.camera!=='detail'){bust(c,p,shot.mood==='ausencia');person(c,b,t,energy,'taller');}
+      if(shot.place==='taller'&&shot.action==='paint'&&shot.camera!=='detail'){bust(c,p,shot.mood==='ausencia');person(c,b,t,energy,'taller');}
       else if(shot.camera==='detail'){
         ellipse(c,800,520,270,180,p.ink+'88');
-        R.fabulaWorld.object(c,b,shot,800,455,1.1+energy*.05,t,energy,reduced);
+        const objectX=R.fabulaWorld.detail(c,b,shot,time,reduced);
+        R.fabulaWorld.object(c,b,shot,objectX,455,1.1+energy*.05,time,energy,reduced);
       }else{
-        const walk=['walk','run','leave','return','board'].includes(shot.action)?Math.sin(t*.18)*140:0;
-        const poseTime=reduced?0:t;
-        R.fabulaWorld.actor(c,b,shot,760+walk,790,1.35,poseTime,energy);
-        if(['give','reach','dance'].includes(shot.action))R.fabulaWorld.actor(c,b,shot,1040,780,1.16,poseTime+1,energy,true);
+        const pose=R.fabulaDirector.pose(shot,time,reduced);
+        const poseTime=reduced?shot.actionAt+8:t;
+        R.fabulaWorld.actor(c,b,shot,730+pose.x,805,1.05,poseTime,energy,false,reduced);
+        if(pose.partner)R.fabulaWorld.actor(c,b,shot,1050,800,1,poseTime,energy,true,reduced);
         if(shot.action==='open'){
           const open=reduced?1:clamp((time-shot.t)/3);c.save();c.translate(1070,300);c.scale(1-open*.7,1);path(c,'M0 0 L175 0 L175 490 L0 490Z',p.rust,p.gold,5);ellipse(c,145,250,8,8,p.gold);c.restore();
         }
         if(shot.action==='board')R.fabulaWorld.prop(c,'taxi',1160,710,.85,p,t,energy);
-        for(let i=0;i<Math.min(2,shot.named.length);i++)if(shot.named[i]!==shot.motif)R.fabulaWorld.prop(c,shot.named[i],330+i*920,710,.45,p,t,energy);
+        // los objetos narrativos aparecen en manos y planos de detalle, con un lugar en la escena.
       }
       R.fabulaWorld.motion(c,b,shot,t,energy);c.restore();
     };

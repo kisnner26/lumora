@@ -32,7 +32,7 @@ function composeFrame() {
       key: (ext.key() + '|' + (proc.dur || 0)) + '|' + (RISO.world?.settings().seed || 'original'), lines: IN.lines,
       title: RISOCLIP.h.meta().title, text: lyric ? (IN.trMode === 'es' && tr ? tr : lyric.text) : '',
       translation: IN.trMode === 'ambas' ? tr : '', showText: IN.show !== false, reduced: !!CFG.reduceMotion,
-        duration: proc.dur, artist: proc.artist || ext.st.artist, cuts: IN.cuts, plans: SEM.plans,
+        duration: proc.dur, bpm: IN.bpm, album: ext.st.album, artist: proc.artist || ext.st.artist, cuts: IN.cuts, plans: SEM.plans,
         edits: RISO.film.plan(IN.lines, IN.cuts, SEM.plans, proc.dur) && RISO.film.edits,
     });
     return;
