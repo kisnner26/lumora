@@ -556,10 +556,11 @@ function cvPaint() {
   cover.dataset.style = CV.style; cover.dataset.size = CV.size; cover.dataset.lyr = hasLyr ? CV.lyr : 'no';
   cover.dataset.beat = CV.beat ? '1' : '0'; cover.dataset.clock = CV.clock ? '1' : '0'; cover.dataset.pin = CV.pin ? '1' : '0';
   cover.dataset.ring = CV.ring ? '1' : '0'; cover.dataset.holo = CV.holo ? '1' : '0'; cover.dataset.depth = CV.depth ? '1' : '0'; cover.dataset.trata = CV.trata ? '1' : '0';
-  for (const k of Object.keys(CV_OPTS)) for (const b of cover.querySelectorAll(`[data-${k}]`)) b.classList.toggle('on', b.dataset[k] === CV[k]);
+  for (const k of Object.keys(CV_OPTS)) for (const b of cover.querySelectorAll(`button[data-${k}]`)) { const on = b.dataset[k] === CV[k]; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); }
   $('cvBeat').classList.toggle('on', CV.beat); $('cvClockBtn').classList.toggle('on', CV.clock); $('cvPin').classList.toggle('on', CV.pin); $('cvReact').classList.toggle('on', CV.react);
   const menu = $('cvMenu'); menu.dataset.tab = CV.tab; menu.querySelectorAll('[data-tab]').forEach(t => t.classList.toggle('on', t.dataset.tab === CV.tab));
   $('cvRing').classList.toggle('on', CV.ring); $('cvHolo').classList.toggle('on', CV.holo); $('cvDepth').classList.toggle('on', CV.depth); $('cvTrataBtn').classList.toggle('on', CV.trata);
+  for (const id of ['cvBeat','cvClockBtn','cvPin','cvReact','cvRing','cvHolo','cvDepth','cvTrataBtn']) $(id).setAttribute('aria-pressed', String($(id).classList.contains('on')));
   const url = ext.artUrl || '';
   if (!url) CV.art = '';
   // la paleta solo con la imagen de ESTA canción: si artImg todavía es la anterior, se espera al siguiente repaso
