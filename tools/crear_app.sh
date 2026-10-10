@@ -36,6 +36,7 @@ done
 
 mkdir -p "$OUT/Contents/Resources/web/media"
 cp -R media/grief "$OUT/Contents/Resources/web/media/"
+cp -R media/frames "$OUT/Contents/Resources/web/media/"
 
 # icono
 swiftc -target "$SWIFT_TARGET" -O app/icono.swift -o app/build/icono

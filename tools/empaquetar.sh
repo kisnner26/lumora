@@ -35,6 +35,12 @@ codesign --verify --deep --strict --verbose=2 "$APP"
 echo "spctl (una firma ad-hoc se rechaza a propósito; con Developer ID y notarización se acepta):"
 spctl --assess --type execute --verbose "$APP" || true
 
+# instalación local sin duplicar el paquete para crear una imagen de disco.
+if [ "${1:-}" = "--app-only" ]; then
+  echo "listo: $APP"
+  exit 0
+fi
+
 # dmg con acceso directo a Aplicaciones
 rm -f "$DMG"; STAGE=$(mktemp -d)
 cp -R "$APP" "$STAGE/"; ln -s /Applications "$STAGE/Applications"

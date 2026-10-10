@@ -7,5 +7,6 @@ cp index.html docs/app/
 for f in $(grep -oE 'src="[A-Za-z0-9_./-]+\.js"' index.html | sed 's/src="//;s/"$//'); do mkdir -p "docs/app/$(dirname "$f")"; cp "$f" "docs/app/$f"; done
 mkdir -p docs/app/media
 cp -R media/grief docs/app/media/
+cp -R media/frames docs/app/media/
 cp LICENSE.md docs/app/LICENSE.md
 echo "docs/app listo: $(ls docs/app | wc -l) archivos, $(du -sh docs/app | cut -f1)"
