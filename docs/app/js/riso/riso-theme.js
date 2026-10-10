@@ -13,17 +13,17 @@
   :root { --rk1:#212b80; --rk2:#f97a2a; --rk3:#6b8fb3; --rkp:#f7edd8; --rkd:#e0561b; --rkl:#faf3e4;
           --rkdots:radial-gradient(rgba(107,143,179,.3) 1.2px, transparent 1.7px) 0 0/9px 9px; --rksh:7px 7px 0 -1px var(--rk1); }
   /* las mismas variables que ya usaba cada pieza, ahora en tintas */
-  #settings, #panel.w2, body #hud, #autor, .cv-float, .cv-menu, .cv-next, #cvMenu {
+  #settings, #panel.w2, body #hud, #autor {
     --gold:var(--rkd) !important; --gold2:var(--rk2) !important; --paper:var(--rk1) !important; --mute:rgba(33,43,128,.8) !important;
     --faint:#4f6c93 !important; --rule:rgba(33,43,128,.42) !important; --panel:var(--rkp) !important; }
   ::selection { background:var(--rk2); color:var(--rk1); }
   :focus-visible { outline:3px solid var(--rk2) !important; outline-offset:2px; }
 
   /* ---------- superficies de papel ---------- */
-  #settings, .w-drawer, body #hud, .cv-player, .cv-menu, .cv-next, #panel.w2 #now {
+  #settings, .w-drawer, body #hud, #panel.w2 #now {
     background:var(--rkdots), var(--rkp) !important; border:3px solid var(--rk1) !important; border-radius:0 !important;
     box-shadow:var(--rksh) !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; color:var(--rk1) !important; }
-  body #hud button, .cv-float button, .cv-menu button, #settings button { color:var(--rk1); }
+  body #hud button, #settings button { color:var(--rk1); }
 
   /* ---------- ajustes ---------- */
   #settings { border-width:0 0 0 4px !important; box-shadow:-9px 0 0 -1px rgba(33,43,128,.22) !important; font-variation-settings:normal; }
@@ -225,40 +225,7 @@
   #np { color:var(--rk1) !important; } #np .np-label, #npSong { background:var(--rkp); border:2.5px solid var(--rk1); padding:6px 10px; color:var(--rk1) !important; text-shadow:none !important; box-shadow:3px 3px 0 -1px var(--rk1); font-style:normal !important; font-weight:600; }
   #np .np-label { margin-right:6px !important; }
 
-  /* ---------- modo carátula (los controles; el fondo sigue siendo la portada) ---------- */
-  .cv-player { border-radius:0 !important; }
-  .cv-ctl button, .cv-tools button { border-radius:0 !important; color:var(--rk1) !important; }
-  .cv-ctl button:hover, .cv-tools button:hover, .cv-tools button.on { background:var(--rk2) !important; color:var(--rk1) !important; }
-  .cv-ctl button.big { background:var(--rk2) !important; border:3px solid var(--rk1) !important; box-shadow:3px 3px 0 -1px var(--rk1) !important; } .cv-ctl button.big svg { fill:var(--rk1) !important; }
-  .cv-prog, .cv-prog span { color:var(--rk1) !important; }
-  .cv-bar { background:linear-gradient(var(--rk1),var(--rk1)) center/100% 4px no-repeat !important; }
-  .cv-bar i { background:var(--rk2) !important; box-shadow:none !important; height:8px !important; margin-top:-4px !important; border:2px solid var(--rk1); border-left:0; border-radius:0 !important; }
-  .cv-tools #cvLike svg { stroke:var(--rk1) !important; fill:none !important; }
-  .cv-tools #cvLike.on { background:var(--rk1) !important; }
-  .cv-tools #cvLike.on svg { fill:var(--rk2) !important; stroke:var(--rkl) !important; }
-  .cv-tools #cvLike:hover:not(.on) { background:var(--rk2) !important; }
-  .cv-menu { border-radius:0 !important; }
-  .cv-menu::-webkit-scrollbar-thumb { background:var(--rk1) !important; border-radius:0 !important; }
-  .cv-tabs, .cv-segs { border:3px solid var(--rk1) !important; border-radius:0 !important; background:var(--rkl) !important; padding:3px !important; gap:3px; }
-  .cv-tabs button, .cv-segs button { border-radius:0 !important; color:var(--rk1) !important; font-weight:600 !important; }
-  .cv-tabs button:hover, .cv-segs button:hover { background:var(--rk2) !important; }
-  .cv-tabs button.on, .cv-segs button.on { background:var(--rk1) !important; color:var(--rkl) !important; box-shadow:none !important; }
-  .cv-desc, .cv-desc b, .cv-menu h5, .cv-tiles button, .cv-chip { color:var(--rk1) !important; }
-  .cv-menu section + section, .cv-foot { border-top:2px dashed rgba(33,43,128,.45) !important; }
-  .cv-tiles i, .cv-chip i { border:3px solid var(--rk1) !important; border-radius:0 !important; }
-  .cv-tiles button.on i { box-shadow:0 0 0 3px var(--rkp), 0 0 0 6px var(--rk2) !important; }
-  .cv-chip i { background:var(--rkl) !important; } .cv-chip.on i { background:var(--rk2) !important; box-shadow:none !important; } .cv-chip.on svg { stroke:var(--rk1) !important; }
-  .cv-foot button { border:2.5px solid var(--rk1) !important; border-radius:0 !important; color:var(--rk1) !important; background:var(--rkl); box-shadow:3px 3px 0 -1px var(--rk1); }
-  .cv-foot button:hover { background:var(--rk2) !important; }
-  #cover .covermeta b, #cover .covermeta span, .cv-clock b, .cv-clock span { background:var(--rkp); color:var(--rk1) !important; border:3px solid var(--rk1); padding:6px 14px; box-shadow:5px 5px 0 -1px var(--rk1); display:inline-block; text-shadow:none !important; }
-  #cover .covermeta span, .cv-clock span { border-width:2.5px; margin-top:10px; padding:5px 10px; line-height:1.4 !important; }
-  .cv-line b { background:var(--rkp); color:var(--rk1) !important; border:3px solid var(--rk1); padding:6px 14px; display:inline-block; box-shadow:5px 5px 0 -1px var(--rk1); text-shadow:none !important; }
-  .cv-line span { color:var(--rkl) !important; text-shadow:0 0 6px rgba(0,0,0,.6); }
-  .cv-list p.on { background:var(--rkp); color:var(--rk1) !important; border:3px solid var(--rk1); padding:9px 14px; box-shadow:5px 5px 0 -1px var(--rk1); text-shadow:none !important; }
-  .cv-list p.on small { color:var(--mute) !important; }
-  #cover .cv-art #coverImg { border-radius:0 !important; border:4px solid var(--rk1); box-shadow:10px 10px 0 -1px var(--rk1) !important; }
-  .cv-next { border-radius:0 !important; color:var(--rk1) !important; }
-  .cv-next * { color:var(--rk1) !important; }
+  /* carátula conserva su propio tema y sus controles. */
 
   /* ---------- modo autor ---------- */
   #autor { color:var(--rk1) !important; }

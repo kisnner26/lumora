@@ -156,7 +156,7 @@ setInterval(() => {
 
   .cv-float { position:absolute; left:50%; bottom:26px; transform:translateX(-50%); z-index:3; transition:opacity .5s, transform .5s cubic-bezier(.2,.8,.2,1); }
   body.idle #cover:not([data-pin="1"]):not(.menu) .cv-float { opacity:0; transform:translate(-50%, 16px); pointer-events:none; }
-  .cv-float button { font:inherit; color:var(--mute); background:none; border:0; cursor:pointer; padding:0; }
+  .cv-float button, :where(#cvMenu) button { font:inherit; color:var(--mute); background:none; border:0; cursor:pointer; padding:0; }
   .cv-player { display:flex; align-items:center; gap:14px; width:min(620px, calc(100vw - 32px)); padding:8px 10px 8px 8px; border-radius:999px;
                background:linear-gradient(180deg, rgba(26,20,15,.72), rgba(12,10,8,.82)); border:1px solid var(--rule); backdrop-filter:blur(24px) saturate(1.4);
                box-shadow:0 20px 60px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.06); }

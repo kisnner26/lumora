@@ -20,11 +20,14 @@
   const design=document.createElement('div');design.className='cv-pane cv-typography';design.dataset.pane='diseno';
   design.innerHTML=`<h5>composición</h5>${options('layout')}<h5>estilos preparados</h5><div class="cv-segs"><button type="button" data-cv-preset="editorial">sesión editorial</button><button type="button" data-cv-preset="lectura">leer la canción</button><button type="button" data-cv-preset="noche">escucha nocturna</button></div><div class="cv-type-actions"><button type="button" data-cv-action="focus">modo concentración</button><button type="button" data-cv-action="save">guardar mi estilo</button><button type="button" data-cv-action="restore">usar mi estilo</button><button type="button" data-cv-action="capture">guardar escena</button></div><p class="cv-desc" id="cvDesignStatus" role="status">tu diseño se guarda automáticamente. los controles de sonido siguen disponibles en su pestaña.</p>`;
   menu.insertBefore(design,menu.querySelector('.cv-foot'));
+  // el menú se ancla a la ventana, fuera de la barra que se oculta al quedar inactiva.
+  cover.append(menu);
+  const main=cover.querySelector('.cv-main'),left=cover.querySelector('.cv-left'),line=cover.querySelector('.cv-line');
   const next=document.createElement('p');next.className='cv-next-verse';next.id='cvNextVerse';cover.querySelector('.cv-line').append(next);
   const css=document.createElement('style');css.textContent=`
   #cover,#cover .cv-float,#cover #cvMenu,#cover .cv-next{--paper:#f6f1e8!important;--gold:#99b8eb!important;--mute:#a9aeb8!important;--faint:#9096a2!important;--rule:#ffffff20!important;color:var(--paper)}
   #cover{background:#0c0d10}
-  #cover .cv-pane{min-height:0!important;max-height:min(48vh,440px);overflow:auto}
+  #cover .cv-pane{min-height:0!important;max-height:none;overflow:visible}
   #cover #cvMenu{background:#11141af5!important;color:var(--paper)!important;border:1px solid #ffffff20!important;border-radius:18px!important;box-shadow:0 24px 80px #0008!important;backdrop-filter:blur(24px)}
   #cover :is(.cv-tabs,.cv-segs){background:#ffffff05!important;border:1px solid #ffffff20!important;border-radius:9px!important;padding:3px!important}
   #cover :is(.cv-tabs,.cv-segs) button{color:var(--mute)!important;border-radius:6px!important;font:450 12px system-ui,sans-serif!important;text-transform:none!important;letter-spacing:0!important}
@@ -52,29 +55,55 @@
   #cover .cv-list :is(p,.cv-verse){display:block;width:100%;text-align:var(--cv-align);font-family:var(--cv-font);font-size:var(--cv-list);line-height:var(--cv-leading);letter-spacing:var(--cv-spacing);font-weight:500;color:#b7b2aa;background:none;border:0;padding:16px 4px;margin:0;cursor:pointer;transition:opacity .3s,transform .3s,color .3s}
   #cover .cv-list .cv-verse.on{color:var(--paper);transform:translateX(4px);text-shadow:none}#cover .cv-list .cv-verse.past{color:#7d7974}
   #cover .cv-list .cv-verse small{display:block;font:italic 400 var(--cv-tr)/1.4 var(--cv-font);margin-top:8px;color:#c4bba9}
-  #cover[data-layout=editorial] .cv-main{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-content:center;gap:clamp(32px,6vw,100px);padding:64px max(40px,7vw) 120px}
-  #cover[data-layout=editorial] .cv-left{align-items:flex-start;justify-self:center;position:relative}
-  #cover[data-layout=editorial] .cv-art{--art:min(36vw,calc(100vh - 290px),520px)}
-  #cover[data-layout=editorial] .covermeta{text-align:left;max-width:var(--art)}#cover[data-layout=editorial] .covermeta b{font-style:normal;font-size:clamp(24px,3vw,46px);font-weight:500;letter-spacing:-.04em}
-  #cover[data-layout=editorial] .cv-left .cv-line{position:absolute;left:calc(100% + clamp(32px,6vw,100px));top:32%;width:min(var(--cv-width),calc(43vw - 40px));max-width:none}
-  #cover[data-layout=editorial][data-lyr=completa] .cv-full{justify-self:start;max-width:100%}
-  #cover[data-layout=editorial] .cv-art #coverImg{border-radius:3px;box-shadow:0 30px 80px #0009}
-  #cover[data-layout=editorial][data-size=s] .cv-art{--art:min(28vw,calc(100vh - 310px),420px)}
-  #cover[data-layout=editorial][data-size=l] .cv-art{--art:min(40vw,calc(100vh - 240px),620px)}
+  #cover .cv-main{box-sizing:border-box;width:100%;height:100%;max-height:100vh;overflow:auto;max-width:1600px;justify-self:center;min-width:0;align-items:safe center;justify-content:safe center}
+  #cover .cv-left{min-width:0}
+  #cover #cvMenu{position:absolute;right:24px;bottom:106px;width:min(410px,calc(100vw - 32px));max-height:calc(100vh - 140px);box-sizing:border-box;z-index:8;overflow:auto}
+  #cover #cvMenu .cv-tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:2px}
+  #cover #cvMenu .cv-tabs button{padding:8px 3px!important;font-size:11px!important;line-height:1.3}
+  #cover #cvMenu .cv-type-range{color:#f6f1e8}
+  #cover #cvMenu h5{font:500 11px/1.4 system-ui,sans-serif;letter-spacing:.06em;margin:16px 0 10px}
+  #cover .cv-tools button.on{background:#ffffff18!important;color:var(--gold)!important}
+  #cover .cv-tools #cvLike.on svg{stroke:#99b8eb;fill:#99b8eb}
+  #cover[data-layout=editorial] .cv-main{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-content:center;align-items:center;gap:clamp(32px,4vw,64px);padding:48px 6vw 116px}
+  #cover[data-layout=editorial] .cv-left{grid-column:1;grid-row:1;align-items:center;width:100%;justify-self:center;position:relative}
+  #cover[data-layout=editorial] .cv-art{--art:min(30vw,calc(100vh - 330px),480px)}
+  #cover[data-layout=editorial] .covermeta{text-align:center;max-width:100%}#cover[data-layout=editorial] .covermeta b{font-style:normal;font-size:clamp(24px,3vw,46px);font-weight:500;letter-spacing:-.04em}
+  #cover[data-layout=editorial] .cv-main>.cv-line{grid-column:2;grid-row:1;position:relative;left:auto;top:auto;width:var(--cv-column);max-width:100%;min-width:0;align-self:center;justify-self:start}
+  #cover[data-layout=editorial][data-lyr=completa] .cv-full{grid-column:2;grid-row:1;justify-self:start;max-width:100%}
+  #cover[data-layout=editorial][data-lyr=no] .cv-main{grid-template-columns:minmax(0,1fr)}
+  #cover[data-layout=editorial][data-size=s] .cv-art{--art:min(24vw,calc(100vh - 350px),380px)}
+  #cover[data-layout=editorial][data-size=l] .cv-art{--art:min(33vw,calc(100vh - 300px),540px)}
+  /* reserva el espacio real del disco o cassette que asoma detrás de la portada. */
+  #cover[data-layout=editorial]:is([data-style=vinilo],[data-style=cd],[data-style=cassette]) .cv-art{--art:min(24vw,calc(100vh - 330px),400px);translate:-12% 0}
+  #cover[data-layout=editorial][data-size=s]:is([data-style=vinilo],[data-style=cd],[data-style=cassette]) .cv-art{--art:min(20vw,calc(100vh - 350px),320px)}
+  #cover[data-layout=editorial][data-size=l]:is([data-style=vinilo],[data-style=cd],[data-style=cassette]) .cv-art{--art:min(26vw,calc(100vh - 300px),440px)}
+  #cover[data-layout=centrado] .cv-art{--art:min(44vmin,calc(100vh - 470px),480px)}
+  #cover[data-layout=centrado][data-size=s] .cv-art{--art:min(36vmin,calc(100vh - 490px),380px)}
+  #cover[data-layout=centrado][data-size=l] .cv-art{--art:min(54vmin,calc(100vh - 450px),580px)}
+  #cover[data-layout=centrado] .cv-line{max-height:24vh}
   #cover[data-layout=inmersivo] .coverbg{opacity:.35}#cover[data-layout=inmersivo] .cv-art{--art:min(40vmin,calc(100vh - 360px),400px)}
   #cover[data-layout=inmersivo] .cv-main{background:linear-gradient(transparent,#08090bc9);padding-bottom:130px}
   #cover[data-focus="1"] :is(.covermeta,.cv-clock,.cv-next,.cv-trata){opacity:0;pointer-events:none}
   #cover:not(.show) .cv-amb i{animation-play-state:paused}
+  @media(min-width:1400px){
+  #cover.menu[data-layout=editorial] .cv-main{width:calc(100% - 440px);margin-right:440px}
+  #cover.menu[data-layout=editorial] .cv-art{--art:min(22vw,calc(100vh - 330px),380px)}
+  #cover.menu[data-layout=editorial]:is([data-style=vinilo],[data-style=cd],[data-style=cassette]) .cv-art{--art:min(19vw,calc(100vh - 330px),340px)}}
   @media(max-width:700px){#cover{--cv-width:88vw!important}#cover[data-layout=editorial] .cv-main{display:flex;flex-direction:column;gap:22px;padding:30px 24px 112px;overflow:auto}
   #cover[data-layout=editorial] .cv-left{align-items:center;width:100%}#cover[data-layout=editorial] .cv-art{--art:min(54vw,30vh,300px)}
-  #cover[data-layout=editorial] .covermeta{text-align:center;max-width:85vw}#cover[data-layout=editorial] .cv-left .cv-line{position:static;width:100%;max-width:88vw}
+  #cover[data-layout=editorial] .covermeta{text-align:center;max-width:85vw}#cover[data-layout=editorial] .cv-main>.cv-line{position:static;width:100%;max-width:88vw}
   #cover .cv-line b{font-size:min(var(--cv-line),8vw)}#cover .cv-full{max-width:88vw;height:35vh}#cover .cv-list .cv-verse{font-size:min(var(--cv-list),8vw)}
+  #cover .cv-art{--art:min(54vw,30vh,300px)!important}
+  #cover:is([data-style=vinilo],[data-style=cd],[data-style=cassette]) .cv-art{--art:min(46vw,27vh,260px)!important}
+  #cover #cvMenu{right:16px;bottom:96px;max-height:calc(100vh - 120px)}
   .cv-type-grid{grid-template-columns:1fr 1fr;gap:12px}.cv-typography{max-height:48vh}}
   @media(prefers-reduced-motion:reduce){#cover *{animation:none!important;transition:none!important}}
   body.reduce-motion #cover *,#cover[data-reduced="1"] *{animation:none!important;transition:none!important}
   `;document.head.append(css);
   function apply(){
-    clean();const v={'--cv-font':fonts[CV.font],'--cv-line':CV.lineSize+'px','--cv-list':CV.listSize+'px','--cv-tr':CV.trSize+'px','--cv-width':CV.lyricWidth+'vw','--cv-leading':CV.leading,'--cv-spacing':CV.letterSpace+'em','--cv-lift':CV.lyricLift+'px','--cv-align':CV.align};
+    clean();
+    if(CV.layout==='editorial'){if(line.parentElement!==main)main.insertBefore(line,cover.querySelector('.cv-full'));}else if(line.parentElement!==left)left.append(line);
+    const v={'--cv-font':fonts[CV.font],'--cv-line':CV.lineSize+'px','--cv-list':CV.listSize+'px','--cv-tr':CV.trSize+'px','--cv-width':CV.lyricWidth+'vw','--cv-column':Math.min(100,CV.lyricWidth*2)+'%','--cv-leading':CV.leading,'--cv-spacing':CV.letterSpace+'em','--cv-lift':CV.lyricLift+'px','--cv-align':CV.align};
     for(const [key,value] of Object.entries(v))cover.style.setProperty(key,value);
     cover.dataset.reduced=cvReduced()?'1':'0';
     cover.dataset.layout=CV.layout;cover.dataset.context=CV.context?'1':'0';cover.dataset.focus=CV.focus?'1':'0';
