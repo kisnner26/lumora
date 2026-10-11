@@ -441,6 +441,14 @@
     if (on !== RC.on) { RC.on = on; document.body.classList.toggle('riso-clip', on); if (!on) { RC.shot = null; RC.lastKey = ''; if (st.sceneId === 'clip') st.sceneId = null; } else lyr.innerHTML = ''; }
     if (!on) { R.grief?.stop(); return _pf(t, dt); }
     const real = dt || .016; if (!ext.active() && !paused) T += real;
+    // los menús, fondos y carátulas opacas ya dibujan su propia superficie.
+    const covered = window.HOME?.on || window.FX?.on || (coverOpen && typeof CV !== 'undefined' && CV.style !== 'escena');
+    RC.suspended = !!(covered && !(typeof REC !== 'undefined' && REC.on));
+    if (RC.suspended) {
+      RC.time = timeNow(); R.grief?.stop(); window.LMFRAMES?.stop();
+      if (typeof hudTick === 'function') hudTick(RC.time, proc.dur);
+      return;
+    }
     if (st.w !== innerWidth || st.h !== innerHeight) st.resize(innerWidth, innerHeight);
     try { frame(paused ? 0 : real); if (CFG.clip !== 'portada' && !RC.framesFootage) window.LMFRAMES?.after(x,W,H,timeNow()); } catch (e) { if (!RC.err) { RC.err = 1; console.warn('videoclip riso:', e.message, e.stack); } }
     bar.style.width = proc.dur ? (timeNow() / proc.dur * 100) + '%' : '0';
