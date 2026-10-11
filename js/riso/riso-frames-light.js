@@ -35,7 +35,7 @@
   let gpu=null,attempted=false;
   function init(){
     if(attempted)return gpu;attempted=true;
-    const canvas=document.createElement('canvas'),gl=canvas.getContext('webgl',{alpha:false,antialias:false,depth:false,preserveDrawingBuffer:true});
+    const canvas=document.createElement('canvas'),gl=canvas.getContext('webgl',{alpha:false,antialias:false,depth:false,preserveDrawingBuffer:false});
     if(!gl)return null;
     const shaders=[],programs=[],textures=[],buffers=[],targets=[];
     function destroy(){for(const x of programs)gl.deleteProgram(x);for(const x of shaders)gl.deleteShader(x);for(const x of textures)gl.deleteTexture(x);for(const x of buffers)gl.deleteBuffer(x);for(const x of targets)gl.deleteFramebuffer(x);gpu=null;}
@@ -47,7 +47,7 @@
       const quad=gl.createBuffer();buffers.push(quad);gl.bindBuffer(gl.ARRAY_BUFFER,quad);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
       function texture(){const t=gl.createTexture();textures.push(t);gl.bindTexture(gl.TEXTURE_2D,t);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);return t;}
       const source=texture(),a=texture(),b=texture(),fa=gl.createFramebuffer(),fb=gl.createFramebuffer();targets.push(fa,fb);
-      let bw=0,bh=0;
+      let bw=0,bh=0,sw=0,sh=0;
       function target(f,t,w,h){gl.bindTexture(gl.TEXTURE_2D,t);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,w,h,0,gl.RGBA,gl.UNSIGNED_BYTE,null);gl.bindFramebuffer(gl.FRAMEBUFFER,f);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,t,0);if(gl.checkFramebufferStatus(gl.FRAMEBUFFER)!==gl.FRAMEBUFFER_COMPLETE)throw Error('framebuffer');}
       function use(pass,input,frame,w,h){gl.bindFramebuffer(gl.FRAMEBUFFER,frame);gl.viewport(0,0,w,h);gl.useProgram(pass.p);gl.bindBuffer(gl.ARRAY_BUFFER,quad);gl.enableVertexAttribArray(pass.position);gl.vertexAttribPointer(pass.position,2,gl.FLOAT,false,0,0);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,input);gl.uniform1i(pass.u.image,0);}
       canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();gpu=null;});
@@ -57,7 +57,9 @@
         if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
         const nw=Math.max(1,Math.round(Math.min(w,480))),nh=Math.max(1,Math.round(h*nw/w));
         if(nw!==bw||nh!==bh){bw=nw;bh=nh;target(fa,a,bw,bh);target(fb,b,bw,bh);}
-        gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,source);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,input);
+        gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,source);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);const iw=input.videoWidth||input.width,ih=input.videoHeight||input.height;
+        if(sw!==iw||sh!==ih){sw=iw;sh=ih;gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,sw,sh,0,gl.RGBA,gl.UNSIGNED_BYTE,null);}
+        gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,gl.RGBA,gl.UNSIGNED_BYTE,input);
         use(blurPass,source,fa,bw,bh);gl.uniform2f(blurPass.u.stepSize,1.8/bw,0);gl.uniform1f(blurPass.u.extract,1);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
         use(blurPass,a,fb,bw,bh);gl.uniform2f(blurPass.u.stepSize,0,1.8/bh);gl.uniform1f(blurPass.u.extract,0);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
         use(finish,source,null,w,h);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,b);gl.uniform1i(finish.u.glow,1);
@@ -83,18 +85,27 @@
     }
     ctx.restore();
   }
+  const upload=document.createElement('canvas'),uploadContext=upload.getContext('2d');
   function render(ctx,w,h,time,source,grid,options={}){
     if(options.reducedMotion)return false;
     const iw=source.videoWidth||source.width,ih=source.videoHeight||source.height;if(!iw||!ih)return false;
     const scale=Math.min(w/iw,h/ih),dw=iw*scale,dh=ih*scale,x=(w-dw)/2,y=(h-dh)/2,q=sample(time,grid,options);
     const renderer=options.forceFallback?null:init();
+    let prepared=source;
     ctx.save();ctx.beginPath();ctx.rect(x,y,dw,dh);ctx.clip();
     try{
-      if(renderer){const rw=Math.min(iw,1280),rh=Math.round(ih*rw/iw);ctx.drawImage(renderer.render(source,rw,rh,q),x,y,dw,dh);}
+      if(renderer){
+        const ratio=Math.min(1,1280/Math.max(iw,ih)),rw=Math.max(1,Math.round(iw*ratio)),rh=Math.max(1,Math.round(ih*ratio));
+        if(iw!==rw||ih!==rh){
+          if(upload.width!==rw||upload.height!==rh){upload.width=rw;upload.height=rh;}
+          uploadContext.drawImage(source,0,0,rw,rh);prepared=upload;
+        }
+        ctx.drawImage(renderer.render(prepared,rw,rh,q),x,y,dw,dh);
+      }
       else fallback(ctx,source,x,y,dw,dh,q);
     }catch{gpu?.destroy();fallback(ctx,source,x,y,dw,dh,q);}
     finally{ctx.restore();}
-    window.LMFRAMESINK?.render(ctx,w,h,time,source,grid,options);
+    window.LMFRAMESINK?.render(ctx,w,h,time,source===ctx.canvas?source:prepared,grid,options);
     return true;
   }
   addEventListener('pagehide',()=>gpu?.destroy(),{once:true});

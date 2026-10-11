@@ -55,7 +55,7 @@
   let gpu=null,attempted=false;
   function init(){
     if(attempted)return gpu;attempted=true;
-    const canvas=document.createElement('canvas'),gl=canvas.getContext('webgl',{alpha:false,antialias:false,depth:false,preserveDrawingBuffer:true});
+    const canvas=document.createElement('canvas'),gl=canvas.getContext('webgl',{alpha:false,antialias:false,depth:false,preserveDrawingBuffer:false});
     if(!gl)return null;
     const shaders=[];let program,texture,buffer;
     function destroy(){for(const s of shaders)gl.deleteShader(s);if(program)gl.deleteProgram(program);if(texture)gl.deleteTexture(texture);if(buffer)gl.deleteBuffer(buffer);gpu=null;}
@@ -66,10 +66,13 @@
       buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
       texture=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,texture);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
       canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();gpu=null;});canvas.addEventListener('webglcontextrestored',()=>{destroy();attempted=false;});
+      let sw=0,sh=0;
       gpu={destroy,render(source,w,h,q){
         if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
         gl.viewport(0,0,w,h);gl.useProgram(program);gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.enableVertexAttribArray(position);gl.vertexAttribPointer(position,2,gl.FLOAT,false,0,0);
-        gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,texture);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,source);
+        gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,texture);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);const iw=source.videoWidth||source.width,ih=source.videoHeight||source.height;
+        if(sw!==iw||sh!==ih){sw=iw;sh=ih;gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,sw,sh,0,gl.RGBA,gl.UNSIGNED_BYTE,null);}
+        gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,gl.RGBA,gl.UNSIGNED_BYTE,source);
         gl.uniform1i(u.image,0);gl.uniform2f(u.resolution,w,h);gl.uniform1f(u.mode,q.id);gl.uniform1f(u.reveal,q.reveal);gl.uniform1f(u.pulse,q.pulse);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);return canvas;
       }};
     }catch{destroy();}
@@ -96,12 +99,18 @@
     }
     fc.putImageData(pixels,0,0);return fallbackCanvas;
   }
+  const upload=document.createElement('canvas'),uploadContext=upload.getContext('2d');
   function render(ctx,w,h,time,source,grid,options={}){
     const q=sample(time,grid,options);if(q.mix<=.001)return q;
     const iw=source.videoWidth||source.width,ih=source.videoHeight||source.height;if(!iw||!ih)return q;
     const scale=Math.min(w/iw,h/ih),dw=iw*scale,dh=ih*scale;
     const outputScale=Math.min(1,1280/Math.max(iw,ih)),rw=Math.max(1,Math.round(iw*outputScale)),rh=Math.max(1,Math.round(ih*outputScale));
-    let result;try{const renderer=options.forceFallback?null:init();result=renderer?renderer.render(source,rw,rh,q):fallback(source,iw,ih,q);}catch{gpu?.destroy();try{result=fallback(source,iw,ih,q);}catch{return q;}}
+    let result;try{const renderer=options.forceFallback?null:init();let prepared=source;
+      if(renderer&&(iw!==rw||ih!==rh)){
+        if(upload.width!==rw||upload.height!==rh){upload.width=rw;upload.height=rh;}
+        uploadContext.drawImage(source,0,0,rw,rh);prepared=upload;
+      }
+      result=renderer?renderer.render(prepared,rw,rh,q):fallback(source,iw,ih,q);}catch{gpu?.destroy();try{result=fallback(source,iw,ih,q);}catch{return q;}}
     ctx.save();ctx.globalAlpha=q.mix;ctx.imageSmoothingEnabled=q.id!==4;ctx.drawImage(result,(w-dw)/2,(h-dh)/2,dw,dh);ctx.restore();return q;
   }
   addEventListener('pagehide',()=>gpu?.destroy(),{once:true});
