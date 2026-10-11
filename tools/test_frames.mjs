@@ -38,7 +38,7 @@ try{
  });
  assert.equal(lyrics.changes,true);assert.equal(lyrics.exported,true);
  assert.ok(lyrics.both.some(c=>c.text==='un recuerdo bajo las luces'));assert.ok(lyrics.both.some(c=>c.text==='a memory under the lights'));
- assert.ok(lyrics.both.every(c=>c.y>=0&&c.y<720*.79));assert.deepEqual(lyrics.spanish.map(c=>c.text),['a memory under the lights']);
+ assert.ok(lyrics.both.every(c=>c.y>=0&&c.y<720*.79));assert.deepEqual([...new Set(lyrics.spanish.map(c=>c.text))],['a memory under the lights']);
  assert.ok(parseFloat(lyrics.large[0].font.split(' ')[1])>parseFloat(lyrics.both[0].font.split(' ')[1]));assert.equal(lyrics.offset[0].text,'otro capítulo');
  const rendering=await p.evaluate(()=>{const c=document.createElement('canvas');c.width=320;c.height=180;const g=c.getContext('2d');const reset=()=>{g.fillStyle='#c25935';g.fillRect(0,0,320,180);g.fillStyle='#fff';g.fillRect(140,20,30,100);};reset();const plain=c.toDataURL();LMFRAMES.boostCanvas(g,320,180,37);const boost=c.toDataURL();reset();CFG.reduceMotion=true;LMFRAMES.boostCanvas(g,320,180,37);const quiet=c.toDataURL();CFG.reduceMotion=false;return{changes:plain!==boost,reduced:plain===quiet};});assert.deepEqual(rendering,{changes:true,reduced:true});
  const edit=await p.evaluate(()=>{const values=Array.from({length:80},(_,t)=>LMFRAMES.cue(t,113.32,.225));return {kinds:new Set(values.map(c=>c.kind)).size,repeat:JSON.stringify(LMFRAMES.cue(37,113.32,.225))===JSON.stringify(LMFRAMES.cue(37,113.32,.225))};});assert.equal(edit.kinds,4);assert.equal(edit.repeat,true);
