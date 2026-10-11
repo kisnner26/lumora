@@ -1972,6 +1972,8 @@ function frame(t0) {
   const dt = Math.min(.08, (t0 - prev) / 1000); prev = t0;
   const t = t0 / 1000;
   readAudio(t);
+  // las luces siguen el audio aunque risografía, fábula o carátula sustituyan el renderizador.
+  try { lightsTick(); } catch (e) { /* una luz no debe interrumpir la animación */ }
   if (mode !== 'proc') window.RISO?.grief?.stop();
   if (mode === 'sync') {
     // mismas escenas que "ver video": la de la línea que acabas de marcar
