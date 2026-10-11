@@ -25,6 +25,7 @@ const LT = {
   devices: [], key: '', lastState: '', calib: 0, calibEnd: null,
   col: [255, 180, 110], int: .5, at: 0, flash: null, view: null,
   sentRgb: null, rgbAt: 0, sent: -1, briAt: 0, onSent: false,
+  sending: 0, retryAt: 0,
 };
 function setLightsLead(ms) { LT.lead = clamp(Math.round(ms), 0, 350); try { localStorage.setItem('lm_lights_lead', LT.lead); } catch (e) {} }
 function setLightsOpt(k, v) { LT.o[k] = v; try { localStorage.setItem('lm_lights_opts', JSON.stringify(LT.o)); } catch (e) {} LT.sentRgb = null; }
@@ -50,7 +51,15 @@ function hslRgb(h, s, l) {
 }
 function lightSend(body) {
   if (!LT.on || !LT.devices.length) return;
-  fetch('/lights', { method: 'POST', body: JSON.stringify(body) }).catch(() => {});
+  const abort = new AbortController(), timeout = setTimeout(() => abort.abort(), 1500);
+  LT.sending++;
+  return fetch('/lights', { method: 'POST', body: JSON.stringify(body), signal: abort.signal })
+    .then(r => { if (!r.ok) throw new Error('puente de luces: ' + r.status); LT.retryAt = 0; })
+    .catch(() => {
+      // una orden fallida no cuenta como aplicada: reenviar el estado actual al reconectar.
+      LT.onSent = false; LT.sentRgb = null; LT.sent = -1;
+      LT.retryAt = performance.now() + 1000;
+    }).finally(() => { clearTimeout(timeout); LT.sending--; });
 }
 
 // ---------- el color ----------
@@ -83,7 +92,7 @@ function targetRgb() {
 function pulseEnv(energy) {                                    // 0..1: cuánto está "encendido" el pulso, `lead` ms en el futuro
   const o = LT.o;
   if (o.mode === 'quieta') return 0;
-  if (window.AUD?.live) return IN.beat || 0;                   // con micrófono el golpe es real: se sigue tal cual
+  if (window.AUD?.live) return clamp(AUD.pulse || 0);          // independiente del renderizador clásico
   if (!IN.period) return 0;
   const bpm = IN.bpm || 60 / IN.period;
   const bt = ((ext.has() ? ext.now() : 0) + LT.lead / 1000 - IN.phase) / IN.period;
@@ -104,7 +113,7 @@ function lightOut(rgb, bright, now, force) {
   LT.view = { rgb: r, bright: b };
   const pv = document.getElementById('ltNow');
   if (pv?.offsetParent) { pv.style.setProperty('--c', `rgb(${r})`); pv.style.setProperty('--b', b / 100); }
-  if (!LT.on || !LT.devices.length || LT.calib) return;
+  if (!LT.on || !LT.devices.length || LT.calib || LT.sending || now < LT.retryAt) return;
   const body = {};
   if (!LT.onSent) { body.on = true; LT.onSent = true; }
   if (force || !LT.sentRgb || (now - LT.rgbAt > 120 && r.some((v, i) => Math.abs(v - LT.sentRgb[i]) >= 5))) { body.rgb = r; LT.sentRgb = r; LT.rgbAt = now; }
@@ -113,9 +122,7 @@ function lightOut(rgb, bright, now, force) {
 }
 
 // ---------- el motor, en cada cuadro del video ----------
-const _procFrameL = procFrame;
-procFrame = function (t, dt) {
-  _procFrameL(t, dt);
+function lightsTick() {
   if (mode !== 'proc' || !ext.has()) return;
   const now = performance.now(), step = Math.min(.1, (now - (LT.at || now)) / 1000); LT.at = now;
   const key = ext.key();
@@ -139,7 +146,7 @@ procFrame = function (t, dt) {
   }
   LT.flash = null;
   lightOut(LT.col, bright, now);
-};
+}
 // momentos: en el coro la luz se abre; en el drop, destello blanco (si los destellos están permitidos)
 const _moment = moment;
 moment = function (kind) {
@@ -156,9 +163,9 @@ setInterval(() => { const st = ext.st.state; if (st !== LT.lastState) { LT.lastS
 async function lightsRefresh(scan) {
   try {
     const r = await fetch('/lights' + (scan ? '?scan=1' : '')).then(r => r.json());
-    const had = LT.devices.length;
+    const had = JSON.stringify(LT.devices);
     LT.devices = r.devices || [];
-    if (LT.devices.length !== had) { LT.onSent = false; LT.sentRgb = null; }
+    if (JSON.stringify(LT.devices) !== had) { LT.onSent = false; LT.sentRgb = null; LT.sent = -1; }
     $('lightsName').textContent = LT.devices.length
       ? LT.devices.length + (LT.devices.length === 1 ? ' luz Govee' : ' luces Govee') + ' · ' + LT.devices.map(d => d.sku).join(', ')
       : (r.error ? 'error de red: ' + r.error : 'ninguna luz encontrada · activa "LAN Control" en la app Govee Home');
