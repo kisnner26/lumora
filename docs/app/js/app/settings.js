@@ -182,7 +182,7 @@ const OPTS = [
     ['rec', 'Modo grabación', 'sw', null, '30 fps estables y menos carga para grabar con OBS'],
     ['recFormat', 'Formato de los clips', 'seg', [['horizontal', '16:9'], ['vertical', '9:16']], 'horizontal para YouTube y pantallas; vertical para historias y TikTok'],
     ['fps', 'Mostrar FPS', 'sw'],
-    ['clip', 'Estilo del video', 'seg', [['riso', 'risografía'], ['portada', 'portada'], ['clasico', 'clásico']], 'risografía: videoclip ilustrado a mano, con objetos que se dibujan solos. portada: una sola pantalla fija con la portada del álbum, el verso que suena y el avance. clásico: los escenarios de siempre'],
+    ['clip', 'tipo de animación', 'seg', [['riso', 'risografía'], ['fabula', 'fábula'], ['portada', 'portada'], ['clasico', 'clásico']], 'fábula: pintura, tipografía de novela y capítulos narrativos. es un estilo independiente de risografía. risografía: videoclip de tintas y objetos. portada: álbum y verso. clásico: escenarios originales'],
   ]],
   ['efectos', [
     ['intensity', 'Intensidad de capas', 'range', [.3, 1.5, .05]],
@@ -284,7 +284,10 @@ const fmtVal = (k, v) => k === 'catFreq' ? Math.round(v * 100) + '%' : (+v).toFi
 function paintFader(i) { const p = (i.value - i.min) / (i.max - i.min) * 100; i.style.setProperty('--p', p + '%'); i.nextElementSibling.textContent = fmtVal(i.dataset.key, i.value); }
 function syncUI() {
   panelEl.querySelectorAll('.sw[data-key]').forEach(b => b.classList.toggle('on', !!CFG[b.dataset.key]));
-  panelEl.querySelectorAll('.seg[data-key]').forEach(g => g.querySelectorAll('button').forEach(b => b.classList.toggle('on', CFG[g.dataset.key] === b.dataset.v)));
+  panelEl.querySelectorAll('.seg[data-key]').forEach(g => g.querySelectorAll('button').forEach(b => {
+    const on = CFG[g.dataset.key] === b.dataset.v;
+    b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on));
+  }));
   panelEl.querySelectorAll('input[type=range][data-key]').forEach(i => { i.value = CFG[i.dataset.key]; paintFader(i); });
   panelEl.querySelectorAll('input.txt[data-key]').forEach(i => { if (document.activeElement !== i) i.value = CFG[i.dataset.key] || ''; });
   panelEl.querySelectorAll('.chips[data-chips]').forEach(g => g.querySelectorAll('button').forEach(b => b.classList.toggle('on', !!(CFG[g.dataset.chips] || {})[b.dataset.cv])));
@@ -307,6 +310,8 @@ function paintLights() {
   paintLead();
 }
 function applyAll() {
+  if (CFG.clip === 'cuento') CFG.clip = 'fabula';
+  document.body.classList.toggle('fabula', CFG.clip === 'fabula');
   applyQuality();
   document.body.classList.toggle('show-fps', CFG.fps);
   lyr.classList.toggle('lite', !CFG.letterAnim);

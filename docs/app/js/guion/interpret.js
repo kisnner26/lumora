@@ -498,6 +498,7 @@ $('hudArtBtn').addEventListener('click', () => toggleCover(true));
 $('cover').addEventListener('click', () => toggleCover(false));
 addEventListener('keydown', e => {
   if (/TEXTAREA|INPUT/.test(document.activeElement?.tagName || '')) return;
+  if (e.key === 'Escape' && coverOpen && ($('cover').classList.contains('menu') || $('cvPosterBox')?.classList.contains('on'))) return;
   if (e.key === 'Escape' && coverOpen) { toggleCover(false); e.stopImmediatePropagation(); return; }
   if (e.key === 'c' && mode !== 'panel') toggleCover();
 }, true);

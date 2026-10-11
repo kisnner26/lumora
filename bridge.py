@@ -5,7 +5,7 @@ GET  /now          -> estado de Música en JSON (se refresca 4 veces por segundo
 GET  /art          -> carátula de la canción actual
 POST /cmd?c=...    -> playpause | seek:+5 | seek:-5 | start
 """
-import hashlib, json, os, queue, re, shutil, signal, socket, socketserver, subprocess, sys, threading, time, tempfile, urllib.request, urllib.parse
+import hashlib, unicodedata, json, os, platform, queue, re, select, shutil, signal, socket, socketserver, subprocess, sys, threading, time, tempfile, urllib.request, urllib.parse
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
@@ -296,10 +296,217 @@ def fetch_wiki(q, lang):
     return out
 
 
+
+# ---------- caras reales: la foto del artista (Wikipedia), recortada sin fondo con tools/rostro (Vision de macOS) ----------
+ROSTRO_BIN = os.path.join(TOOLS, 'rostro')
+CARAS_DIR = os.path.expanduser('~/Library/Caches/lumora-caras')
+CARAS_LOCK = threading.Lock()
+CARAS_BUSY = {}
+MUSICO = re.compile(r'singer|rapper|musician|band|songwriter|\bDJ\b|producer|vocalist|guitarist|drummer|pianist|composer|cantante|rapero|m[uú]sic|grupo', re.I)
+
+
+MALA_FOTO = re.compile(r'mugshot|booking|arrest|police|wanted|sideview|court|trial|funeral|memorial|[&]|_and_|_with_|_feat|_ft\.?_|_x_', re.I)   # fichas policiales y fotos con más de una persona
+
+
+def _norm_nombre(t):
+    return re.sub(r'[^a-z0-9]+', '', unicodedata.normalize('NFD', str(t).lower()).encode('ascii', 'ignore').decode())
+
+
+def _mismo_nombre(buscado, titulo):
+    """el título del artículo (sin «(rapper)» ni «The») tiene que ser el mismo nombre: «Sech» no es «Sechskies» ni «Duki» es «Duko»"""
+    def base(t):
+        t = re.sub(r'\s*\(.*?\)', '', str(t)).strip()
+        return _norm_nombre(re.sub(r'^the\s+', '', t, flags=re.I))
+    return bool(base(buscado)) and base(buscado) == base(titulo)
+
+
+def _fotos_candidatas(name, modo='verificado'):
+    """URLs de fotos del artista por orden de fiabilidad: Wikipedia (en y es), y la imagen oficial de Deezer; devuelve (fuente, url)"""
+    out = []
+    for lang in ('en', 'es'):
+        def summary(title):
+            return get_json(f'https://{lang}.wikipedia.org/api/rest_v1/page/summary/' + urllib.parse.quote(title.strip().replace(' ', '_')))
+        def valido(d):
+            return d and d.get('type') == 'standard' and (d.get('thumbnail') or {}).get('source') and MUSICO.search((d.get('description') or '') + ' ' + (d.get('extract') or '')[:260])
+        cand = [summary(name)]
+        if not valido(cand[0]):
+            q = get_json(f'https://{lang}.wikipedia.org/w/rest.php/v1/search/title?limit=4&q=' + urllib.parse.quote(name)) or {}
+            cand = [summary(p.get('key') or p.get('title')) for p in (q.get('pages') or [])[:4] if p.get('key') or p.get('title')]
+            if not any(valido(d) for d in cand):                        # «Duki» o «Travis Scott»: el artículo a veces se llama «Duki (rapper)»
+                q = get_json(f'https://{lang}.wikipedia.org/w/rest.php/v1/search/title?limit=4&q=' + urllib.parse.quote(name + (' singer' if lang == 'en' else ' cantante'))) or {}
+                cand += [summary(p.get('key') or p.get('title')) for p in (q.get('pages') or [])[:4] if p.get('key') or p.get('title')]
+        for d in cand:
+            if valido(d) and _mismo_nombre(name, d.get('title', '')):
+                if not MALA_FOTO.search(urllib.parse.unquote(d['thumbnail']['source'].split('/')[-1])):
+                    out.append(('wiki', re.sub(r'/\d+px-', '/960px-', d['thumbnail']['source'].split('?')[0])))
+                m = get_json(f'https://{lang}.wikipedia.org/api/rest_v1/page/media-list/' + urllib.parse.quote((d.get('title') or name).replace(' ', '_'))) or {}
+                vistas = {out[-1][1].rsplit('/', 1)[-1].split('px-', 1)[-1]} if out else set()
+                for it in (m.get('items') or []):                               # el resto de fotos del artículo: la mejor de frente gana
+                    sr = (it.get('srcset') or [{}])[-1].get('src') if it.get('type') == 'image' else None
+                    if not sr or re.search(r'\.(svg|gif|webm|ogv|ogg|pdf)', sr, re.I) or len(out) >= 6:
+                        continue
+                    u = re.sub(r'/\d+px-', '/960px-', ('https:' + sr if sr.startswith('//') else sr).split('?')[0]); k = u.rsplit('/', 1)[-1].split('px-', 1)[-1]
+                    if k not in vistas and _norm_nombre(name) in _norm_nombre(urllib.parse.unquote(k)) and not MALA_FOTO.search(urllib.parse.unquote(k)):      # otras fotos del artículo solo si el archivo nombra al artista: el artículo también muestra a otras personas
+                        vistas.add(k); out.append(('wiki', u))
+                break
+    if modo == 'wiki':
+        return out
+    # TheAudioDB y Deezer: la ficha del artista identifica quién sale (nombre idéntico); son las fuentes verificadas fuera de Wikipedia
+    t = get_json('https://www.theaudiodb.com/api/v1/json/2/search.php?s=' + urllib.parse.quote(name)) or {}
+    for a in (t.get('artists') or [])[:1]:
+        if _mismo_nombre(name, a.get('strArtist', '')):
+            for k in ('strArtistThumb', 'strArtistFanart', 'strArtistFanart2', 'strArtistFanart3'):
+                if a.get(k):
+                    out.append(('audiodb', a[k]))
+    d = get_json('https://api.deezer.com/search/artist?limit=3&q=' + urllib.parse.quote(name)) or {}
+    for a in d.get('data') or []:
+        if a.get('picture_xl') and _mismo_nombre(name, a.get('name', '')):
+            out.append(('deezer', a['picture_xl']))
+            break
+    if modo != 'amplio':
+        return out
+    # solo en modo amplio: Commons y la web abierta no identifican a quién muestra la foto (pueden equivocarse de persona)
+    nn = _norm_nombre(name)
+    c = get_json('https://commons.wikimedia.org/w/api.php?action=query&format=json&generator=search&gsrnamespace=6&gsrlimit=12&prop=imageinfo&iiprop=url|size|mime&iiurlwidth=960&gsrsearch=' + urllib.parse.quote('"' + name + '"')) or {}
+    n = 0
+    for pg in sorted((c.get('query') or {}).get('pages', {}).values(), key=lambda x: x.get('index', 99)):
+        ii = (pg.get('imageinfo') or [{}])[0]
+        if nn and nn in _norm_nombre(pg.get('title', '')) and ii.get('mime') in ('image/jpeg', 'image/png') and (ii.get('width') or 0) >= 400 and ii.get('thumburl') and n < 4:
+            out.append(('commons', ii['thumburl'])); n += 1
+    out.extend(_web_imagenes(name))
+    return out
+
+
+def _web_imagenes(name):
+    """última opción: búsqueda de imágenes en la web (DuckDuckGo); solo resultados cuyo título nombra al artista"""
+    try:
+        h = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15', 'Referer': 'https://duckduckgo.com/'}
+        q = urllib.parse.quote(name + ' musician portrait')
+        page = urllib.request.urlopen(urllib.request.Request('https://duckduckgo.com/?iax=images&ia=images&q=' + q, headers=h), timeout=15).read().decode('utf-8', 'replace')
+        vqd = re.search(r'vqd=["\']?([\d-]+)', page)
+        if not vqd:
+            return []
+        data = json.loads(urllib.request.urlopen(urllib.request.Request('https://duckduckgo.com/i.js?l=us-en&o=json&f=,,,type:photo,,&p=1&vqd=' + vqd.group(1) + '&q=' + q, headers=h), timeout=15).read().decode('utf-8', 'replace'))
+        nn, out = _norm_nombre(name), []
+        for r in data.get('results') or []:
+            if STOCK.search((r.get('url') or '') + ' ' + (r.get('image') or '')):          # bancos de fotos: marcas de agua y derechos estrictos
+                continue
+            if nn and nn in _norm_nombre(r.get('title', '')) and r.get('image') and (r.get('width') or 0) >= 400 and len(out) < 5:
+                out.append(('web', r['image']))
+        return out
+    except Exception:
+        return []
+
+
+VALIDAS = {'wiki': ('wiki',), 'verificado': ('wiki', 'audiodb', 'deezer'), 'amplio': ('wiki', 'audiodb', 'deezer', 'commons', 'web')}
+
+
+def cara_de(name, modo='verificado'):
+    """(png, meta) de la cara recortada de un artista, o None. Se guarda en disco. Solo se aceptan fotos de fuentes que identifican
+    al artista; los fallos de red no se recuerdan como «sin foto» para reintentarlo"""
+    if not os.path.exists(os.path.join(CARAS_DIR, 'v5')):                  # política nueva (fuentes verificadas): se descarta lo guardado con la anterior
+        os.makedirs(CARAS_DIR, exist_ok=True)
+        for f in os.listdir(CARAS_DIR):
+            if f.endswith(('.no', '.png', '.json')):
+                os.remove(os.path.join(CARAS_DIR, f))
+        open(os.path.join(CARAS_DIR, 'v5'), 'w').write('5')
+    ok_fuentes = VALIDAS.get(modo, VALIDAS['verificado'])
+    key = hashlib.sha1(' '.join(name.lower().split()).encode()).hexdigest()[:16]
+    png, meta, no = (os.path.join(CARAS_DIR, key + e) for e in ('.png', '.json', '.no'))
+    def guardada():
+        m = json.load(open(meta))
+        return (open(png, 'rb').read(), m) if m.get('fuente') in ok_fuentes else None
+    if os.path.exists(png) and os.path.exists(meta):
+        r = guardada()
+        if r:
+            return r
+    if os.path.exists(no) and time.time() - os.path.getmtime(no) < 3 * 86400:
+        return None
+    if not os.path.exists(ROSTRO_BIN):
+        return None
+    with CARAS_LOCK:
+        lock = CARAS_BUSY.setdefault(key, threading.Lock())
+    with lock:
+        if os.path.exists(png) and os.path.exists(meta):
+            r = guardada()
+            if r:
+                return r
+        os.makedirs(CARAS_DIR, exist_ok=True)
+        mejor, transitorio = None, False                                       # (puntuación, bytes, meta): de frente, nítida y grande
+        for fuente, url in _fotos_candidatas(name, modo):
+            if fuente not in ok_fuentes:
+                continue
+            if fuente != 'wiki' and mejor and mejor[0] >= .6:                    # con una buena foto de Wikipedia no hace falta mirar más lejos
+                break
+            for intento in (0, 1):
+                try:
+                    req = urllib.request.Request(url, headers={'User-Agent': 'Lumora/1.0 (aplicacion personal de letras)'})
+                    with tempfile.TemporaryDirectory() as d:
+                        src, out = os.path.join(d, 'in.img'), os.path.join(d, 'out.png')
+                        open(src, 'wb').write(urllib.request.urlopen(req, timeout=25).read())
+                        r = subprocess.run([ROSTRO_BIN, src, out], capture_output=True, text=True, timeout=60)
+                        if r.returncode == 0 and os.path.exists(out):
+                            m = json.loads(r.stdout); m['fuente'] = fuente
+                            sc = float(m.get('q', 0)) + min(.25, float(m.get('fr', 0)) * .9) - float(m.get('yaw', 0)) * .6
+                            if fuente == 'web' and sc < .4:
+                                break
+                            if not mejor or sc > mejor[0]:
+                                mejor = (sc, open(out, 'rb').read(), m)
+                    break
+                except Exception:
+                    transitorio = True                                         # 429, tiempo agotado…: se reintenta una vez y no se marca como «sin foto»
+                    time.sleep(1.5)
+            if mejor and mejor[0] >= .78:
+                break
+        if mejor and mejor[0] >= .25:                                           # una foto de perfil, borrosa o tapada se descarta
+            open(png, 'wb').write(mejor[1]); json.dump(mejor[2], open(meta, 'w'))
+            return mejor[1], mejor[2]
+        if not transitorio:
+            open(no, 'w').write('1')
+        return None
+
+
 # ---------- oído: niveles del audio del sistema (tools/oido, ScreenCaptureKit) ----------
 OIDO_BIN = os.path.join(TOOLS, 'oido')
+TOMADOR_BIN = os.path.join(TOOLS, 'tomador')
+TOMADOR = {'proc': None, 'session': '', 'cancelled': {}}
+TOMADOR_LOCK = threading.Lock()
+PCM_START_TIMEOUT = 8
+PCM_IDLE_TIMEOUT = 3
 AUDIO = {'clients': [], 'error': '', 'running': False}
 AUDIO_LOCK = threading.Lock()
+
+
+def parar_tomador(pr):
+    if pr and pr.poll() is None:
+        pr.terminate()
+        try:
+            pr.wait(2)
+        except subprocess.TimeoutExpired:
+            pr.kill()
+            pr.wait()
+
+
+def pcm_read(pr, connection, size, timeout):
+    """espera muestras sin perder de vista el cierre del navegador ni dejar un tap mudo colgado."""
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        ready, _, _ = select.select([connection, pr.stdout], [], [], min(.2, max(0, deadline - time.monotonic())))
+        if connection in ready and not connection.recv(1, socket.MSG_PEEK):
+            raise BrokenPipeError('el reproductor se desconectó')
+        if pr.stdout in ready:
+            return pr.stdout.read1(size)
+    raise TimeoutError('el tomador dejó de entregar audio')
+
+
+def navegador_audio(user_agent):
+    """el proceso de audio del navegador es compartido: no puede entrar en su propio tap."""
+    for marker, bundle in [('Edg/', 'com.microsoft.edgemac'), ('OPR/', 'com.operasoftware.opera'),
+                           ('Firefox/', 'org.mozilla.firefox'), ('Chrome/', 'com.google.chrome'),
+                           ('Safari/', 'com.apple.safari')]:
+        if marker in user_agent:
+            return bundle
+    return ''
 
 
 def oido_permitido(pedir=False):
@@ -393,6 +600,22 @@ def govee_send(ip, cmd, data):
         pass
 
 
+def lights_emit(ips, pend):
+    # algunos firmwares descartan paquetes consecutivos: separar también color y brillo.
+    commands = []
+    if 'on' in pend:
+        commands.append(('turn', {'value': 1 if pend['on'] else 0}))
+    if 'rgb' in pend:
+        r, g, b = pend['rgb']
+        commands.append(('colorwc', {'color': {'r': r, 'g': g, 'b': b}, 'colorTemInKelvin': 0}))
+    if 'bright' in pend:
+        commands.append(('brightness', {'value': max(1, min(100, int(pend['bright'])))}))
+    for cmd, data in commands:
+        for ip in ips:
+            govee_send(ip, cmd, data)
+        time.sleep(.04)
+
+
 def lights_loop():
     # busca luces al arrancar y cada 2 minutos; envía como mucho ~25 órdenes por segundo por luz
     # (antes 80 ms de cola: con el pulso predictivo de lights.js ese margen se sumaba a su propio
@@ -404,14 +627,7 @@ def lights_loop():
         with LIGHTS['lock']:
             pend, LIGHTS['pending'] = LIGHTS['pending'], {}
             ips = list(LIGHTS['devices'])
-        for ip in ips:
-            if 'on' in pend:
-                govee_send(ip, 'turn', {'value': 1 if pend['on'] else 0})
-            if 'rgb' in pend:
-                r, g, b = pend['rgb']
-                govee_send(ip, 'colorwc', {'color': {'r': r, 'g': g, 'b': b}, 'colorTemInKelvin': 0})
-            if 'bright' in pend:
-                govee_send(ip, 'brightness', {'value': max(1, min(100, int(pend['bright'])))})
+        lights_emit(ips, pend)
         time.sleep(.04)
 
 
@@ -434,7 +650,7 @@ def to_mp4(data):
         src, dst = os.path.join(d, 'in.webm'), os.path.join(d, 'out.mp4')
         open(src, 'wb').write(data)
         r = subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', src, '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '19',
-                            '-pix_fmt', 'yuv420p', '-r', '30', '-movflags', '+faststart', dst], capture_output=True, text=True, timeout=600)
+                            '-c:a', 'aac', '-b:a', '192k', '-pix_fmt', 'yuv420p', '-r', '30', '-movflags', '+faststart', dst], capture_output=True, text=True, timeout=600)
         if r.returncode != 0 or not os.path.exists(dst):
             raise RuntimeError(r.stderr.strip()[:200] or 'ffmpeg falló')
         return open(dst, 'rb').read()
@@ -646,6 +862,28 @@ class Handler(SimpleHTTPRequestHandler):
                 return self.send_json({'scenes': guion.SCENES, 'objects': guion.OBJECTS, 'moods': guion.MOODS, 'times': guion.TIMES,
                                        'colors': guion.COLORS, 'transitions': guion.TRANSITIONS})
             return self.send_json({'ready': guion.available(), 'model': guion.MODEL})
+        if path == '/cara':                                     # la cara real del artista, recortada y sin fondo (PNG con su posición en la cabecera X-Cara)
+            name = parse_qs(urlparse(self.path).query).get('name', [''])[0][:80]
+            res = cara_de(name, {'wiki': 'wiki', 'wide': 'amplio'}.get(parse_qs(urlparse(self.path).query).get('src', [''])[0], 'verificado')) if name.strip() else None
+            if not res:
+                return self.send_json({'none': True}, 404)
+            body, meta = res
+            self.send_response(200)
+            self.send_header('Content-Type', 'image/png')
+            self.send_header('Content-Length', str(len(body)))
+            self.send_header('Cache-Control', 'max-age=86400')
+            self.send_header('X-Cara', json.dumps(meta))
+            self.send_header('Access-Control-Expose-Headers', 'X-Cara')
+            self.end_headers()
+            self.wfile.write(body)
+            return
+        if path == '/artista':                                  # rasgos reconocibles de un artista (los genera Claude una vez y quedan guardados)
+            import guion
+            name = parse_qs(urlparse(self.path).query).get('name', [''])[0]
+            try:
+                return self.send_json({'look': guion.artist_look(name)})
+            except Exception as e:
+                return self.send_json({'error': str(e)[:160]}, 503)
         if path == '/prefs':
             import guion
             p = guion.load_prefs()
@@ -715,6 +953,62 @@ class Handler(SimpleHTTPRequestHandler):
                 with AUDIO_LOCK:
                     AUDIO['clients'].remove(q)
             return
+        if path == '/pcm':                                      # audio del sistema (tap de Core Audio) para que la página lo procese
+            if sys.platform == 'darwin' and tuple(int(n) for n in platform.mac_ver()[0].split('.')[:2]) < (14, 2):
+                return self.send_json({'error': 'el procesamiento del audio del mac necesita macos 14.2 o posterior'}, 501)
+            if not os.path.exists(TOMADOR_BIN):
+                return self.send_json({'error': 'esta versión no incluye el tomador de audio'}, 501)
+            solo = parse_qs(urlparse(self.path).query).get('solo', [''])[0]
+            session = parse_qs(urlparse(self.path).query).get('session', [''])[0][:80]
+            cmd = [TOMADOR_BIN] + (['--solo', solo] if re.fullmatch(r'[a-zA-Z0-9._-]{1,40}', solo) else [])
+            browser = navegador_audio(self.headers.get('User-Agent', ''))
+            if browser:
+                cmd += ['--exclude-bundle', browser]
+            with TOMADOR_LOCK:
+                TOMADOR['cancelled'] = {k: t for k, t in TOMADOR['cancelled'].items() if time.monotonic() - t < 30}
+                if session and session in TOMADOR['cancelled']:
+                    return self.send_json({'error': 'captura cancelada'}, 409)
+                parar_tomador(TOMADOR['proc'])
+                pr = TOMADOR['proc'] = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                TOMADOR['session'] = session
+            started = False
+            try:
+                first = b''
+                deadline = time.monotonic() + PCM_START_TIMEOUT
+                while len(first) < 4:
+                    chunk = pcm_read(pr, self.connection, 4 - len(first), max(0, deadline - time.monotonic()))
+                    if not chunk:
+                        parar_tomador(pr)
+                        err = (pr.stderr.read() or b'').decode(errors='replace').strip()
+                        return self.send_json({'error': err or 'el tomador no arrancó', 'permiso': pr.returncode == 3}, 503)
+                    first += chunk
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/octet-stream')
+                self.send_header('Cache-Control', 'no-store')
+                self.end_headers()
+                started = True
+                self.wfile.write(first)
+                self.wfile.flush()
+                while True:
+                    chunk = pcm_read(pr, self.connection, 65536, PCM_IDLE_TIMEOUT)
+                    if not chunk:
+                        break
+                    self.wfile.write(chunk)
+                    self.wfile.flush()
+            except TimeoutError as e:
+                if not started:
+                    self.send_json({'error': str(e)}, 503)
+            except (BrokenPipeError, ConnectionResetError, OSError):
+                pass
+            finally:
+                parar_tomador(pr)
+                pr.stdout.close()
+                pr.stderr.close()
+                with TOMADOR_LOCK:
+                    if TOMADOR['proc'] is pr:
+                        TOMADOR['proc'] = None
+                        TOMADOR['session'] = ''
+            return
         if path == '/lights':
             if parse_qs(urlparse(self.path).query).get('scan'):
                 threading.Thread(target=govee_scan, daemon=True).start()
@@ -745,6 +1039,17 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         u = urlparse(self.path)
+        if u.path == '/pcm/stop':
+            session = parse_qs(u.query).get('session', [''])[0][:80]
+            if not session:
+                return self.send_json({'error': 'falta la sesión de audio'}, 400)
+            with TOMADOR_LOCK:
+                cancelled = {k: t for k, t in TOMADOR['cancelled'].items() if time.monotonic() - t < 30}
+                cancelled[session] = time.monotonic()
+                TOMADOR['cancelled'] = dict(list(cancelled.items())[-64:])
+                if TOMADOR['session'] == session:
+                    parar_tomador(TOMADOR['proc'])
+            return self.send_json({'ok': True})
         if u.path == '/log':                                   # errores de la página, para depurar
             n = int(self.headers.get('Content-Length') or 0)
             msg = self.rfile.read(min(n, 2000)).decode('utf-8', 'replace')
@@ -775,6 +1080,13 @@ class Handler(SimpleHTTPRequestHandler):
                 AUTOR['data'][k] = {**body.get('project', {}), 'saved': time.time()}
             save_autor()
             return self.send_json({'ok': True})
+        if u.path == '/voces':                                 # quién canta cada verso de una colaboración (tarda: busca el reparto en la web y queda guardado)
+            n = int(self.headers.get('Content-Length') or 0)
+            try:
+                import guion
+                return self.send_json(guion.quien_canta(json.loads(self.rfile.read(n) or b'{}')))
+            except Exception as e:
+                return self.send_json({'error': str(e)[:160]}, 503)
         if u.path == '/story':                                 # guion completo de la canción, escrito por Claude
             n = int(self.headers.get('Content-Length') or 0)
             try:

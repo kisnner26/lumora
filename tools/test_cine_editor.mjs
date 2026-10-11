@@ -1,0 +1,30 @@
+import assert from 'node:assert/strict';
+import {servidor,abrir,BASE} from './lib.mjs';
+const srv=await servidor(),{b,p,errores}=await abrir(1600,1000);
+try{
+ await p.goto(BASE+'/index.html?menu=0');await p.waitForFunction('window.RISO?.film?.draw && window.RISOCLIP');
+ await p.evaluate(async()=>{ext.st={...ext.st,name:'cine qa',artist:'twenty one pilots',album:'Clancy',state:'paused',duration:40};mode='proc';proc.dur=40;IN.lines=['Open the door','Give you a letter','I tear the photo','The flower withers','I leave the room','Come back home','Board the taxi'].map((text,i)=>({text,t:i*5}));IN.cuts=[0,15,25];SEM.plans=[];await openAutor();});
+ await p.locator('[data-cine-line="1"]').click();
+ const box=await p.locator('#cineBoard canvas').first().boundingBox();assert.equal(box.width,120);assert.equal(box.height,70);
+ await p.waitForFunction(()=>{const c=document.querySelector('#cineBoard canvas'),d=c.getContext('2d').getImageData(0,0,c.width,c.height).data;return new Set(d).size>10;});
+ await p.locator('[data-cine="camera"]').selectOption('close');
+ await p.locator('[data-cine="action"]').selectOption('give');
+ assert.equal(await p.evaluate(()=>RISO.film.edits.lines[1].camera),'close');
+ await p.locator('#cineSaveVersion').click();await p.waitForFunction('document.querySelector("#cineRestore").disabled===false');
+ await p.locator('[data-cine="camera"]').selectOption('wide');await p.locator('#cineRestore').click();
+ assert.equal(await p.evaluate(()=>AUT.P.cinema.lines[1].camera),'close');
+ await p.evaluate(()=>flushAutorSave());
+ const saved=await p.evaluate(()=>RISOSTORE.get('misc','autor|cine qa|twenty one pilots'));assert.equal(saved.cinema.lines[1].camera,'close');
+ await p.screenshot({path:'/tmp/lumora-cine-editor.png'});
+ await p.locator('[data-cine="kind"]').selectOption('singer');
+ await p.waitForTimeout(150);
+ await p.evaluate(()=>{closeAutor(true);ext.st.name='otra canción';RISO.film.plan(IN.lines,IN.cuts,SEM.plans,40);});
+ assert.equal(await p.evaluate(()=>Object.keys(RISO.film.edits.lines).length),0);
+ await p.reload();await p.waitForFunction('window.RISO?.film');
+ const persisted=await p.evaluate(()=>RISOSTORE.get('misc','versions|cine qa|twenty one pilots'));assert.equal(persisted[0].project.cinema.lines[1].camera,'close');
+ await p.goto(BASE+'/index.html?web=1&menu=0');await p.waitForFunction('window.RISO?.film');
+ const web=await p.evaluate(async()=>{await fetch('/autor',{method:'POST',body:JSON.stringify({key:'qa web',project:{cinema:{lines:{1:{camera:'detail'}},sections:{}},blocks:[]}})});return fetch('/autor?key=qa%20web').then(r=>r.json());});assert.equal(web.cinema.lines[1].camera,'detail');
+ await p.reload();await p.waitForFunction('window.RISO?.film');assert.equal(await p.evaluate(()=>fetch('/autor?key=qa%20web').then(r=>r.json()).then(v=>v.cinema.lines[1].camera)),'detail');
+ await p.evaluate(()=>fetch('/autor',{method:'POST',body:JSON.stringify({key:'qa web',delete:true})}));
+ assert.deepEqual(errores,[]);console.log('ok: editor, miniaturas, dirección, versiones, restauración, aislamiento por canción y persistencia');
+}finally{await b.close();srv.stop();}

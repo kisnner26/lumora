@@ -16,7 +16,7 @@ for sp in glob.glob(os.path.join(ROOT, '.venv', 'lib', 'python3*', 'site-package
 MODEL = 'claude-sonnet-5'                                         # con la suscripción (Claude Code); con clave de API usa el mismo
 EFFORT = 'medium'
 CLAUDE_BIN = shutil.which('claude') or '/opt/homebrew/bin/claude'
-VERSION = 'g4'                                                   # cambia si cambia el prompt: invalida la memoria
+VERSION = 'g5'                                                   # cambia si cambia el prompt: invalida la memoria
 KEY_FILE = next((p for p in map(os.path.expanduser, ('~/.config/lumora/anthropic_key', '~/.config/taxicab/anthropic_key')) if os.path.exists(p)), os.path.expanduser('~/.config/lumora/anthropic_key'))
 CACHE_FILE = os.path.expanduser('~/Library/Caches/lumora-guiones.json')
 
@@ -70,6 +70,18 @@ OBJECTS = {
     'network': 'red de datos', 'hero': 'emblema de superhéroe', 'halftone': 'trama de cómic', 'speedlines': 'líneas de velocidad de cómic',
     'pow': 'onomatopeya de cómic / golpe', 'web': 'telaraña', 'sport': 'deporte nombrado en la letra', 'nation': 'país nombrado en la letra',
     'brand': 'marca nombrada en la letra',
+    'carta_abierta': 'carta abierta / comunicación íntima',
+    'maleta_viaje': 'maleta / partida / despedida',
+    'puerta_entreabierta': 'puerta / umbral / regreso',
+    'ventana_lluvia': 'ventana mojada / espera en casa',
+    'foto_rota': 'fotografía rota / recuerdo / separación',
+    'banco_vacio': 'banco vacío / espera / ausencia',
+    'hilo_rojo': 'hilo entre dos personas / vínculo',
+    'puente_camino': 'puente / cruzar / reencuentro',
+    'escalera_salida': 'escalera / ascenso / salida',
+    'faro_costa': 'faro / orientación / esperanza',
+    'semilla_brote': 'semilla germinando / empezar de nuevo',
+    'silla_ausente': 'silla vacía / alguien que falta',
 }
 MOODS = ['euforico', 'feliz', 'romantico', 'sereno', 'nostalgico', 'melancolico', 'triste', 'oscuro', 'rabioso', 'desafiante']
 TIMES = ['amanecer', 'dia', 'atardecer', 'noche', 'madrugada']
@@ -95,6 +107,7 @@ Cómo decidir:
 - Las figuras de personas: woman, man o couple solo cuando la letra habla de alguien concreto (ella, él, nosotros). Fíjate en el género de quien se habla.
 - sport, nation y brand solo si la letra nombra un deporte, país o marca real.
 - La energía (0 a 10) sigue la estructura: estrofas más bajas, coros y drops más altos, final que baja o explota según la canción.
+- Continuidad gráfica: conserva el lugar, las personas y un objeto significativo mientras la acción siga. Cambia la composición cuando ocurra algo (partir, esperar, regresar, recordar), no solo porque cambie el verso. En un estribillo que vuelve, recupera su objeto y escenario. Respeta las negaciones: «no te vayas» no muestra una partida consumada.
 - Variedad con sentido: no repitas el mismo escenario más de 2 bloques seguidos salvo que la historia siga en ese lugar.
 - scene2 es un escenario secundario tenue mezclado detrás; úsalo solo si suma al significado, si no pon "ninguno". atmos es una capa ambiental suave para todo el bloque (por ejemplo lluvia en un bloque triste); "ninguno" si no hace falta.
 - word: la palabra más importante del verso, copiada tal cual como aparece en el verso (una sola palabra). big: true solo en los versos que merecen la palabra gigante en pantalla (ganchos, remates, la palabra clave del coro); como mucho uno de cada cinco versos.
@@ -363,3 +376,181 @@ def storyboard(req):
     finally:
         ev.set()
         STATE['inflight'].pop(key, None)
+
+
+# ---------- aspecto del artista real: rasgos reconocibles para el retrato vectorial ----------
+LOOK_FILE = os.path.expanduser('~/Library/Caches/lumora-artistas.json')
+LOOK_ENUM = {
+    'hair': ['short', 'mop', 'messy', 'long', 'waves', 'ponytail', 'braids', 'dreads', 'mullet', 'bob', 'afro', 'curls', 'bun', 'beehive', 'quiff', 'slick', 'wavesShort', 'buzz', 'bald'],
+    'outfit': ['jacket', 'shirt', 'hoodie', 'suit', 'military', 'cardigan', 'jumpsuit', 'coat', 'dress', 'crop'],
+    'hat': ['none', 'fedora', 'cap', 'beanie'], 'instrument': ['none', 'guitar', 'bass', 'drums', 'keys', 'ukulele'],
+}
+LOOK_BOOL = ['beard', 'moustache', 'sideburns', 'glasses', 'earrings', 'eyeliner', 'lipstick', 'headband', 'fringe', 'chain', 'necklace', 'tie', 'glove', 'tattoos']
+LOOK_SCHEMA = {
+    'type': 'object', 'additionalProperties': False,
+    'required': ['known', 'skin', 'hair', 'hairInk', 'outfit', 'clothes', 'hat', 'instrument', 'face'] + LOOK_BOOL,
+    'properties': {
+        'known': {'type': 'boolean'}, 'skin': {'type': 'number'}, 'hair': {'type': 'string', 'enum': LOOK_ENUM['hair']}, 'hairInk': {'type': 'integer', 'enum': [1, 2, 3]},
+        'outfit': {'type': 'string', 'enum': LOOK_ENUM['outfit']}, 'clothes': {'type': 'integer', 'enum': [-1, 1, 2, 3]},
+        'hat': {'type': 'string', 'enum': LOOK_ENUM['hat']}, 'instrument': {'type': 'string', 'enum': LOOK_ENUM['instrument']},
+        'face': {'type': 'object', 'additionalProperties': False, 'required': ['width', 'height', 'jaw', 'eyes', 'nose', 'lips'],
+                 'properties': {k: {'type': 'number'} for k in ('width', 'height', 'jaw', 'eyes', 'nose', 'lips')}},
+        **{k: {'type': 'boolean'} for k in LOOK_BOOL},
+    },
+}
+LOOK_SYSTEM = ('Eres director de arte de un video musical ilustrado. Describes la imagen pública y reconocible de un artista musical para un retrato vectorial de tres tintas, '
+               'solo con los rasgos que esa persona o el cantante principal del grupo tiene de verdad en su imagen habitual (peinado, color de pelo, vello facial, gafas, tono de piel, ropa característica, accesorios, instrumento). '
+               'No inventes: si no conoces a esa persona o grupo, devuelve known=false y valores neutros. Solo artistas musicales públicos; nunca personas privadas. '
+               'skin: 0.10 muy claro, 0.20 claro, 0.28 trigueño, 0.40 moreno, 0.55 muy oscuro. hairInk: 1 pelo oscuro (negro o castaño oscuro), 2 pelirrojo, castaño rojizo o teñido de color cálido, 3 rubio, canoso o teñido claro. '
+               'clothes: color de su ropa característica: 1 oscuro (negro, azul marino), 2 cálido (rojo, naranja, mostaza), 3 frío o claro (verde, azul, gris), -1 blanco. '
+               'face: proporciones de 0.88 a 1.12 (1 es neutro): width ancho de cara, height alto, jaw mandíbula, eyes separación y tamaño de ojos, nose nariz, lips labios. hat: none si no suele llevar sombrero o gorro.')
+
+
+def _look_cli(name):
+    env = {k: v for k, v in os.environ.items() if not k.startswith(('ANTHROPIC_', 'CLAUDE_CODE', 'CLAUDECODE'))}
+    cmd = [CLAUDE_BIN, '-p', '--model', MODEL, '--effort', 'low', '--output-format', 'json', '--no-session-persistence', '--tools', '', '--setting-sources', '',
+           '--strict-mcp-config', '--disable-slash-commands', '--system-prompt', LOOK_SYSTEM, '--json-schema', json.dumps(LOOK_SCHEMA)]
+    r = subprocess.run(cmd, input='Artista: ' + name, capture_output=True, text=True, timeout=120, env=env, cwd=os.path.expanduser('~'))
+    res = json.loads(r.stdout)
+    out = res.get('structured_output')
+    if out is None:
+        text = (res.get('result') or '').strip().removeprefix('```json').removesuffix('```')
+        out = json.loads(text)
+    return out
+
+
+def _look_api(name):
+    client = _client()
+    msg = client.messages.create(model=MODEL, max_tokens=1200, system=LOOK_SYSTEM, messages=[{'role': 'user', 'content': 'Artista: ' + name}],
+                                 output_config={'format': {'type': 'json_schema', 'schema': LOOK_SCHEMA}})
+    return json.loads(next(b.text for b in msg.content if b.type == 'text'))
+
+
+def _clean_look(raw):
+    c = lambda v, a, b, d: max(a, min(b, float(v))) if isinstance(v, (int, float)) and not isinstance(v, bool) else d
+    out = {'known': bool(raw.get('known')), 'skin': c(raw.get('skin'), .08, .6, .15)}
+    for k in ('hair', 'outfit'):
+        out[k] = raw.get(k) if raw.get(k) in LOOK_ENUM[k] else ('short' if k == 'hair' else 'shirt')
+    out['hairInk'] = raw.get('hairInk') if raw.get('hairInk') in (1, 2, 3) else 1
+    out['clothes'] = raw.get('clothes') if raw.get('clothes') in (-1, 1, 2, 3) else 1
+    out['hat'] = raw.get('hat') if raw.get('hat') in ('fedora', 'cap', 'beanie') else None
+    out['instrument'] = raw.get('instrument') if raw.get('instrument') in ('guitar', 'bass', 'drums', 'keys', 'ukulele') else None
+    f = raw.get('face') if isinstance(raw.get('face'), dict) else {}
+    out['face'] = {k: c(f.get(k), .86, 1.14, 1.0) for k in ('width', 'height', 'jaw', 'eyes', 'nose', 'lips')}
+    for k in LOOK_BOOL:
+        out[k] = bool(raw.get(k))
+    return out
+
+
+def artist_look(name):
+    name = ' '.join(str(name or '').split())[:80]
+    key = name.lower()
+    if len(name) < 2:
+        return {'known': False}
+    with STATE['lock']:
+        cache = STATE.setdefault('looks', None)
+        if cache is None:
+            try:
+                cache = STATE['looks'] = json.load(open(LOOK_FILE))
+            except Exception:
+                cache = STATE['looks'] = {}
+        if key in cache:
+            return cache[key]
+    raw = None
+    if has_key():
+        try:
+            raw = _look_api(name)
+        except Exception:
+            raw = None
+    if raw is None and os.path.exists(CLAUDE_BIN):
+        raw = _look_cli(name)
+    if raw is None:
+        raise RuntimeError('Claude no está disponible')
+    look = _clean_look(raw)
+    with STATE['lock']:
+        STATE['looks'][key] = look
+        try:
+            os.makedirs(os.path.dirname(LOOK_FILE), exist_ok=True)
+            tmp = LOOK_FILE + '.tmp'
+            json.dump(STATE['looks'], open(tmp, 'w'), ensure_ascii=False)
+            os.replace(tmp, LOOK_FILE)
+        except Exception:
+            pass
+    return look
+
+
+# ---------- quién canta cada verso: tramos por artista acreditado, con la confianza de cada uno ----------
+VOCES_FILE = os.path.expanduser('~/Library/Caches/lumora-voces.json')
+VOCES_SCHEMA = {
+    'type': 'object', 'additionalProperties': False, 'required': ['fuente', 'bloques'],
+    'properties': {
+        'fuente': {'type': 'string', 'description': 'de dónde sale el reparto: genius, otra web o memoria'},
+        'bloques': {'type': 'array', 'items': {'type': 'object', 'additionalProperties': False, 'required': ['desde', 'hasta', 'voz', 'confianza'],
+                    'properties': {'desde': {'type': 'integer'}, 'hasta': {'type': 'integer'}, 'voz': {'type': 'string'}, 'confianza': {'type': 'number'}}}},
+    },
+}
+VOCES_SYSTEM = ('Eres un experto en discografías. Te doy el título, los artistas acreditados y la letra con el número de cada línea. Indica quién canta cada tramo de líneas. '
+                'Busca primero la letra anotada de la canción en la web (Genius marca «[Verso 1: Nombre]», «[Estribillo: Nombre]») y usa ese reparto; si no la encuentras, usa solo lo que sabes con seguridad de la canción. '
+                '«voz» debe ser exactamente uno de los nombres acreditados que te doy, o «varios» si cantan a la vez, o «desconocido» si no puedes saberlo. '
+                'Nunca adivines ni repartas por turnos: es mejor «desconocido» con confianza baja que un nombre dudoso. confianza va de 0 a 1 (1 = lo vi anotado en una fuente). '
+                'Los tramos cubren todas las líneas sin huecos ni solapes, en orden.')
+
+
+def _voces_prompt(req):
+    return 'Canción: {t}\nArtistas acreditados (usa estos nombres exactos): {a}\n\nLetra (número: línea):\n{l}'.format(
+        t=req['titulo'], a=' | '.join(req['creditos']), l='\n'.join(f"{x['i']}: {x['text']}" for x in req['lines']))
+
+
+def _voces_cli(req):
+    env = {k: v for k, v in os.environ.items() if not k.startswith(('ANTHROPIC_', 'CLAUDE_CODE', 'CLAUDECODE'))}
+    cmd = [CLAUDE_BIN, '-p', '--model', MODEL, '--effort', 'low', '--output-format', 'json', '--no-session-persistence', '--tools', 'WebSearch,WebFetch', '--allowedTools', 'WebSearch,WebFetch',
+           '--setting-sources', '', '--strict-mcp-config', '--disable-slash-commands', '--system-prompt', VOCES_SYSTEM, '--json-schema', json.dumps(VOCES_SCHEMA)]
+    r = subprocess.run(cmd, input=_voces_prompt(req), capture_output=True, text=True, timeout=240, env=env, cwd=os.path.expanduser('~'))
+    res = json.loads(r.stdout)
+    out = res.get('structured_output')
+    if out is None:
+        out = json.loads((res.get('result') or '').strip().removeprefix('```json').removesuffix('```'))
+    return out
+
+
+def quien_canta(req):
+    """tramos de líneas por voz: [{desde, hasta, voz, confianza}] con los nombres acreditados; las voces dudosas salen como «desconocido»"""
+    creditos = [str(c).strip() for c in (req.get('creditos') or []) if str(c).strip()][:6]
+    lines = [{'i': int(l['i']), 'text': str(l['text'])[:200]} for l in (req.get('lines') or []) if str(l.get('text', '')).strip()][:400]
+    if len(creditos) < 2 or not lines:
+        return {'bloques': [{'desde': lines[0]['i'] if lines else 0, 'hasta': lines[-1]['i'] if lines else 0, 'voz': creditos[0] if creditos else 'desconocido', 'confianza': 1.0 if creditos else 0}], 'fuente': 'un solo crédito'}
+    key = hashlib.sha1((req.get('titulo', '') + '|' + '|'.join(sorted(c.lower() for c in creditos))).lower().encode()).hexdigest()[:20]
+    with STATE['lock']:
+        cache = STATE.setdefault('voces', None)
+        if cache is None:
+            try:
+                cache = STATE['voces'] = json.load(open(VOCES_FILE))
+            except Exception:
+                cache = STATE['voces'] = {}
+        if key in cache:
+            return cache[key]
+    with STATE['lock']:
+        lock = STATE.setdefault('voces_lock', {}).setdefault(key, threading.Lock())
+    with lock:
+        with STATE['lock']:
+            if key in STATE['voces']:
+                return STATE['voces'][key]
+        out = _voces_cli({'titulo': str(req.get('titulo', ''))[:120], 'creditos': creditos, 'lines': lines})
+    validos = {c.lower(): c for c in creditos}
+    bl = []
+    for b in out.get('bloques') or []:
+        v = str(b.get('voz', '')).strip(); vl = v.lower()
+        voz = validos.get(vl) or ('varios' if vl == 'varios' else 'desconocido')
+        conf = max(0.0, min(1.0, float(b.get('confianza', 0)))) if voz != 'desconocido' else 0.0
+        bl.append({'desde': int(b.get('desde', 0)), 'hasta': int(b.get('hasta', 0)), 'voz': voz, 'confianza': conf})
+    res = {'bloques': bl, 'fuente': str(out.get('fuente', ''))[:60]}
+    with STATE['lock']:
+        STATE['voces'][key] = res
+        try:
+            os.makedirs(os.path.dirname(VOCES_FILE), exist_ok=True)
+            tmp = VOCES_FILE + '.tmp'
+            json.dump(STATE['voces'], open(tmp, 'w'), ensure_ascii=False)
+            os.replace(tmp, VOCES_FILE)
+        except Exception:
+            pass
+    return res

@@ -6,4 +6,6 @@ tools/oido
 tools/traducir
 personal/
 app/build/
-.venv-empaque/
+.venv-empaque*/
+tools/rostro
+tools/tomador

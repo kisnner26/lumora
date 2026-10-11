@@ -33,6 +33,8 @@ chk('(b) Managua cuenta dos versos', m.hits.managua === 2);
 await p.click('#expWin li[data-c=managua]'); await espera(1500); await shot('mapa-managua');
 chk('(c) al elegir una ciudad salen sus canciones', await p.evaluate(() => /managua blues/i.test(document.getElementById("exSide").textContent) && RISOEXP.sel === 'managua'));
 await p.evaluate(() => { RISOEXP.sel = null; }); await p.click('#expWin [data-t=mapa]'); await espera(1500);
+// la selección anterior centra Managua con zoom; encajar el mapa antes de pulsar Tokio.
+await p.click('#expWin [data-a=zfit]');
 const pos = await p.evaluate(() => { const pt = RISOEXP.pts.find(q => q.id === 'tokio'), out = document.querySelector('#expWin canvas'), r = out.getBoundingClientRect(), sK = out.height / 900; return { x: r.left + ((pt.x - 800) * sK + out.width / 2) / out.width * r.width, y: r.top + pt.y * sK / out.height * r.height }; });
 await p.mouse.click(pos.x, pos.y); await espera(1500);
 chk('(c) tocar el pin en el mapa lo selecciona', await p.evaluate(() => RISOEXP.sel === 'tokio' && /bailando en tokio/i.test(document.getElementById("exSide").textContent)));

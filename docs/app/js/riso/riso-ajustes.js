@@ -14,6 +14,7 @@
 
   // ---------- looks ----------
   const LOOKS = {
+    fabula: ['fábula', 'motor independiente: pintura, tipografía de novela y capítulos narrativos', { clip: 'fabula', camera: true, cameraAmt: .5, lyricSize: 1, trMode: 'ambas' }],
     clasico: ['risografía clásica', 'lo de fábrica: todo encendido y movimiento normal', { intensity: 1, camera: true, cameraAmt: 1, transitions: 'todas', flashes: true, lyricSize: 1, typo: 'variada', letterAnim: true, kinetic: true, catFreq: 1, fxCine: ALLON, textBox: false }],
     noche: ['cine nocturno', 'más cámara, cortes de tinta y palabras con peso; menos dibujos sueltos', { intensity: 1.2, cameraAmt: 1.4, transitions: 'todas', flashes: true, lyricSize: 1.1, kinetic: true, catFreq: .8, fxCine: { tinta: true, papel: false, peso: true, taller: true } }],
     calma: ['calma', 'cámara lenta, cortes suaves de papel, sin destellos ni golpes', { intensity: .6, cameraAmt: .5, transitions: 'suaves', flashes: false, kinetic: false, catFreq: .6, fxCine: { tinta: false, papel: true, peso: false, taller: false } }],
@@ -21,12 +22,15 @@
     lectura: ['lectura', 'letra grande sobre papel y traducción; poco movimiento', { lyricSize: 1.35, typo: 'clasica', trMode: 'ambas', kinetic: false, cameraAmt: .4, transitions: 'suaves', textBox: true, fxCine: { tinta: false, papel: false, peso: true, taller: false } }],
     minimo: ['mínimo', 'sin efectos de cine, sin cámara y sin cortes', { intensity: .4, camera: false, transitions: 'ninguna', flashes: false, kinetic: false, letterAnim: false, catFreq: .3, fxCine: ALLOFF }],
   };
-  const KEYS = ['intensity', 'camera', 'cameraAmt', 'transitions', 'flashes', 'lyricSize', 'typo', 'letterAnim', 'trMode', 'kinetic', 'catFreq', 'fxCine', 'textBox'];
+  const KEYS = ['clip', 'intensity', 'camera', 'cameraAmt', 'transitions', 'flashes', 'lyricSize', 'typo', 'letterAnim', 'trMode', 'kinetic', 'catFreq', 'fxCine', 'textBox'];
   const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
   const snapshot = () => Object.fromEntries(KEYS.map(k => [k, JSON.parse(JSON.stringify(CFG[k] ?? null))]));
   const applyLook = vals => { for (const [k, v] of Object.entries(vals)) CFG[k] = typeof v === 'object' && v ? { ...v } : v; applyAll(); };
   const activeLook = () => { for (const [id, [name, , v]] of Object.entries(LOOKS)) if (Object.entries(v).every(([k, x]) => same(CFG[k] ?? null, x) || (typeof x === 'object' && x && same({ ...(CFG[k] || {}) }, x)))) return name; return ''; };
-  for (const [id, [name, desc, vals]] of Object.entries(LOOKS)) SETUI.addRow('looks', ['look_' + id, name, 'btn', { texto: 'aplicar', fn: () => { applyLook(vals); paintLooks(); } }, desc]);
+  for (const [id, [name, desc, vals]] of Object.entries(LOOKS)) {
+    if (id !== 'fabula') vals.clip = 'riso';
+    SETUI.addRow('looks', ['look_' + id, name, 'btn', { texto: 'aplicar', fn: () => { applyLook(vals); paintLooks(); } }, desc]);
+  }
   SETUI.addRow('looks', ['look_guardar', 'Guardar mi look', 'btn', { texto: 'guardar los ajustes de ahora', fn: async () => { if (ST) await ST.set('misc', 'miLook', snapshot()); await paintLooks(); } }, 'guarda tamaño de letra, cámara, transiciones y efectos para volver a ellos cuando quieras']);
   SETUI.addRow('looks', ['look_mio', 'Mi look', 'btn', { texto: 'aplicar', fn: async () => { const v = ST && await ST.get('misc', 'miLook'); if (v) applyLook(v); paintLooks(); } }, 'todavía no guardaste ninguno']);
   async function paintLooks() {
@@ -106,9 +110,16 @@
   const clamp = (x) => Math.max(.7, Math.min(1.6, x || 1));
   async function renderPreview() {
     if (busy || !panel.classList.contains('open') || !window.RISOEXP || !RISOEXP.paint) return; busy = true;
-    try { const cv = RISOEXP.paint(640, 360, 2, drawPreview, {}), o = prev.querySelector('canvas'); o.getContext('2d').drawImage(cv, 0, 0, o.width, o.height);
+    try { const o = prev.querySelector('canvas');
+      if (CFG.clip === 'fabula' && R.fabula) {
+        R.fabula.render(o.getContext('2d'), o.width, o.height, 3, { key: 'lumora-vista-previa', lines: [], title: 'fábula', text: 'cada canción abre otra página', reduced: true });
+      } else {
+        const cv = RISOEXP.paint(640, 360, 2, drawPreview, {}); o.getContext('2d').drawImage(cv, 0, 0, o.width, o.height);
+      }
       const fx = Object.entries(CFG.fxCine || {}).filter(([, v]) => v).map(([k]) => k).join(' · ') || 'ninguno';
-      $('prevCap').textContent = `vista previa · letra ${(+CFG.lyricSize || 1).toFixed(2)}× · traducción: ${CFG.trMode} · efectos: ${CFG.reduceMotion ? 'sin movimiento' : fx}`; } catch (e) {}
+      $('prevCap').textContent = CFG.clip === 'fabula'
+        ? `fábula · tipografía de novela · letra ${(+CFG.lyricSize || 1).toFixed(2)}× · traducción: ${CFG.trMode}`
+        : `vista previa · letra ${(+CFG.lyricSize || 1).toFixed(2)}× · traducción: ${CFG.trMode} · efectos: ${CFG.reduceMotion ? 'sin movimiento' : fx}`; } catch (e) {}
     busy = false;
   }
   AJ.preview = renderPreview;

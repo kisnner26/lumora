@@ -8,11 +8,12 @@ cd "$(dirname "$0")/.."
 
 # entorno de empaquetado local (PyInstaller); no se instala nada global
 if [ ! -x .venv-empaque/bin/pyinstaller ]; then
-  python3 -m venv .venv-empaque
+  "${LUMORA_BUILD_PYTHON:-python3}" -m venv .venv-empaque
   .venv-empaque/bin/pip install --quiet pyinstaller
 fi
 
 tools/crear_app.sh
+python3 tools/verificar_app.py app/build/Lumora.app
 APP=app/build/Lumora.app
 DMG=app/build/Lumora.dmg
 ID="${DEVELOPER_ID:--}"                       # "-" = firma ad-hoc
@@ -23,7 +24,7 @@ OPC="--force --options runtime --timestamp=none"
 find "$APP" -type f \( -perm -u+x -o -name '*.dylib' -o -name '*.so' \) | while read -r f; do
   if file "$f" | grep -q 'Mach-O'; then
     case "$(basename "$f")" in
-      oido|traducir|lumora-bridge) IDF="-i com.kisnner.lumora.$(basename "$f")" ;;   # identificador fijo: el permiso de macOS no se pierde al recompilar
+      oido|tomador|rostro|traducir|lumora-bridge) IDF="-i com.kisnner.lumora.$(basename "$f")" ;;   # identificador fijo: el permiso de macOS no se pierde al recompilar
       *) IDF="" ;;
     esac
     codesign $OPC $IDF -s "$ID" --entitlements app/entitlements.plist "$f"
@@ -33,6 +34,12 @@ codesign $OPC -s "$ID" --entitlements app/entitlements.plist "$APP"
 codesign --verify --deep --strict --verbose=2 "$APP"
 echo "spctl (una firma ad-hoc se rechaza a propósito; con Developer ID y notarización se acepta):"
 spctl --assess --type execute --verbose "$APP" || true
+
+# instalación local sin duplicar el paquete para crear una imagen de disco.
+if [ "${1:-}" = "--app-only" ]; then
+  echo "listo: $APP"
+  exit 0
+fi
 
 # dmg con acceso directo a Aplicaciones
 rm -f "$DMG"; STAGE=$(mktemp -d)

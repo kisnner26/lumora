@@ -46,6 +46,7 @@ A_LINES = ['walking alone in the rain tonight', 'the city lights are burning in 
 B_LINES = ['midnight train to nowhere', 'the stars are falling in Paris', 'un baile en la playa con el mar', '', 'she is my queen and my angel', 'ella es mi cielo, mi todo',
            'the guitar cries in the dark', 'and the piano knows my name', '', 'fire in the sky, thunder in my soul', 'voy a volar lejos de aquí', 'free like a bird, free like the wind']
 SONGS = {
+    'gimme': dict(name='Gimme More', artist='Britney Spears', album='Blackout', dur=251, lines=None, bpm=113.32, genre='pop', art=2),
     'a': dict(name='Noche de Neón', artist='Los Ejemplos', album='Prueba I', dur=200, lines=A_LINES, bpm=104, genre='pop', art=1),
     'b': dict(name='Tren de Medianoche', artist='Banda Simulada', album='Prueba II', dur=185, lines=B_LINES, bpm=92, genre='rock', art=2),
     'c': dict(name='Ambiente sin Voz', artist='Instrumental Co.', album='Prueba III', dur=150, lines=None, bpm=78, genre='ambient', art=3),
@@ -121,8 +122,23 @@ class H(SimpleHTTPRequestHandler):
             return
         u = urlparse(self.path); q = {k: v[0] for k, v in parse_qs(u.query).items()}; p = u.path
         if p == '/now': return self.j(snapshot())
+        if p == '/cara':                                          # la integración real se activa expresamente
+            if os.environ.get('LUMORA_MOCK_REAL_ARTISTS') != '1': return self.j({'none': True}, 404)
+            try:
+                import bridge
+                res = bridge.cara_de(q.get('name', ''), {'wiki': 'wiki', 'wide': 'amplio'}.get(q.get('src', ''), 'verificado')) if q.get('name', '').strip() else None
+            except Exception: res = None
+            if not res: return self.j({'none': True}, 404)
+            body, meta = res; self.send_response(200); self.send_header('Content-Type', 'image/png'); self.send_header('Content-Length', str(len(body))); self.send_header('X-Cara', json.dumps(meta)); self.end_headers(); self.wfile.write(body); return
+        if p == '/artista':
+            if os.environ.get('LUMORA_MOCK_REAL_ARTISTS') != '1': return self.j({'error': 'generador externo desactivado en pruebas'}, 503)
+            try:
+                import guion
+                return self.j({'look': guion.artist_look(q.get('name', ''))})
+            except Exception as e: return self.j({'error': str(e)[:120]}, 503)
         if p == '/mock/estado': return self.j({**snapshot(), 'song': ST['song']})
         if p == '/mock':
+            with LOCK: ST['src'] = q.get('src', 'music') if q.get('src', 'music') in ('music', 'spotify') else 'music'
             scn = q.get('scn', '')
             if scn == 'normal': set_song('a', 0)
             elif scn == 'cambio': set_song('b', 0)
@@ -167,6 +183,12 @@ class H(SimpleHTTPRequestHandler):
         return super().do_GET()
     def do_POST(self):
         u = urlparse(self.path); n = int(self.headers.get('Content-Length') or 0); body = self.rfile.read(n) if n else b''
+        if u.path == '/voces':
+            if os.environ.get('LUMORA_MOCK_REAL_ARTISTS') != '1': return self.j({'bloques': [], 'fuente': 'prueba sin servicios externos'})
+            try:
+                import guion
+                return self.j(guion.quien_canta(json.loads(body or b'{}')))
+            except Exception as e: return self.j({'error': str(e)[:120]}, 503)
         if u.path == '/cmd':
             c = parse_qs(u.query).get('c', [''])[0]
             if c == 'playpause':
@@ -184,6 +206,8 @@ class H(SimpleHTTPRequestHandler):
         return self.j({'ok': True})
 
 if __name__ == '__main__':
+    ThreadingHTTPServer.daemon_threads = True
+    ThreadingHTTPServer.request_queue_size = 128
     ThreadingHTTPServer.daemon_threads = True
     ThreadingHTTPServer.request_queue_size = 128  # la página precarga decenas de scripts a la vez
     print('puente simulado en http://127.0.0.1:%d/index.html' % PORT)

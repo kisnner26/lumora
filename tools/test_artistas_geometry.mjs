@@ -2,11 +2,14 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
-const RISO = { K: {}, catalog: {}, props: {}, clamp: x => Math.max(0, Math.min(1, x)), easeOut: x => x };
+const scenes = {}, RISO = { K: {}, catalog: {}, props: {}, scenes, order: [], register: sc => { scenes[sc.id] = sc; RISO.order.push(sc.id); }, clamp: x => Math.max(0, Math.min(1, x)), easeOut: x => x };
 const context = vm.createContext({ window: { RISO }, Math });
-for (const file of ['riso-artistas', 'riso-cantantes', 'riso-geometry']) vm.runInContext(readFileSync(new URL('../js/riso/' + file + '.js', import.meta.url), 'utf8'), context);
-const { artistFigures: A, singers: S, geometry: G } = RISO;
-assert.ok(Object.keys(A.profiles).length >= 50);
+for (const file of ['riso-artistas', 'riso-cantantes', 'riso-gd']) vm.runInContext(readFileSync(new URL('../js/riso/' + file + '.js', import.meta.url), 'utf8'), context);
+const { artistFigures: A, singers: S, gd: G } = RISO;
+assert.equal(Object.keys(A.profiles).length, 80);
+for (const [band, members] of [['twenty one pilots', ['tyler_joseph','josh_dun']], ['queen',['freddie_mercury','brian_may','roger_taylor','john_deacon']], ['nirvana',['kurt_cobain','dave_grohl','krist_novoselic']], ['the beatles',['john_lennon','paul_mccartney','george_harrison','ringo_starr']]]) assert.deepEqual(Array.from(S.plan(band), s => s.id), members);
+assert.equal(A.profile('Freddie Mercury', null, 'A Night at the Opera').moustache, false);
+assert.equal(A.profile('John Lennon', null, 'Rubber Soul').tie, true);
 for (const p of Object.values(A.profiles)) for (const name of p.names) assert.equal(S.idOf(name), p.id, name);
 assert.equal(S.idOf('The Weeknd Tribute'), null);
 assert.equal(S.idOf('Queen Tribute Band'), null);
@@ -15,6 +18,13 @@ assert.equal(S.idOf('Selena'), 'selena');
 assert.equal(S.idOf('TWENTY ØNE PILØTS'), 'tyler_joseph');
 assert.equal(S.idOf('Beyoncé'), 'beyonce');
 assert.equal(S.plan(''), null);
+assert.notDeepEqual(A.profiles.tyler_joseph.face, A.profiles.josh_dun.face);
+assert.notDeepEqual(A.profiles.taylor_swift.face, A.profiles.adele.face);
+assert.equal(A.profile('Twenty One Pilots', null, 'Trench').outfit, 'coat');
+assert.equal(A.profile('Tyler Joseph', null, 'Clancy').hat, null);
+assert.equal(A.profiles.tyler_joseph.hat, 'beanie');
+assert.equal(A.profile('Billie Eilish', null, 'Happier Than Ever').splitHair, false);
+assert.equal(A.profiles.billie_eilish.splitHair, true);
 assert.equal(S.plan('Artista Nuevo')[0].id, null);
 assert.deepEqual(JSON.stringify(A.profile('Artista Nuevo')), JSON.stringify(A.profile('artista nuevo')));
 assert.equal(S.plan('The Weeknd & Bad Bunny', 'Song (feat. Ariana Grande)').length, 3);
@@ -26,16 +36,8 @@ for (const l of G.levels) {
   assert.equal(G.detect(l.title + ' (Official Audio)', l.author), l);
   assert.equal(G.detect(l.title, 'artista ajeno'), null, 'no confundir: ' + l.title);
   assert.equal(G.detect(l.title, 'artista ajeno', 'Geometry Dash soundtrack'), l);
-  for (let t = 0; t <= 180; t += .37) {
-    const s = G.state(l, t);
-    for (const key of ['y', 'scroll', 'angle', 'portal']) assert.ok(Number.isFinite(s[key]), l.title + '/' + key);
-    assert.ok(s.y >= 170 && s.y <= 690, l.title + ' fuera del corredor');
-    assert.equal(JSON.stringify(G.state(l, t)), JSON.stringify(s), 'determinismo tras buscar');
-  }
-  const forms = new Set(l.modes.map((_, i) => G.state(l, (i * 16 + 8) * 60 / l.bpm).mode));
-  assert.equal(forms.size, new Set(l.modes).size);
-  const a = G.state(l, 1, true), b = G.state(l, 1.1, true);
-  assert.equal(a.y, b.y); assert.equal(a.scroll, b.scroll); assert.equal(a.angle, 0);
+  const picks = new Set(); for (let i = 0; i < 40; i++) picks.add(G.scene(l, (() => { let k = i * 7 + l.id; return () => ((k = (k * 9301 + 49297) % 233280) / 233280); })()));
+  for (const id of picks) assert.ok(scenes[id], 'escena registrada: ' + id);
 }
 assert.equal(G.detect('Dash', 'otro'), null);
 assert.equal(G.detect('Jumper', 'Third Eye Blind'), null);
@@ -47,11 +49,7 @@ assert.equal(G.detect('-BlastProcess-', 'Waterflame').id, 17);
 assert.equal(G.detect("Can't Let Go", 'DJVI').id, 6);
 assert.equal(G.detect('Clubstep', 'DJ-Nate').id, 14);
 assert.equal(G.detect('otra canción', 'Waterflame'), null);
-// la fase rápida no produce saltos de escenario al entrar ni al salir.
-const electro = G.levels[14], fast = electro.modes.indexOf('fast');
-for (const beat of [fast * 16, (fast + 1) * 16]) {
-  const before = G.state(electro, (beat - .001) * 60 / electro.bpm).scroll;
-  const after = G.state(electro, (beat + .001) * 60 / electro.bpm).scroll;
-  assert.ok(after >= before && after - before < 1);
-}
-console.log(`ok: ${Object.keys(A.profiles).length} perfiles, aliases y colaboraciones; 22 niveles, variantes, falsos positivos, seeks y movimiento reducido`);
+// las escenas exclusivas no entran en el sorteo de las demás canciones
+assert.deepEqual(['gd-cubo', 'gd-nave', 'gd-onda', 'gd-gravedad'].filter(id => RISO.order.includes(id)), []);
+assert.equal(Object.keys(scenes).length, 4);
+console.log(`ok: ${Object.keys(A.profiles).length} perfiles, aliases y colaboraciones; 22 niveles detectados sin falsos positivos y escenas exclusivas fuera del sorteo general`);

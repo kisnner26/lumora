@@ -6,14 +6,15 @@
 // adelantar y póster del verso. Todo se recuerda.
 // Se abre con la carátula de la consola o la tecla c; se cierra con esc o c.
 // ============================================================
-const CV_DEF = { style: 'difuminado', lyr: 'linea', size: 'm', beat: true, clock: false, pin: false, react: true, ring: false, holo: false, depth: false, trata: false, tab: 'fondo' };
+const CV_DEF = { style: 'difuminado', lyr: 'linea', size: 'm', beat: true, clock: false, pin: false, react: true, ring: false, holo: false, depth: false, trata: false, tab: 'fondo', layout: 'editorial', font: 'humanista', align: 'left', lineSize: 34, listSize: 32, trSize: 18, lyricWidth: 42, leading: 1.25, letterSpace: 0, lyricLift: 0, context: true, focus: false };
 const CV = (() => { try { return { ...CV_DEF, ...JSON.parse(localStorage.getItem('lm_cover2') || '{}') }; } catch (e) { return { ...CV_DEF }; } })();
 CV.art = ''; CV.listKey = '';
-if (!['fondo', 'vista'].includes(CV.tab)) CV.tab = 'fondo';
+if (!['fondo', 'vista', 'letra', 'diseno', 'sonido'].includes(CV.tab)) CV.tab = 'fondo';
+const cvReduced = () => !!window.CFG?.reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches;
 const cvSave = () => { try { localStorage.setItem('lm_cover2', JSON.stringify(Object.fromEntries(Object.keys(CV_DEF).map(k => [k, CV[k]])))); } catch (e) {} };
 const cvEsc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const CV_OPTS = {
-  style: [['difuminado', 'difuminado'], ['ambiente', 'ambiente'], ['escena', 'escena'], ['minimo', 'mínimo'], ['vinilo', 'vinilo'], ['cassette', 'cassette'], ['cd', 'cd'], ['estanteria', 'estantería'], ['artista', 'artista']],
+  style: [['difuminado', 'difuminado'], ['ambiente', 'ambiente'], ['escena', 'escena'], ['minimo', 'mínimo'], ['vinilo', 'vinilo'], ['cassette', 'cassette'], ['cd', 'cd'], ['estanteria', 'estantería'], ['artista', 'artista'], ['universo', 'universo']],
   lyr: [['linea', 'línea'], ['completa', 'completa'], ['no', 'oculta']],
   size: [['s', 's'], ['m', 'm'], ['l', 'l']],
 };
@@ -23,8 +24,8 @@ const CV_DESC = {
            escena: 'el video de lumora sigue corriendo detrás, desenfocado', minimo: 'negro, la portada y el título en grande; nada más',
            vinilo: 'el disco con su brazo y su aguja. Arrástralo en círculo para adelantar o atrasar', cassette: 'la cinta asoma detrás. Arrástrala de lado para moverte por la canción',
            cd: 'el disco iridiscente asoma. Arrástralo en círculo para adelantar o atrasar', estanteria: 'los discos que escuchaste desfilan abajo, el último primero',
-           artista: 'otras portadas del artista flotan detrás, despacio' },
-  lyr: { linea: 'el verso que suena, debajo de la portada', completa: 'toda la letra al lado; toca un verso para saltar ahí', no: 'solo la portada, sin letra' },
+           artista: 'otras portadas del artista flotan detrás, despacio', universo: 'un lugar generado para esta canción, que respira con los graves. cada semilla es un mundo distinto' },
+  lyr: { linea: 'el verso que suena, adaptado a la composición elegida', completa: 'toda la letra al lado; toca un verso para saltar ahí', no: 'solo la portada, sin letra' },
   size: { s: 'portada chica: más aire alrededor', m: 'portada mediana', l: 'portada grande, casi a pantalla' },
 };
 const cvLabel = (k, v) => (CV_OPTS[k].find(o => o[0] === v) || [, v])[1];
@@ -155,7 +156,7 @@ setInterval(() => {
 
   .cv-float { position:absolute; left:50%; bottom:26px; transform:translateX(-50%); z-index:3; transition:opacity .5s, transform .5s cubic-bezier(.2,.8,.2,1); }
   body.idle #cover:not([data-pin="1"]):not(.menu) .cv-float { opacity:0; transform:translate(-50%, 16px); pointer-events:none; }
-  .cv-float button { font:inherit; color:var(--mute); background:none; border:0; cursor:pointer; padding:0; }
+  .cv-float button, :where(#cvMenu) button { font:inherit; color:var(--mute); background:none; border:0; cursor:pointer; padding:0; }
   .cv-player { display:flex; align-items:center; gap:14px; width:min(620px, calc(100vw - 32px)); padding:8px 10px 8px 8px; border-radius:999px;
                background:linear-gradient(180deg, rgba(26,20,15,.72), rgba(12,10,8,.82)); border:1px solid var(--rule); backdrop-filter:blur(24px) saturate(1.4);
                box-shadow:0 20px 60px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.06); }
@@ -432,10 +433,11 @@ const cvSeg = k => `<div class="cv-seg">${CV_OPTS[k].map(([v, t]) => `<button da
     ['cvPin', 'fijar', 'fijar la barra: que no se oculte al quedarse quieto', '<path d="M9 3h6l-.6 6.2L19 13v2h-6v5l-1 2-1-2v-5H5v-2l4.6-3.8z"/>'],
   ];
   float.innerHTML = `<div class="cv-menu" id="cvMenu" data-tab="fondo">
-      <nav class="cv-tabs"><button data-tab="fondo">fondo</button><button data-tab="vista">portada y efectos</button></nav>
+      <nav class="cv-tabs"><button data-tab="fondo">fondo</button><button data-tab="vista">portada y efectos</button><button data-tab="sonido">sonido</button></nav>
       <div class="cv-pane" data-pane="fondo"><div class="cv-tiles">${CV_OPTS.style.map(tile).join('')}</div><p class="cv-desc" id="cvDescFondo"></p></div>
       <div class="cv-pane" data-pane="vista"><div class="cv-pair"><div><h5>letra</h5>${segs('lyr')}</div><div><h5>portada</h5>${segs('size')}</div></div>
         <h5>efectos</h5><div class="cv-chips">${CV_CHIPS.map(c => chip(...c)).join('')}</div><p class="cv-desc" id="cvDescVista"></p></div>
+      <div class="cv-pane" data-pane="sonido" id="cvPaneSonido"></div>
       <div class="cv-foot"><button id="cvPoster">póster del verso</button><button id="cvFs">pantalla completa</button></div>
     </div>
     <div class="cv-player">
@@ -453,10 +455,11 @@ const cvSeg = k => `<div class="cv-seg">${CV_OPTS[k].map(([v, t]) => `<button da
   cover.append(shelf, drift, main, float, clock, trata, next, poster);
   // nada dentro de la carátula la cierra por accidente: todo pasa por aquí
   cover.addEventListener('click', e => {
+    if (e.target.closest('#cvPaneSonido')) return;
     e.stopImmediatePropagation();
     const bar = e.target.closest('#cvBar');
     if (bar) { const r = bar.getBoundingClientRect(); return ext.cmd('goto:' + (clamp((e.clientX - r.left) / r.width) * (ext.st.dur || 0)).toFixed(2)); }
-    const p = e.target.closest('[data-t]'); if (p) return ext.cmd('goto:' + Math.max(0, +p.dataset.t - .15).toFixed(2));
+    const p = e.target.closest('[data-t]'); if (p) return ext.cmd('goto:' + Math.max(0, +p.dataset.t - (IN.off || 0) - .15).toFixed(2));
     const b = e.target.closest('button');
     if (!b && e.target.id === 'cvPosterBox') return cvPosterClose();
     if (!b) { if (!e.target.closest('.cv-menu')) { cover.classList.remove('menu'); $('cvMenuBtn').classList.remove('on'); } return; }
@@ -484,6 +487,10 @@ const cvSeg = k => `<div class="cv-seg">${CV_OPTS[k].map(([v, t]) => `<button da
     if (b.id === 'cvBack') { cover.classList.remove('menu'); $('cvMenuBtn').classList.remove('on'); return toggleCover(false); }
   }, true);
 
+  cover.addEventListener('keydown', e => {
+    if (e.key !== 'Escape' && e.target.closest('.cv-menu')) e.stopPropagation();
+  });
+
   const menuEl = float.querySelector('.cv-menu');
   menuEl.addEventListener('mouseover', e => { const o = e.target.closest('[data-style], [data-lyr], [data-size], [data-hint]'); cvDesc(menuEl.contains(o) ? o : null); });
   menuEl.addEventListener('mouseleave', () => cvDesc());
@@ -493,6 +500,7 @@ const cvSeg = k => `<div class="cv-seg">${CV_OPTS[k].map(([v, t]) => `<button da
   const setVars = o => { for (const k in o) art.style.setProperty(k, o[k]); };
   function resetTilt() { setVars({ '--tiltX': '0deg', '--tiltY': '0deg', '--px': 0, '--py': 0 }); }
   cover.addEventListener('mousemove', e => {
+    if (cvReduced()) return resetTilt();
     if (!CV.depth && !CV.holo) return;
     const r = art.getBoundingClientRect();
     const px = clamp((e.clientX - (r.left + r.width / 2)) / (r.width / 2), -1, 1), py = clamp((e.clientY - (r.top + r.height / 2)) / (r.height / 2), -1, 1);
@@ -548,10 +556,11 @@ function cvPaint() {
   cover.dataset.style = CV.style; cover.dataset.size = CV.size; cover.dataset.lyr = hasLyr ? CV.lyr : 'no';
   cover.dataset.beat = CV.beat ? '1' : '0'; cover.dataset.clock = CV.clock ? '1' : '0'; cover.dataset.pin = CV.pin ? '1' : '0';
   cover.dataset.ring = CV.ring ? '1' : '0'; cover.dataset.holo = CV.holo ? '1' : '0'; cover.dataset.depth = CV.depth ? '1' : '0'; cover.dataset.trata = CV.trata ? '1' : '0';
-  for (const k of Object.keys(CV_OPTS)) for (const b of cover.querySelectorAll(`[data-${k}]`)) b.classList.toggle('on', b.dataset[k] === CV[k]);
+  for (const k of Object.keys(CV_OPTS)) for (const b of cover.querySelectorAll(`button[data-${k}]`)) { const on = b.dataset[k] === CV[k]; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); }
   $('cvBeat').classList.toggle('on', CV.beat); $('cvClockBtn').classList.toggle('on', CV.clock); $('cvPin').classList.toggle('on', CV.pin); $('cvReact').classList.toggle('on', CV.react);
   const menu = $('cvMenu'); menu.dataset.tab = CV.tab; menu.querySelectorAll('[data-tab]').forEach(t => t.classList.toggle('on', t.dataset.tab === CV.tab));
   $('cvRing').classList.toggle('on', CV.ring); $('cvHolo').classList.toggle('on', CV.holo); $('cvDepth').classList.toggle('on', CV.depth); $('cvTrataBtn').classList.toggle('on', CV.trata);
+  for (const id of ['cvBeat','cvClockBtn','cvPin','cvReact','cvRing','cvHolo','cvDepth','cvTrataBtn']) $(id).setAttribute('aria-pressed', String($(id).classList.contains('on')));
   const url = ext.artUrl || '';
   if (!url) CV.art = '';
   // la paleta solo con la imagen de ESTA canción: si artImg todavía es la anterior, se espera al siguiente repaso
@@ -748,11 +757,11 @@ function cvPosterClose() { $('cvPosterBox').classList.remove('on'); }
 // la letra completa: se arma una vez por canción (y al llegar traducciones)
 function cvBuildList() {
   const idx = IN.lines.map((l, i) => l.text ? i : -1).filter(i => i >= 0);
-  const key = ext.key() + '|' + idx.length + '|' + (IN.tr || []).filter(Boolean).length + '|' + IN.trMode;
+  const key = ext.key() + '|' + JSON.stringify(idx.map(i => [IN.lines[i].t, IN.lines[i].text, IN.tr?.[i] || ''])) + '|' + IN.trMode;
   if (key === CV.listKey) return;
   CV.listKey = key;
   const tx = i => { const main = IN.lines[i].text, tr = IN.tr?.[i] || ''; return IN.trMode === 'es' && tr ? [tr, ''] : [main, IN.trMode === 'ambas' ? tr : '']; };
-  $('cvList').innerHTML = idx.length ? idx.map(i => { const [a, b] = tx(i); return `<p data-i="${i}" data-t="${IN.lines[i].t}">${cvEsc(a)}${b ? `<small>${cvEsc(b)}</small>` : ''}</p>`; }).join('') : '<p class="none">esta canción no tiene letra sincronizada</p>';
+  $('cvList').innerHTML = idx.length ? idx.map(i => { const [a, b] = tx(i); return `<button type="button" class="cv-verse" data-i="${i}" data-t="${IN.lines[i].t}" aria-label="${cvEsc(a)}">${cvEsc(a)}${b ? `<small>${cvEsc(b)}</small>` : ''}</button>`; }).join('') : '<p class="none">esta canción no tiene letra sincronizada</p>';
   CV.cur = -2;
 }
 (function cvLoop() {
@@ -767,8 +776,8 @@ function cvBuildList() {
     if (CV.pp !== playing) { CV.pp = playing; $('cvPP').innerHTML = cvIco(playing ? 'M7 5h4v14H7zM13 5h4v14h-4z' : 'M8 5v14l11-7z'); }
     for (const el of $('cover').querySelectorAll('.cv-vinyl, .cv-cd, .cv-cass')) el.classList.toggle('spin', playing);
     cvReactFrame(pos, dur);
-    $('cover').style.setProperty('--beat', CV.beat && mode === 'proc' ? (IN.beat || 0).toFixed(3) : 0);
-    $('cover').style.setProperty('--pulse', mode === 'proc' ? (IN.beat || 0).toFixed(3) : 0);        // anillo de ritmo: late aunque el latido de la portada esté apagado
+    $('cover').style.setProperty('--beat', CV.beat && !cvReduced() && mode === 'proc' ? (IN.beat || 0).toFixed(3) : 0);
+    $('cover').style.setProperty('--pulse', mode === 'proc' && !cvReduced() ? (IN.beat || 0).toFixed(3) : 0);        // anillo de ritmo: late aunque el latido de la portada esté apagado
     if (CV.style === 'vinilo') {
       // surco de afuera (14°) a junto a la etiqueta (33°) según el progreso; en pausa se levanta en su sitio; sin canción, a su apoyo
       const arm = $('cover').querySelector('.cv-arm');
@@ -785,18 +794,19 @@ function cvBuildList() {
       }
     }
     if (mode === 'proc') {
-      // con el videoclip de risografía el lyric video clásico no corre y IN.shown no se actualiza: el verso se saca del tiempo de la canción
-      const i = window.RISOCLIP?.on && RISOCLIP.h ? RISOCLIP.h.lineIdx(RISOCLIP.h.timeNow()) : IN.shown, main = i >= 0 ? IN.lines[i]?.text || '' : '', tr = i >= 0 ? IN.tr?.[i] || '' : '';
+      // carátula usa el reloj de reproducción, incluso si el otro motor visual está detenido.
+      const lyricTime = (window.RISOCLIP?.h?.timeNow?.() ?? pos) + (IN.off || 0) + .2;
+      const i = IN.lines.findLastIndex(l => l.t <= lyricTime), main = i >= 0 ? IN.lines[i]?.text || '' : '', tr = i >= 0 ? IN.tr?.[i] || '' : '';
       const a = IN.trMode === 'es' && tr ? tr : main, b = IN.trMode === 'ambas' ? tr : '';
-      if ($('cvLine').textContent !== a) { $('cvLine').textContent = a; $('cvTr').textContent = b; }
+      if ($('cvLine').textContent !== a || $('cvTr').textContent !== b) { $('cvLine').textContent = a; $('cvTr').textContent = b; }
       if (CV.lyr === 'completa') {
         cvBuildList();
-        const cur = IN.lines.findLastIndex(l => l.text && l.t <= pos + .1);
+        const cur = IN.lines.findLastIndex(l => l.text && l.t <= lyricTime);
         if (cur !== CV.cur) {
           CV.cur = cur;
           const list = $('cvList'), box = list.parentElement;
           for (const p of list.children) { const n = +p.dataset.i; p.classList.toggle('on', n === cur); p.classList.toggle('past', n < cur); }
-          const el = list.querySelector('p.on');
+          const el = list.querySelector('.on');
           list.style.transform = `translateY(${el ? box.clientHeight * .4 - el.offsetTop - el.offsetHeight / 2 : box.clientHeight * .3}px)`;
         }
       }
@@ -814,7 +824,7 @@ const CVR = { sat: 1, bri: 1, glow: 0 };
 function cvReactFrame(pos, dur) {
   const art = $('cover').querySelector('.cv-art');
   let sat = 1, bri = 1, glow = 0;
-  if (CV.react && mode === 'proc') {
+  if (CV.react && !cvReduced() && mode === 'proc') {
     const plan = SEM.plans?.[SEM.blockNow], e = plan ? (plan.energy ?? 5) : 5 + (IN.mood?.a || 0) * 3;
     const sad = plan && /triste|melancolico|oscuro|nostalgico/.test(plan.mood || '');
     if (e >= 7) { bri = 1.06 + (IN.beat || 0) * .05; sat = 1.15; glow = 60 + (e - 7) * 20; }                 // coro, drop: se ilumina
@@ -828,7 +838,7 @@ function cvReactFrame(pos, dur) {
 // en el drop, la portada se parte en pedazos y vuelve a armarse
 { const _m = moment; moment = function (kind) {
   _m(kind);
-  if (kind !== 'drop' || !coverOpen || !CV.react) return;
+  if (kind !== 'drop' || !coverOpen || !CV.react || cvReduced()) return;
   const art = $('cover').querySelector('.cv-art'); art.querySelector('.cv-shards')?.remove();
   const sh = document.createElement('div'); sh.className = 'cv-shards'; sh.style.setProperty('--artbg', `url("${ext.artUrl}")`);
   for (let k = 0; k < 16; k++) {

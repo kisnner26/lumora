@@ -304,6 +304,16 @@
   .hud-tools .led { position:absolute; right:6px; top:6px; width:5px; height:5px; border-radius:50%; background:rgba(246,238,226,.2); }
   .hud-tools .led.on { background:var(--gold); box-shadow:0 0 8px var(--gold2); }
   .hud-tools .sep { width:1px; height:20px; background:var(--rule); margin:0 6px; }
+  .hud-grp { display:flex; align-items:center; gap:2px; }
+  .hud-tools button[data-k=t], .hud-tools #recFmt { width:auto; min-width:34px; padding:0 8px; }
+  .hud-more-wrap { position:static; }
+  .hud-more { position:absolute; right:18px; bottom:calc(100% + 14px); z-index:30; display:grid; grid-template-columns:1fr 1fr; gap:6px; width:min(430px,calc(100vw - 48px)); max-height:max(110px,calc(100dvh - 240px)); overflow-y:auto; padding:12px; background:var(--rkl,#1b1812); border:2px solid var(--rk1,#f4ead7); box-shadow:8px 8px 0 #212b8038; }
+  .hud-more[hidden] { display:none; }
+  .hud-more button { width:auto; height:42px; justify-content:start; grid-auto-flow:column; gap:10px; padding:0 12px; border:2px solid var(--rk1,#f4ead7); border-radius:0; }
+  .hud-more button::after { content:attr(data-label); font:600 10px 'Martian Mono',monospace; letter-spacing:.1em; text-transform:uppercase; white-space:nowrap; }
+  .hud-more .tag { border-width:1px !important; }
+  .hud-more .led { position:static; margin-left:auto; flex:none; }
+  .hud-tools #hudMoreBtn[aria-expanded=true] { background:var(--rk2,rgba(246,238,226,.14)); }
   .recdot { fill:#ff5a4f; } #recBtn.on .recdot { animation:recp 1s ease-in-out infinite; } @keyframes recp { 50% { opacity:.3; } }
   body #hud .hud-prog { display:grid; grid-template-columns:44px 1fr 44px; align-items:center; gap:12px; margin-top:12px; font:400 10.5px 'Martian Mono',monospace; color:var(--faint); font-variant-numeric:tabular-nums; }
   body #hud .hud-prog span { display:block; color:var(--faint); }
@@ -343,17 +353,30 @@
       <button data-c="seek:10" title="adelante 10 s (→)"><svg viewBox="0 0 24 24"><path d="M12 5V2l5 4-5 4V7a6 6 0 1 0 6 6h2a8 8 0 1 1-8-8z"/><text x="12" y="16.5" font-size="6.5" text-anchor="middle" font-family="Martian Mono" fill="currentColor">10</text></svg></button>
     </div>
     <div class="hud-tools" id="hudTools">
-      <button data-k="t" title="traducción (t)"><b class="tag" id="hudTr">es</b></button>
-      <button data-k="l" title="mostrar u ocultar la letra (l)" id="hudLyr"><svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h10v2H4z"/></svg></button>
-      <button data-k="e" title="modo autor: editar este video (e)"><svg viewBox="0 0 24 24"><path d="M3 17.2V21h3.8l11-11-3.8-3.8zM20.7 7a1 1 0 0 0 0-1.4l-2.3-2.3a1 1 0 0 0-1.4 0l-1.8 1.8 3.8 3.8z"/></svg></button>
-      <button id="hudLights" title="luces del cuarto"><svg viewBox="0 0 24 24"><path d="M9 21h6v-1H9zm3-19a7 7 0 0 0-4 12.7V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.3A7 7 0 0 0 12 2z"/></svg><i class="led"></i></button>
+      <div class="hud-grp">
+        <button data-k="t" title="traducción (t)"><b class="tag" id="hudTr">es</b></button>
+        <button data-k="l" title="mostrar u ocultar la letra (l)" id="hudLyr"><svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h10v2H4z"/></svg></button>
+      </div>
       <span class="sep"></span>
-      <button id="recBtn" title="grabar clip: empezar y detener (r)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5.5" class="recdot"/><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
-      <button id="recFmt" title="formato del clip: tocar para cambiar"><b class="tag" id="recFmtTag">16:9</b></button>
-      <button data-cover title="carátula a pantalla completa (c)"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="14" cy="12" r="4.3" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="14" cy="12" r="1.1"/><path d="M6.5 7v10" stroke="currentColor" stroke-width="1.7"/></svg></button>
-      <button data-k="f" title="pantalla completa (f)"><svg viewBox="0 0 24 24"><path d="M5 5h5v2H7v3H5zm9 0h5v5h-2V7h-3zM5 14h2v3h3v2H5zm12 0h2v5h-5v-2h3z"/></svg></button>
-      <button data-k="," title="ajustes (,)"><svg viewBox="0 0 24 24"><path d="M19.4 13a7.5 7.5 0 0 0 0-2l2-1.6-2-3.4-2.4 1a7.6 7.6 0 0 0-1.7-1L15 3.4h-4l-.4 2.6a7.6 7.6 0 0 0-1.7 1l-2.4-1-2 3.4 2 1.6a7.5 7.5 0 0 0 0 2l-2 1.6 2 3.4 2.4-1a7.6 7.6 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7.6 7.6 0 0 0 1.7-1l2.4 1 2-3.4zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg></button>
-      <button data-k="Escape" title="volver al inicio (esc)"><svg viewBox="0 0 24 24"><path d="M12 3 3 10.5V21h6.5v-6h5v6H21V10.5z"/></svg></button>
+      <div class="hud-grp" id="hudMain">
+        <button data-cover title="carátula a pantalla completa (c)"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="14" cy="12" r="4.3" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="14" cy="12" r="1.1"/><path d="M6.5 7v10" stroke="currentColor" stroke-width="1.7"/></svg></button>
+        <button data-k="f" title="pantalla completa (f)"><svg viewBox="0 0 24 24"><path d="M5 5h5v2H7v3H5zm9 0h5v5h-2V7h-3zM5 14h2v3h3v2H5zm12 0h2v5h-5v-2h3z"/></svg></button>
+      </div>
+      <span class="sep"></span>
+      <div class="hud-more-wrap">
+        <button id="hudMoreBtn" title="más herramientas" aria-label="más herramientas" aria-expanded="false" aria-controls="hudMore"><svg viewBox="0 0 24 24"><circle cx="5.5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="18.5" cy="12" r="2"/></svg></button>
+        <div class="hud-more" id="hudMore" role="group" aria-label="herramientas adicionales" hidden>
+          <button data-label="grabar clip" id="recBtn" title="grabar clip: empezar y detener (r)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5.5" class="recdot"/><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
+          <button data-label="formato del clip" id="recFmt" title="formato del clip: tocar para cambiar"><b class="tag" id="recFmtTag">16:9</b></button>
+          <button data-label="modo autor" data-k="e" title="modo autor: editar este video (e)"><svg viewBox="0 0 24 24"><path d="M3 17.2V21h3.8l11-11-3.8-3.8zM20.7 7a1 1 0 0 0 0-1.4l-2.3-2.3a1 1 0 0 0-1.4 0l-1.8 1.8 3.8 3.8z"/></svg></button>
+          <button data-label="luces del cuarto" id="hudLights" title="luces del cuarto"><svg viewBox="0 0 24 24"><path d="M9 21h6v-1H9zm3-19a7 7 0 0 0-4 12.7V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.3A7 7 0 0 0 12 2z"/></svg><i class="led"></i></button>
+        </div>
+      </div>
+      <span class="sep"></span>
+      <div class="hud-grp">
+        <button data-k="," title="ajustes (,)"><svg viewBox="0 0 24 24"><path d="M19.4 13a7.5 7.5 0 0 0 0-2l2-1.6-2-3.4-2.4 1a7.6 7.6 0 0 0-1.7-1L15 3.4h-4l-.4 2.6a7.6 7.6 0 0 0-1.7 1l-2.4-1-2 3.4 2 1.6a7.5 7.5 0 0 0 0 2l-2 1.6 2 3.4 2.4-1a7.6 7.6 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7.6 7.6 0 0 0 1.7-1l2.4 1 2-3.4zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg></button>
+        <button data-k="Escape" title="volver al inicio (esc)"><svg viewBox="0 0 24 24"><path d="M12 3 3 10.5V21h6.5v-6h5v6H21V10.5z"/></svg></button>
+      </div>
     </div>
   </div>
   <div class="hud-prog"><span id="hudT0">0:00</span><div class="hudbar" id="hudBar"><i id="hudFill"></i><div class="hud-marks" id="hudMarks"></div><b class="hud-tip" id="hudTip"></b></div><span id="hudT1">0:00</span></div>
@@ -854,6 +877,7 @@ function scene8(p, t) {
 let actx = null, analyser = null, fftBuf = null, energy = 0, micOn = false;
 const bands = new Float32Array(24);
 function initAudio() {
+  if (window.LMAUDIO) { LMAUDIO.attachElement(audio).then(g => { actx=LMAUDIO.ctx; analyser=g.analyser; fftBuf=new Uint8Array(analyser.frequencyBinCount); micOn=false; }).catch(() => {}); return; }
   if (!audio.src || (actx && !micOn && analyser)) return;
   try {
     actx = actx || new (window.AudioContext || window.webkitAudioContext)();
@@ -1948,6 +1972,8 @@ function frame(t0) {
   const dt = Math.min(.08, (t0 - prev) / 1000); prev = t0;
   const t = t0 / 1000;
   readAudio(t);
+  // las luces siguen el audio aunque risografía, fábula o carátula sustituyan el renderizador.
+  try { lightsTick(); } catch (e) { /* una luz no debe interrumpir la animación */ }
   if (mode !== 'proc') window.RISO?.grief?.stop();
   if (mode === 'sync') {
     // mismas escenas que "ver video": la de la línea que acabas de marcar
@@ -2036,6 +2062,7 @@ requestAnimationFrame(frame);
 <script src="js/app/hud.js"></script>
 <script src="js/modos/cover.js"></script>
 <script src="js/riso/riso-store.js"></script>
+<script src="js/audio/experience.js"></script>
 <script src="js/riso/riso.js"></script>
 <script src="js/riso/escenas/riso-scenes.js"></script>
 <script src="js/riso/escenas/riso-scenes2.js"></script>
@@ -2058,13 +2085,32 @@ requestAnimationFrame(frame);
 <script src="js/riso/props/riso-props-famosos.js"></script>
 <script src="js/riso/props/riso-props-oficios.js"></script>
 <script src="js/riso/props/riso-props-vida.js"></script>
+<script src="js/riso/props/riso-props-relatos.js"></script>
 <script src="js/riso/riso-people.js"></script>
 <script src="js/riso/riso-fx.js"></script>
 <script src="js/riso/riso-artistas.js"></script>
+<script src="js/riso/riso-voces.js"></script>
 <script src="js/riso/riso-cantantes.js"></script>
-<script src="js/riso/riso-geometry.js"></script>
+<script src="js/riso/riso-gd.js"></script>
+<script src="js/riso/riso-pov.js"></script>
 <script src="js/riso/riso-grief.js"></script>
+<script src="js/riso/riso-relato.js"></script>
+<script src="js/riso/riso-cine.js"></script>
+<script src="js/riso/riso-universo.js"></script>
+<script src="js/riso/riso-atmosfera.js"></script>
+<script src="js/riso/riso-historia.js"></script>
+<script src="js/riso/riso-cine-dibujo.js"></script>
+<script src="js/riso/riso-fabula-world.js"></script>
+<script src="js/riso/riso-fabula-director.js"></script>
+<script src="js/riso/riso-fabula-actors.js"></script>
+<script src="js/riso/riso-fabula.js"></script>
+<script src="js/riso/riso-frames-montage.js"></script>
+<script src="js/riso/riso-frames-ink.js"></script>
+<script src="js/riso/riso-frames-light.js"></script>
+<script src="js/riso/riso-frames-lyrics.js"></script>
+<script src="js/riso/riso-frames.js"></script>
 <script src="js/riso/riso-clip.js"></script>
+<script src="js/riso/riso-cine-editor.js"></script>
 <script src="js/riso/riso-poster.js"></script>
 <script src="js/riso/riso-mix.js"></script>
 <script src="js/riso/riso-compartir.js"></script>
@@ -2074,5 +2120,10 @@ requestAnimationFrame(frame);
 <script src="js/riso/riso-xr.js"></script>
 <script src="js/riso/riso-menu.js"></script>
 <script src="js/riso/riso-theme.js"></script>
+<script src="js/riso/riso-fabula-theme.js"></script>
+<script src="js/app/experience-ui.js"></script>
+<script src="js/modos/cover-universo.js"></script>
+<script src="js/modos/cover-design.js"></script>
+<script src="js/app/recuerdo.js"></script>
 </body>
 </html>

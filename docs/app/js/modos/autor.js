@@ -184,25 +184,38 @@ const CLONE = (p, i) => ({ ...BLANK(i), ...p, n: i, objects: [...(p.objects || [
 function fromCurrent() {
   const blocks = IN.cuts.map((_, i) => SEM.plans[i] ? CLONE(SEM.plans[i], i) : BLANK(i)), lines = {};
   for (const [i, e] of Object.entries(STORY.lines)) lines[i] = { objects: [...e.objects], word: e.word, big: e.big, person: e.person };
-  return { blocks, lines, story: STORY.text || '' };
+  return { blocks, lines, story: STORY.text || '', cinema: window.RISO?.film?.clean(RISO.film.key === autorKey() ? RISO.film.edits : {}) || { lines: {}, sections: {} } };
 }
 const lineOf = i => AUT.P.lines[i] || (AUT.P.lines[i] = { objects: [], word: '', big: false, person: '' });
 function applyProject() {
   const P = AUT.P; IN.preparing = false;
+  if (window.RISO?.film) RISO.film.setEdits(P.cinema || {});
+  if (window.RISOCLIP) RISOCLIP.shot = null;
   P.blocks.forEach((b, i) => applyPlan(i, { ...b, objects: [...b.objects] }));
   const text = P.story; STORY.reset();
   STORY.add({ lines: Object.entries(P.lines).map(([i, e]) => ({ i: +i, ...e })), story: text }); STORY.on = true;
   RECIPE.key = ''; SEM.blockNow = -1; IN.motifs = {};
   IN.aiState = 'guion del autor';
 }
-function project() { return { cuts: IN.cuts, blocks: AUT.P.blocks, lines: Object.entries(AUT.P.lines).map(([i, e]) => ({ i: +i, ...e })), story: AUT.P.story }; }
+function project() { return { cuts: IN.cuts, blocks: AUT.P.blocks, lines: Object.entries(AUT.P.lines).map(([i, e]) => ({ i: +i, ...e })), story: AUT.P.story, cinema: AUT.P.cinema || { lines: {}, sections: {} } }; }
+async function flushAutorSave() {
+  clearTimeout(AUT.saveT); const pending = AUT.pendingSave; if (!pending) return AUT.saveQueue;
+  AUT.pendingSave = null;
+  AUT.saveQueue = (AUT.saveQueue || Promise.resolve()).catch(() => {}).then(async () => {
+  try {
+    await RISOSTORE.set('misc', 'autor|' + pending.key, pending.project);
+    const response = await fetch('/autor', { method: 'POST', body: JSON.stringify(pending) });
+    if (!response.ok || (await response.json()).error) throw new Error('puente');
+    if (autorKey() === pending.key && !AUT.pendingSave) { AUT.saved = true; $('autSaved').textContent = 'guardado'; $('autSaved').className = 'ok'; }
+  } catch (e) { if (autorKey() === pending.key) { $('autSaved').textContent = 'copia local'; $('autSaved').className = ''; } }
+  });
+  return AUT.saveQueue;
+}
 function save() {
+  if (AUT.pendingSave && AUT.pendingSave.key !== autorKey()) flushAutorSave();
   AUT.saved = false; $('autSaved').textContent = 'guardando'; $('autSaved').className = '';
-  clearTimeout(AUT.saveT);
-  AUT.saveT = setTimeout(async () => {
-    try { await fetch('/autor', { method: 'POST', body: JSON.stringify({ key: autorKey(), project: project() }) }); AUT.saved = true; $('autSaved').textContent = 'guardado'; $('autSaved').className = 'ok'; }
-    catch (e) { $('autSaved').textContent = 'sin guardar'; }
-  }, 500);
+  AUT.pendingSave = { key: autorKey(), project: JSON.parse(JSON.stringify(project())) };
+  clearTimeout(AUT.saveT); AUT.saveT = setTimeout(flushAutorSave, 500);
 }
 // cada cambio: se anota para deshacer, se ve al instante y se guarda
 function edit(fn) {
@@ -219,7 +232,7 @@ function undo(redo) {
 const objLabel = k => (AUT.cat.objects[k] || k).split(' / ')[0];
 function objPicker(field, max, list) {
   const q = AUT.q.toLowerCase().trim();
-  const all = Object.keys(AUT.cat.objects).filter(k => MOTIF[k] && !list.includes(k) && (!q || k.includes(q) || AUT.cat.objects[k].toLowerCase().includes(q)));
+  const all = Object.keys(AUT.cat.objects).filter(k => (MOTIF[k] || window.RISO?.props?.DEFS[k]) && !list.includes(k) && (!q || k.includes(q) || AUT.cat.objects[k].toLowerCase().includes(q)));
   return `<div class="chips">${list.map(k => `<button class="chip2 on" data-f="${field}-del" data-v="${k}">${esc(objLabel(k))}<span class="x">×</span></button>`).join('') || '<span style="color:var(--faint)">ninguno</span>'}</div>
     ${list.length < max ? `<input type="text" data-f="q" placeholder="buscar: lluvia, corazones, avión…" value="${esc(AUT.q)}" style="margin-top:10px">
     <div class="objpick chips">${all.map(k => `<button class="chip2" data-f="${field}-add" data-v="${k}" title="${esc(AUT.cat.objects[k])}">${esc(objLabel(k))}</button>`).join('')}</div>` : ''}`;
@@ -299,7 +312,7 @@ function drawTimeline() {
   const idx = lineIdx();
   $('tlLines').innerHTML = idx.map((i, k) => {
     const l = IN.lines[i], next = IN.lines[idx[k + 1]]?.t ?? Math.min(songDur(), l.t + 4), L = AUT.P.lines[i] || {};
-    const w = Math.max(4, (next - l.t) * pps - 2), kw = L.word ? l.text.replace(new RegExp(`(${L.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'i'), '<span class="kw">$1</span>') : esc(l.text);
+    const w = Math.max(4, (next - l.t) * pps - 2), kw = L.word ? esc(l.text).replace(new RegExp(`(${L.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'i'), '<span class="kw">$1</span>') : esc(l.text);
     return `<div class="tl-l ${L.big ? 'big' : ''} ${AUT.sel.kind === 'line' && AUT.sel.i === i ? 'on' : ''}" data-l="${i}" style="left:${l.t * pps + 1}px;width:${w}px" title="${esc(l.text)}">${w > 40 ? kw : ''}${L.objects?.length ? '<span class="dot"></span>' : ''}</div>`;
   }).join('');
 }
@@ -339,12 +352,14 @@ function action(a) {
   if (a === 'prev' || a === 'next') { const L = selList(), k = L.indexOf(S.i) + (a === 'next' ? 1 : -1); if (L[k] !== undefined) { S.i = L[k]; AUT.q = ''; render(); scrollToSel(); } return; }
   if (a === 'seekSel') return ext.cmd('goto:' + Math.max(0, (S.kind === 'block' ? IN.cuts[S.i] : IN.lines[S.i].t) - .3).toFixed(2));
   if (a === 'copyNext' && S.kind === 'block' && S.i + 1 < AUT.P.blocks.length) return edit(P => { P.blocks[S.i + 1] = { ...CLONE(P.blocks[S.i], S.i + 1), summary: P.blocks[S.i + 1].summary }; });
-  if (a === 'clearBlock') return edit(P => { P.blocks[S.i] = { ...BLANK(S.i), scene: P.blocks[S.i].scene }; });
-  if (a === 'clearLine') return edit(P => { P.lines[S.i] = { objects: [], word: '', big: false, person: '' }; });
-  if (a === 'blank') { if (!confirm('¿borrar todo y armar el video desde cero?')) return; return edit(P => { P.blocks = IN.cuts.map((_, i) => BLANK(i)); P.lines = {}; P.story = ''; }); }
+  if (a === 'clearBlock') return edit(P => { P.blocks[S.i] = { ...BLANK(S.i), scene: P.blocks[S.i].scene }; if (P.cinema) delete P.cinema.sections[S.i]; });
+  if (a === 'clearLine') return edit(P => { P.lines[S.i] = { objects: [], word: '', big: false, person: '' }; if (P.cinema) delete P.cinema.lines[S.i]; });
+  if (a === 'blank') { if (!confirm('¿borrar todo y armar el video desde cero?')) return; return edit(P => { P.blocks = IN.cuts.map((_, i) => BLANK(i)); P.lines = {}; P.story = ''; P.cinema = { lines: {}, sections: {} }; }); }
   if (a === 'claude') {
     if (!confirm('¿descartar tu versión y volver al guion de Claude?')) return;
-    fetch('/autor', { method: 'POST', body: JSON.stringify({ key: autorKey(), delete: true }) }).then(() => { closeAutor(true); SEM.key = ''; planSong(); toast('volviste al guion de Claude'); });
+    clearTimeout(AUT.saveT); AUT.pendingSave = null; RISO.film?.setEdits({});
+    const key = autorKey();
+    Promise.resolve(AUT.saveQueue).then(() => RISOSTORE.del('misc', 'autor|' + key)).then(() => fetch('/autor', { method: 'POST', body: JSON.stringify({ key, delete: true }) })).then(() => { if (autorKey() !== key) return; closeAutor(true); SEM.key = ''; planSong(); toast('volviste al guion de Claude'); });
     return;
   }
   if (a === 'rec') { if (REC.on) return stopRec(); ext.cmd('start'); setTimeout(startRec, 700); toast('grabando desde el inicio: se descarga en mp4 al detener'); }
@@ -360,14 +375,18 @@ async function openAutor() {
   if (!ext.has() || !ext.st.name) { toast('pon una canción en Música o Spotify primero'); return false; }
   if (mode !== 'proc') { startProc(); await new Promise(r => setTimeout(r, 400)); }
   if (IN.cuts.length < 2 || !lineIdx().length) { toast('esta canción todavía no tiene letra sincronizada'); return false; }
-  if (!AUT.cat) try { AUT.cat = await fetch('/story?catalog=1').then(r => r.json()); } catch (e) { toast('el puente no responde'); return false; }
+  let catalog = {}; try { catalog = await fetch('/story?catalog=1').then(r => r.json()); } catch (e) {}
+  AUT.cat = { scenes: catalog.scenes || Object.fromEntries(Object.values(window.RISO?.scenes || {}).filter(s => s.id !== 'clip').map(s => [s.id, s.name])),
+    objects: { ...(catalog.objects || {}), ...Object.fromEntries(Object.entries(window.RISO?.catalog?.info || {}).map(([id, p]) => [id, p.label])) },
+    moods: catalog.moods || Object.keys(MOOD_VA), colors: catalog.colors || Object.keys(COLOR_HUE), times: catalog.times || Object.keys(TOD), transitions: catalog.transitions || { suave: 'continuidad', corte: 'cambio', impacto: 'clímax' } };
+  AUT.trigger = document.activeElement;
   stage(); AUT.open = true; document.body.classList.add('autor');
   AUT.P = fromCurrent(); AUT.hist = []; AUT.fut = [];
   AUT.base = /guion de Claude|director de lumora/.test(IN.aiState || '') ? JSON.parse(JSON.stringify(AUT.P)) : null;   // solo se aprende de lo que cambias sobre el guion de Claude
   const pos = ext.now(); AUT.sel = { kind: 'block', i: Math.max(0, IN.cuts.findLastIndex(c => c <= pos)) };
   $('autSong').innerHTML = `<b>${esc(ext.st.name)}</b> · ${esc(ext.st.artist)}`;
   $('autSaved').textContent = 'sin cambios'; $('autSaved').className = '';
-  fitStage(); render(); scrollToSel();
+  fitStage(); render(); scrollToSel(); $('autPlay').focus();
   return true;
 }
 // tu estilo de director: qué cambiaste respecto al guion de Claude, para que los próximos guiones salgan a tu gusto
@@ -393,10 +412,12 @@ function learnStyle() {
   AUT.base = JSON.parse(JSON.stringify(P));                                       // si vuelves a abrir, no se cuenta dos veces
 }
 function closeAutor(silent) {
+  flushAutorSave();
   if (!silent) learnStyle();                                                      // si descartaste tu versión, no se aprende de ella
   AUT.open = false; document.body.classList.remove('autor');
   if (AUT.wrap) AUT.wrap.style.transform = '';
-  if (!silent && AUT.hist.length) toast('tu versión quedó guardada para esta canción');
+  AUT.trigger?.focus();
+  if (!silent && AUT.hist.length) toast('guardando tu versión para esta canción');
 }
 addEventListener('keydown', e => {
   const typing = /TEXTAREA|INPUT|SELECT/.test(document.activeElement?.tagName || '');
