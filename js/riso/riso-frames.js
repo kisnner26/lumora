@@ -57,12 +57,17 @@
     activeVideo=v;
     for(const other of [video,editVideo])if(other&&other!==v&&!other.paused)other.pause();
     const s=Math.min(w/v.videoWidth,h/v.videoHeight),dw=v.videoWidth*s,dh=v.videoHeight*s;
-    ctx.save();ctx.globalAlpha=alpha;ctx.fillStyle='#08090d';ctx.fillRect(0,0,w,h);ctx.drawImage(v,(w-dw)/2,(h-dh)/2,dw,dh);ctx.restore();return true;
+    ctx.save();ctx.globalAlpha=alpha;ctx.fillStyle='#08090d';ctx.fillRect(0,0,w,h);ctx.drawImage(v,(w-dw)/2,(h-dh)/2,dw,dh);ctx.restore();
+    if(wantEdit)window.LMFRAMESLIGHT?.render(ctx,w,h,time,v,grid,{flashes:CFG.flashes});
+    return true;
   }
   function boostFootage(ctx,w,h,time,source,options={}){
     if(!boosted||reduced()||homeOn()||!window.LMFRAMESMONTAGE)return null;
-    return LMFRAMESMONTAGE.render(ctx,w,h,time,source,options.grid??null,{
+    const result=LMFRAMESMONTAGE.render(ctx,w,h,time,source,options.grid??null,{
       duration:options.duration||limit,bpm:options.bpm||IN.bpm||proc.bpm,phase:options.phase??IN.phase,flashes:CFG.flashes});
+    // procesa el encuadre ya compuesto; la letra del clip se dibuja después.
+    window.LMFRAMESLIGHT?.render(ctx,w,h,time,ctx.canvas,options.grid??null,{bpm:options.bpm||IN.bpm||proc.bpm,phase:options.phase??IN.phase,flashes:CFG.flashes});
+    return result;
   }
   function boostCanvas(ctx,w,h,time,external=false){
     if(!boosted||reduced()||homeOn())return;
