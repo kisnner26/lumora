@@ -1974,6 +1974,8 @@ function frame(t0) {
   readAudio(t);
   // las luces siguen el audio aunque risografía, fábula o carátula sustituyan el renderizador.
   try { lightsTick(); } catch (e) { /* una luz no debe interrumpir la animación */ }
+  // conservar sonido y luces en segundo plano; omitir solo los píxeles invisibles.
+  if (document.hidden && !(typeof REC !== 'undefined' && REC.on)) { requestAnimationFrame(frame); return; }
   if (mode !== 'proc') window.RISO?.grief?.stop();
   if (mode === 'sync') {
     // mismas escenas que "ver video": la de la línea que acabas de marcar

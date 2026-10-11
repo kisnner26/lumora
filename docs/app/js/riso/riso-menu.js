@@ -133,6 +133,8 @@
   addEventListener('resize', () => { if (active()) fit(); });
   function loop(t0) {
     H.raf = 0; if (!active()) return;
+    if (document.hidden && !F.rec) { H.last = 0; return; }
+    if (H.last && t0 - H.last < 1000 / (window.FRAME_CAP || 60) - 3) { H.raf = requestAnimationFrame(loop); return; }
     const dt = Math.min(.25, (t0 - (H.last || t0)) / 1000); H.last = t0;
     const root = H.on ? home : F.on ? fx : $('panel');
     if (CFG.clip === 'fabula' && R.fabula && !F.on) {
@@ -148,6 +150,7 @@
     H.raf = requestAnimationFrame(loop);
   }
   function run() { if (!H.raf) { H.last = 0; H.raf = requestAnimationFrame(loop); } }
+  addEventListener('visibilitychange', () => { if (!document.hidden && active()) run(); });
   // cuando el menú está encima, la bienvenida de abajo no gasta cuadros
   if (typeof welcomeBg === 'function') { const _wb = welcomeBg; welcomeBg = function (t, dt) { if (active()) return; _wb(t, dt); }; }
 
