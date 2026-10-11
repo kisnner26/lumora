@@ -600,6 +600,22 @@ def govee_send(ip, cmd, data):
         pass
 
 
+def lights_emit(ips, pend):
+    # algunos firmwares descartan paquetes consecutivos: separar también color y brillo.
+    commands = []
+    if 'on' in pend:
+        commands.append(('turn', {'value': 1 if pend['on'] else 0}))
+    if 'rgb' in pend:
+        r, g, b = pend['rgb']
+        commands.append(('colorwc', {'color': {'r': r, 'g': g, 'b': b}, 'colorTemInKelvin': 0}))
+    if 'bright' in pend:
+        commands.append(('brightness', {'value': max(1, min(100, int(pend['bright'])))}))
+    for cmd, data in commands:
+        for ip in ips:
+            govee_send(ip, cmd, data)
+        time.sleep(.04)
+
+
 def lights_loop():
     # busca luces al arrancar y cada 2 minutos; envía como mucho ~25 órdenes por segundo por luz
     # (antes 80 ms de cola: con el pulso predictivo de lights.js ese margen se sumaba a su propio
@@ -611,14 +627,7 @@ def lights_loop():
         with LIGHTS['lock']:
             pend, LIGHTS['pending'] = LIGHTS['pending'], {}
             ips = list(LIGHTS['devices'])
-        for ip in ips:
-            if 'on' in pend:
-                govee_send(ip, 'turn', {'value': 1 if pend['on'] else 0})
-            if 'rgb' in pend:
-                r, g, b = pend['rgb']
-                govee_send(ip, 'colorwc', {'color': {'r': r, 'g': g, 'b': b}, 'colorTemInKelvin': 0})
-            if 'bright' in pend:
-                govee_send(ip, 'brightness', {'value': max(1, min(100, int(pend['bright'])))})
+        lights_emit(ips, pend)
         time.sleep(.04)
 
 
