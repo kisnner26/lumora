@@ -90,7 +90,7 @@
   function drawLyrics(ctx,w,h,time){
     window.LMFRAMESLYRICS?.render(ctx,w,h,time,{
       lines:IN.lines,translations:IN.tr,trMode:IN.trMode,off:IN.off,show:IN.show,
-      size:CFG.lyricSize,style:CFG.clip,source:activeVideo,grid,
+      size:CFG.lyricSize,style:CFG.clip,source:ctx.canvas,grid,
       bpm:IN.bpm||proc.bpm,phase:IN.phase,reduced:reduced(),animate:CFG.letterAnim,flashes:CFG.flashes,
     });
   }

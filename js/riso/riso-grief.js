@@ -196,7 +196,7 @@
     if(v.readyState>=2&&!reduced)window.LMFRAMES?.boostFootage(ctx,w,h,time,v,{duration:opts.duration||146.365,bpm:60/BEAT,phase:0});
     if(opts.text)window.LMFRAMESLYRICS?.render(ctx,w,h,time,{
       text:opts.text,lines:IN.lines,translations:IN.tr,trMode:IN.trMode,off:IN.off,show:IN.show,
-      size:CFG.lyricSize,style:CFG.clip,source:v,bpm:BPM,phase:0,
+      size:CFG.lyricSize,style:CFG.clip,source:ctx.canvas,bpm:BPM,phase:0,
       reduced:reduced,animate:CFG.letterAnim,flashes:CFG.flashes,
     });
     G.current = { ...cue, look, ready: v.readyState >= 2, sourceTime: v.currentTime, seeking: v.seeking, paused: v.paused };
