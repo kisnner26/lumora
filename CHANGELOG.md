@@ -2,6 +2,8 @@
 
 ## 2026-10-10
 
+- repara el envío de luces govee en risografía, fábula, vídeo y carátula; usa el pulso de audio directamente, reintenta al recuperar el puente y separa los paquetes lan de color y brillo.
+
 - añade filtros musicales de boceto, contornos, puntillismo y píxeles blancos progresivos al gameplay con boost, con fundidos, exportación y letras legibles sobre el resultado.
 
 - mejora las letras sobre gameplay con entradas, pulsación musical, énfasis progresivo y contraste y color adaptados al video; conserva tamaño, traducción, desfase y exportación.
