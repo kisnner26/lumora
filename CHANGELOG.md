@@ -1,5 +1,9 @@
 # historial de cambios
 
+## 2026-10-11
+
+- reduce las subidas y asignaciones de texturas de los filtros, evita trabajo repetido en carátula y suspende dibujos ocultos conservando audio, luces, letras, fondo escena y grabación. añade benchmark local y pruebas de regresión de rendimiento.
+
 ## 2026-10-10
 
 - repara el envío de luces govee en risografía, fábula, vídeo y carátula; usa el pulso de audio directamente, reintenta al recuperar el puente y separa los paquetes lan de color y brillo.
