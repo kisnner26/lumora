@@ -70,22 +70,14 @@
     boostCanvas(ctx,w,h,time);
   }
   function setBoost(value){boosted=!!value;try{localStorage.setItem('lm_frames_boost',boosted?'1':'0');}catch{}paint();}
-  const style=document.createElement('style');style.textContent=`
-  #lumoraFramesBar{position:fixed;top:max(20px,env(safe-area-inset-top));right:max(20px,env(safe-area-inset-right));z-index:22;display:flex;align-items:center;gap:12px;padding:8px 10px 8px 16px;background:#101318eb;border:1px solid #ffffff26;border-radius:14px;color:#f5f0e7;box-shadow:0 12px 40px #0005;font:400 11px system-ui,sans-serif}
-  #lumoraFramesBar[hidden]{display:none}#lumoraFramesBar button{background:#ffffff0c;border:1px solid #ffffff28;color:#f5f0e7;padding:10px 12px;border-radius:8px;font:500 11px system-ui,sans-serif;cursor:pointer}#lumoraFramesBar button[aria-pressed=true]{background:#99b8eb;color:#111720;border-color:#99b8eb}
-  #lumoraFramesBar button:focus-visible{outline:2px solid #99b8eb;outline-offset:3px}
-  @media(max-width:700px){#lumoraFramesBar{top:12px;right:12px;left:12px;justify-content:space-between;gap:6px;font-size:10px}#lumoraFramesBar button{padding:10px 8px;font-size:10px}}
-  `;document.head.append(style);
-  const bar=document.createElement('div');bar.id='lumoraFramesBar';bar.hidden=true;
-  const status=document.createElement('span'),button=document.createElement('button');button.type='button';button.textContent='boost with lumora frames';button.addEventListener('click',()=>setBoost(!boosted));bar.append(status,button);document.body.append(bar);
-  const more=document.createElement('button');more.id='hudFrames';more.type='button';more.dataset.label='boost with lumora frames';more.title='boost with lumora frames';more.setAttribute('aria-label',more.title);more.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h18v16H3zm2 2v12h14V6zM9 8l7 4-7 4z"/></svg>';more.addEventListener('click',()=>setBoost(!boosted));document.getElementById('hudMore')?.append(more);
+  const button=document.createElement('button');button.id='autFrames';button.className='aut-btn';button.type='button';
+  button.textContent='boost with lumora frames';button.title='montaje automático al ritmo de la canción';
+  button.addEventListener('click',()=>setBoost(!boosted));
+  document.getElementById('autTop')?.insertBefore(button,document.getElementById('autSaved'));
   function paint(){
-    const match=matches(),time=window.RISOCLIP?.h?.timeNow?.()??0;
-    bar.hidden=!match||homeOn()||mode!=='proc'||coverOpen||CFG.clip==='clasico'||CFG.clip==='portada';
-    for(const el of [button,more])el.setAttribute('aria-pressed',String(boosted));
-    more.classList.toggle('on',boosted);
-    status.textContent=failed?'gameplay no disponible · animación activa':time>=limit?'animación · '+(CFG.clip==='fabula'?'fábula':'risografía'):'geometry dash · '+Math.floor(Math.max(0,time)/60)+':'+String(Math.floor(Math.max(0,time)%60)).padStart(2,'0')+' / 1:20';
-    if(bar.hidden||document.hidden||time>=limit)stop();
+    const time=window.RISOCLIP?.h?.timeNow?.()??0;
+    button.setAttribute('aria-pressed',String(boosted));button.classList.toggle('gold',boosted);
+    if(!eligible(time)||mode!=='proc'||CFG.clip==='clasico'||CFG.clip==='portada')stop();
   }
   const timer=setInterval(paint,250);document.addEventListener('visibilitychange',()=>{if(document.hidden)stop();});addEventListener('pagehide',()=>{clearInterval(timer);stop();},{once:true});
   window.LMFRAMES={detect,cue,before,after,boostCanvas,setBoost,stop,get boosted(){return boosted;},get video(){return video;},get grid(){return grid;},get failed(){return failed;}};paint();
