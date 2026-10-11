@@ -194,17 +194,11 @@
     }
     ctx.restore();
     if(v.readyState>=2&&!reduced)window.LMFRAMES?.boostFootage(ctx,w,h,time,v,{duration:opts.duration||146.365,bpm:60/BEAT,phase:0});
-    if (opts.text) {
-      ctx.save();
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.font = `700 ${Math.max(22, Math.min(44 * unit, w / 30))}px "Anybody", sans-serif`;
-      const width = Math.min(w * .86, ctx.measureText(opts.text).width + 56 * unit);
-      const y = h * .87;
-      ctx.fillStyle = 'rgba(8,3,7,.82)'; ctx.fillRect((w - width) / 2, y - 34 * unit, width, 68 * unit);
-      ctx.fillStyle = '#e5233f'; ctx.fillRect((w - width) / 2, y + 32 * unit, width, 3 * unit);
-      ctx.fillStyle = '#f3dfe3'; ctx.fillText(opts.text, w / 2, y, w * .82);
-      ctx.restore();
-    }
+    if(opts.text)window.LMFRAMESLYRICS?.render(ctx,w,h,time,{
+      text:opts.text,lines:IN.lines,translations:IN.tr,trMode:IN.trMode,off:IN.off,show:IN.show,
+      size:CFG.lyricSize,style:CFG.clip,source:v,bpm:BPM,phase:0,
+      reduced:reduced,animate:CFG.letterAnim,flashes:CFG.flashes,
+    });
     G.current = { ...cue, look, ready: v.readyState >= 2, sourceTime: v.currentTime, seeking: v.seeking, paused: v.paused };
   }
   const G = R.grief = { detect, timeline, treatment, render, stop, footage, current: null };
