@@ -59,16 +59,55 @@
     if(q.kind==='pan'&&q.cut>.08){ctx.save();ctx.globalAlpha=q.cut*.15;ctx.fillStyle='#9bbcff';ctx.fillRect((q.direction>0?1-q.cut:q.cut)*w,0,w*.018,h);ctx.restore();}
     const shade=ctx.createRadialGradient(w/2,h/2,h*.22,w/2,h/2,Math.max(w,h)*.65);shade.addColorStop(0,'#0000');shade.addColorStop(1,'#0005');ctx.save();ctx.fillStyle=shade;ctx.fillRect(0,0,w,h);ctx.restore();
   }
+  // la letra comparte reloj y controles con los motores ilustrados, pero se compone
+  // después del montaje: los golpes de cámara nunca desplazan el texto.
+  function drawLyrics(ctx,w,h,time){
+    if(IN.show===false)return;
+    const li=window.RISOCLIP?.h?.lineIdx(time)??-1,line=IN.lines[li];
+    if(!line)return;
+    const tr=IN.tr?.[li]?.trim()||'',main=IN.trMode==='es'&&tr?tr:line.text;
+    const second=IN.trMode==='ambas'?tr:'';
+    if(!main)return;
+    ctx.save();ctx.textAlign='center';ctx.textBaseline='top';
+    const serif=CFG.clip==='fabula',family=serif?'"Cormorant Garamond", Georgia, serif':'"Anybody", sans-serif';
+    const maxW=w*.82,maxH=h*.28,scale=Math.max(.7,Math.min(1.6,+CFG.lyricSize||1));
+    let size=Math.min(h*.052,w*.066)*scale;
+    function wrapText(text,fs,translation=false){
+      ctx.font=`${translation?'italic 500':'600'} ${fs}px ${family}`;
+      const rows=[];let row='';
+      for(const word of text.trim().split(/\s+/)){
+        const next=row?row+' '+word:word;
+        if(row&&ctx.measureText(next).width>maxW){rows.push(row);row='';}
+        if(ctx.measureText(word).width<=maxW){row=row?row+' '+word:word;continue;}
+        for(const char of word){
+          if(row&&ctx.measureText(row+char).width>maxW){rows.push(row);row='';}row+=char;
+        }
+      }
+      if(row.trim())rows.push(row.trim());return rows;
+    }
+    let lines,translations,total;
+    do{lines=wrapText(main,size);translations=second?wrapText(second,size*.64,true):[];
+      total=lines.length*size*1.16+(translations.length?size*.24+translations.length*size*.78:0);
+      if(total<=maxH)break;size*=.9;
+    }while(size>Math.min(w,h)*.012);
+    const top=h*.78-total,pad=size*.5;
+    const shade=ctx.createLinearGradient(0,top-pad*2,0,h*.82);
+    shade.addColorStop(0,'#08090d00');shade.addColorStop(.35,'#08090dbb');shade.addColorStop(1,'#08090d00');
+    ctx.fillStyle=shade;ctx.fillRect(0,top-pad*2,w,total+pad*4);
+    ctx.shadowColor='#000';ctx.shadowBlur=size*.2;ctx.shadowOffsetY=size*.04;
+    ctx.fillStyle='#fff8ed';ctx.font=`600 ${size}px ${family}`;
+    let y=top;for(const row of lines){ctx.fillText(row,w/2,y);y+=size*1.16;}
+    if(translations.length){y+=size*.24;ctx.fillStyle='#ead6af';ctx.font=`italic 500 ${size*.64}px ${family}`;
+      for(const row of translations){ctx.fillText(row,w/2,y);y+=size*.78;}}
+    ctx.restore();
+  }
   function eligible(time){return !coverOpen&&!homeOn()&&!document.hidden&&matches()&&time>=0&&time<limit;}
   function before(ctx,w,h,time){
     if(!eligible(time)){stop();return false;}
-    if(time>=limit-.4&&!reduced())return false;
-    const drawn=drawFootage(ctx,w,h,time);if(drawn)boostCanvas(ctx,w,h,time);return drawn;
+    const drawn=drawFootage(ctx,w,h,time);
+    if(drawn){boostCanvas(ctx,w,h,time);drawLyrics(ctx,w,h,time);}return drawn;
   }
-  function after(ctx,w,h,time){
-    if(eligible(time)&&time>=limit-.4&&!reduced())drawFootage(ctx,w,h,time,(limit-time)/.4);
-    boostCanvas(ctx,w,h,time);
-  }
+  function after(ctx,w,h,time){boostCanvas(ctx,w,h,time);}
   function setBoost(value){boosted=!!value;try{localStorage.setItem('lm_frames_boost',boosted?'1':'0');}catch{}paint();}
   const button=document.createElement('button');button.id='autFrames';button.className='aut-btn';button.type='button';
   button.textContent='boost with lumora frames';button.title='montaje automático al ritmo de la canción';
