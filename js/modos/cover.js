@@ -755,7 +755,11 @@ function cvPosterSave() {
 }
 function cvPosterClose() { $('cvPosterBox').classList.remove('on'); }
 // la letra completa: se arma una vez por canción (y al llegar traducciones)
+// mantener el reloj visual fluido sin volver a serializar toda la canción en cada cuadro.
 function cvBuildList() {
+  const now=performance.now(),song=ext.key();
+  if(CV.listKey&&CV.listLines===IN.lines&&CV.listTr===IN.tr&&CV.listMode===IN.trMode&&CV.listSong===song&&now-(CV.listReadAt||0)<250)return;
+  CV.listLines=IN.lines;CV.listTr=IN.tr;CV.listMode=IN.trMode;CV.listSong=song;CV.listReadAt=now;
   const idx = IN.lines.map((l, i) => l.text ? i : -1).filter(i => i >= 0);
   const key = ext.key() + '|' + JSON.stringify(idx.map(i => [IN.lines[i].t, IN.lines[i].text, IN.tr?.[i] || ''])) + '|' + IN.trMode;
   if (key === CV.listKey) return;
@@ -764,27 +768,40 @@ function cvBuildList() {
   $('cvList').innerHTML = idx.length ? idx.map(i => { const [a, b] = tx(i); return `<button type="button" class="cv-verse" data-i="${i}" data-t="${IN.lines[i].t}" aria-label="${cvEsc(a)}">${cvEsc(a)}${b ? `<small>${cvEsc(b)}</small>` : ''}</button>`; }).join('') : '<p class="none">esta canción no tiene letra sincronizada</p>';
   CV.cur = -2;
 }
-(function cvLoop() {
+function cvText(id,text) { const el=$(id);if(el.textContent!==text)el.textContent=text; }
+function cvStyle(el,key,value) { if(el.style.getPropertyValue(key)!==String(value))el.style.setProperty(key,value); }
+let cvRaf=0,cvFrameAt=0,cvClockMinute=-1;
+function cvRun() { if(!cvRaf&&coverOpen&&!document.hidden)cvRaf=requestAnimationFrame(cvLoop); }
+function cvLoop(now) {
+  cvRaf=0;
+  if(!coverOpen||document.hidden)return;
+  if(now-cvFrameAt<1000/(window.FRAME_CAP||60)-3){cvRun();return;}
+  cvFrameAt=now;
   if (coverOpen) {
     // canción nueva o letra que llegó tarde con la carátula abierta: se repinta sola (antes se quedaba con la anterior)
     const hasLyr = mode === 'proc' && IN.lines.some(l => l.text), tNow = performance.now();
     if ((hasLyr !== CV.hasLyr || (ext.artUrl || '') !== CV.art) && tNow - (CV.paintAt || 0) > 300) { CV.paintAt = tNow; cvPaint(); }
     const pos = ext.has() ? ext.now() : 0, dur = ext.st.dur || 0, f = s => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
     const shown = CV.scrub ?? pos;                                                                   // mientras haces scratch, la barra muestra adónde vas
-    $('cvT0').textContent = f(shown); $('cvT1').textContent = f(dur); $('cvFill').style.width = (dur ? clamp(shown / dur) * 100 : 0) + '%';
+    if(mode==='proc') {
+      const beat=(pos-(IN.phase||0))/(IN.period||.5);
+      IN.beat=window.AUD?.live?clamp(AUD.pulse||0):Math.pow(1-(beat-Math.floor(beat)),4);
+      SEM.blockNow=IN.cuts.length>1?Math.max(0,IN.cuts.findLastIndex(t=>t<=pos)):-1;
+    }
+    cvText('cvT0',f(shown)); cvText('cvT1',f(dur)); cvStyle($('cvFill'),'width',(dur ? clamp(shown / dur) * 100 : 0) + '%');
     const playing = ext.st.state === 'playing';
     if (CV.pp !== playing) { CV.pp = playing; $('cvPP').innerHTML = cvIco(playing ? 'M7 5h4v14H7zM13 5h4v14h-4z' : 'M8 5v14l11-7z'); }
-    for (const el of $('cover').querySelectorAll('.cv-vinyl, .cv-cd, .cv-cass')) el.classList.toggle('spin', playing);
+    for (const el of $('cover').querySelectorAll('.cv-vinyl, .cv-cd, .cv-cass')) if(el.classList.contains('spin')!==playing)el.classList.toggle('spin', playing);
     cvReactFrame(pos, dur);
-    $('cover').style.setProperty('--beat', CV.beat && !cvReduced() && mode === 'proc' ? (IN.beat || 0).toFixed(3) : 0);
-    $('cover').style.setProperty('--pulse', mode === 'proc' && !cvReduced() ? (IN.beat || 0).toFixed(3) : 0);        // anillo de ritmo: late aunque el latido de la portada esté apagado
+    cvStyle($('cover'),'--beat', CV.beat && !cvReduced() && mode === 'proc' ? (IN.beat || 0).toFixed(3) : 0);
+    cvStyle($('cover'),'--pulse', mode === 'proc' && !cvReduced() ? (IN.beat || 0).toFixed(3) : 0);        // anillo de ritmo: late aunque el latido de la portada esté apagado
     if (CV.style === 'vinilo') {
       // surco de afuera (14°) a junto a la etiqueta (33°) según el progreso; en pausa se levanta en su sitio; sin canción, a su apoyo
       const arm = $('cover').querySelector('.cv-arm');
-      arm.style.setProperty('--armRot', (ext.has() ? 14 + 19 * (dur ? clamp(shown / dur) : 0) : 0).toFixed(2) + 'deg');
-      arm.classList.toggle('up', !playing);
+      cvStyle(arm,'--armRot', (ext.has() ? 14 + 19 * (dur ? clamp(shown / dur) : 0) : 0).toFixed(2) + 'deg');
+      if(arm.classList.contains('up')===playing)arm.classList.toggle('up', !playing);
     }
-    if (CV.clock) { const d = new Date(); $('cvClock').textContent = d.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' }); $('cvDate').textContent = d.toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' }); }
+    if (CV.clock && Math.floor(Date.now()/60000)!==cvClockMinute) { const d = new Date();cvClockMinute=Math.floor(d.getTime()/60000); cvText('cvClock',d.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })); cvText('cvDate',d.toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' })); }
     if (CV.trata) {
       const plan = mode === 'proc' ? SEM.plans?.[SEM.blockNow] : null, tx = plan?.summary || '';
       const el = $('cvTrataTx');
@@ -812,9 +829,10 @@ function cvBuildList() {
       }
     }
   }
-  requestAnimationFrame(cvLoop);
-})();
-{ const _toggleCover = toggleCover; toggleCover = function (on) { _toggleCover(on); document.body.classList.toggle('cover-open', coverOpen); if (coverOpen) { CV.art = ''; CV.listKey = ''; CV.cur = -2; cvPaint(); } }; }
+  cvRun();
+}
+{ const _toggleCover = toggleCover; toggleCover = function (on) { _toggleCover(on); document.body.classList.toggle('cover-open', coverOpen); if (coverOpen) { CV.art = ''; CV.listKey = ''; CV.cur = -2; cvClockMinute=-1;cvFrameAt=0;cvPaint();cvRun(); } else {cancelAnimationFrame(cvRaf);cvRaf=0;} }; }
+addEventListener('visibilitychange',()=>{if(document.hidden){cancelAnimationFrame(cvRaf);cvRaf=0;}else{cvFrameAt=0;cvRun();}});
 addEventListener('resize', () => { if (coverOpen) CV.cur = -2; });
 // esc cierra primero el menú de opciones
 addEventListener('keydown', e => { if (e.key === 'Escape' && coverOpen && $('cvPosterBox').classList.contains('on')) { e.stopImmediatePropagation(); return cvPosterClose(); } if (e.key === 'Escape' && coverOpen && $('cover').classList.contains('menu')) { e.stopImmediatePropagation(); $('cover').classList.remove('menu'); $('cvMenuBtn').classList.remove('on'); } }, true);
@@ -831,8 +849,8 @@ function cvReactFrame(pos, dur) {
     else if (e <= 3 || sad) { sat = sad ? .5 : .7; bri = .82; }                                          // puente, lo triste: se apaga
   }
   CVR.sat += (sat - CVR.sat) * .05; CVR.bri += (bri - CVR.bri) * .08; CVR.glow += (glow - CVR.glow) * .06;
-  art.style.setProperty('--sat', CVR.sat.toFixed(3)); art.style.setProperty('--bri', CVR.bri.toFixed(3));
-  art.style.setProperty('--glowR', CVR.glow.toFixed(0) + 'px');
+  cvStyle(art,'--sat', CVR.sat.toFixed(3)); cvStyle(art,'--bri', CVR.bri.toFixed(3));
+  cvStyle(art,'--glowR', CVR.glow.toFixed(0) + 'px');
   cvNextFrame(pos, dur);
 }
 // en el drop, la portada se parte en pedazos y vuelve a armarse
