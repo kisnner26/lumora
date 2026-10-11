@@ -2,6 +2,8 @@
 
 ## 2026-10-10
 
+- mejora las letras sobre gameplay con entradas, pulsación musical, énfasis progresivo y contraste y color adaptados al video; conserva tamaño, traducción, desfase y exportación.
+
 - añade color por frases, bloom selectivo y aberración cromática al ritmo sobre los videos con boost; conserva montaje, letras y grabación, con alternativa canvas y ajustes de accesibilidad.
 
 - separa «fábula» de risografía: tema, fuentes, fondo de bienvenida, controles pertinentes y exportación propios. migra la selección anterior «cuento» y conserva la elección entre sesiones.
