@@ -43,8 +43,14 @@
     const s=Math.min(w/v.videoWidth,h/v.videoHeight),dw=v.videoWidth*s,dh=v.videoHeight*s;
     ctx.save();ctx.globalAlpha=alpha;ctx.fillStyle='#08090d';ctx.fillRect(0,0,w,h);ctx.drawImage(v,(w-dw)/2,(h-dh)/2,dw,dh);ctx.restore();return true;
   }
-  function boostCanvas(ctx,w,h,time){
+  function boostFootage(ctx,w,h,time,source,options={}){
+    if(!boosted||reduced()||homeOn()||!window.LMFRAMESMONTAGE)return null;
+    return LMFRAMESMONTAGE.render(ctx,w,h,time,source,options.grid??null,{
+      duration:options.duration||limit,bpm:options.bpm||IN.bpm||proc.bpm,phase:options.phase??IN.phase,flashes:CFG.flashes});
+  }
+  function boostCanvas(ctx,w,h,time,external=false){
     if(!boosted||reduced()||homeOn())return;
+    if(external)return boostFootage(ctx,w,h,time,video,{grid,duration:limit});
     const q=musicalCue(time),live=window.AUD?.live?Math.min(.35,Math.max(0,AUD.pulse||0)*.25):0;
     const travel=q.kind==='pull'?.035*(1-q.progress):q.kind==='push'?.035*q.progress:.012;
     const zoom=1.012+travel+q.attack*.025+q.cut*.025+live*.015;
@@ -105,9 +111,12 @@
   function before(ctx,w,h,time){
     if(!eligible(time)){stop();return false;}
     const drawn=drawFootage(ctx,w,h,time);
-    if(drawn){boostCanvas(ctx,w,h,time);drawLyrics(ctx,w,h,time);}return drawn;
+    if(drawn){boostCanvas(ctx,w,h,time,true);drawLyrics(ctx,w,h,time);}return drawn;
   }
-  function after(ctx,w,h,time){boostCanvas(ctx,w,h,time);}
+  function after(ctx,w,h,time){
+    if(window.RISO?.grief?.detect(ext.st?.name,ext.st?.artist))return;
+    boostCanvas(ctx,w,h,time);
+  }
   function setBoost(value){boosted=!!value;try{localStorage.setItem('lm_frames_boost',boosted?'1':'0');}catch{}paint();}
   const button=document.createElement('button');button.id='autFrames';button.className='aut-btn';button.type='button';
   button.textContent='boost with lumora frames';button.title='montaje automático al ritmo de la canción';
@@ -119,5 +128,5 @@
     if(!eligible(time)||mode!=='proc'||CFG.clip==='clasico'||CFG.clip==='portada')stop();
   }
   const timer=setInterval(paint,250);document.addEventListener('visibilitychange',()=>{if(document.hidden)stop();});addEventListener('pagehide',()=>{clearInterval(timer);stop();},{once:true});
-  window.LMFRAMES={detect,cue,before,after,boostCanvas,setBoost,stop,get boosted(){return boosted;},get video(){return video;},get grid(){return grid;},get failed(){return failed;}};paint();
+  window.LMFRAMES={detect,cue,before,after,boostCanvas,boostFootage,setBoost,stop,get boosted(){return boosted;},get video(){return video;},get grid(){return grid;},get failed(){return failed;}};paint();
 })();

@@ -193,6 +193,7 @@
       ctx.fillText(failure || 'preparando el montaje…', w / 2, h / 2 + 140 * unit);
     }
     ctx.restore();
+    if(v.readyState>=2&&!reduced)window.LMFRAMES?.boostFootage(ctx,w,h,time,v,{duration:opts.duration||146.365,bpm:60/BEAT,phase:0});
     if (opts.text) {
       ctx.save();
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
