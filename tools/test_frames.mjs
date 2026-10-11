@@ -11,7 +11,7 @@ try{
  await p.evaluate(()=>{window.__time=12;ext.now=()=>window.__time;mode='proc';CFG.clip='fabula';proc.dur=251;IN.lines=[{t:0,text:'un recuerdo bajo las luces'},{t:35,text:'un recuerdo bajo las luces'},{t:40,text:'otro capítulo'},{t:80,text:'la historia continúa'}];IN.cuts=[0,35,80];IN.tr=['','a memory under the lights','',''];IN.show=true;IN.trMode='ambas';IN.off=0;});
  async function at(t,clip='fabula'){
   await p.evaluate(({t,clip})=>{window.__time=t;CFG.clip=clip;RISOCLIP.frame(.016);},{t,clip});
-  if(t<80)await p.waitForFunction(t=>{RISOCLIP.frame(.016);const v=LMFRAMES.video;return v?.readyState>=2&&!v.seeking&&Math.abs(v.currentTime-t)<.08&&RISOCLIP.framesFootage;},t);
+  if(t<80)await p.waitForFunction(t=>{RISOCLIP.frame(.016);const v=LMFRAMES.video;return v?.readyState>=2&&!v.seeking&&Math.abs(v.currentTime-t)<.08&&RISOCLIP.framesFootage&&(!LMFRAMES.boosted||LMFRAMES.editFailed||CFG.reduceMotion||v===LMFRAMES.editedVideo);},t);
   else await p.evaluate(()=>RISOCLIP.frame(.016));
  }
  await at(12);assert.equal(await p.evaluate(()=>ext.st.src),'music');assert.equal(await p.evaluate(()=>LMFRAMES.video.muted&&LMFRAMES.video.paused),true);
@@ -51,7 +51,7 @@ try{
  await p.evaluate(()=>toggleCover(true));await p.waitForFunction(()=>LMFRAMES.video.paused);await p.evaluate(()=>toggleCover(false));
  await mock('song=a&pos=20&state=paused');await p.waitForFunction(()=>ext.st.name==='Noche de Neón');await at(90);assert.equal(await p.evaluate(()=>LMFRAMES.video.paused),true);assert.equal(await p.evaluate(()=>RISOCLIP.framesFootage),false);
  // una fuente ausente deja activo el motor procedural.
- await p.route('**/media/frames/gimme-more.mp4',r=>r.abort());await mock('song=gimme&pos=12&state=paused');await p.reload({waitUntil:'domcontentloaded'});await p.waitForFunction(()=>window.LMFRAMES&&ext.st.name==='Gimme More');
+ await p.route('**/media/frames/*.mp4',r=>r.abort());await mock('song=gimme&pos=12&state=paused');await p.reload({waitUntil:'domcontentloaded'});await p.waitForFunction(()=>window.LMFRAMES&&ext.st.name==='Gimme More');
  await p.getByRole('button',{name:'lyric video',exact:true}).click();await p.waitForFunction(()=>!document.getElementById('home').classList.contains('on'));await p.evaluate(()=>{mode='proc';CFG.clip='fabula';RISOCLIP.frame(.016);});await p.waitForFunction(()=>LMFRAMES.failed);assert.equal(await p.evaluate(()=>RISOCLIP.framesFootage),false);
  assert.equal(await p.evaluate(()=>localStorage.getItem('lm_frames_boost')),'1');assert.deepEqual(errores,[]);
  console.log('frames: música y spotify, detección exacta, pausa, seek, 80 s, ambos motores, boost, grabación, carátula y vídeo ausente: ok');
