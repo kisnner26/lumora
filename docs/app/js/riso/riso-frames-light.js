@@ -94,6 +94,7 @@
       else fallback(ctx,source,x,y,dw,dh,q);
     }catch{gpu?.destroy();fallback(ctx,source,x,y,dw,dh,q);}
     finally{ctx.restore();}
+    window.LMFRAMESINK?.render(ctx,w,h,time,source,grid,options);
     return true;
   }
   addEventListener('pagehide',()=>gpu?.destroy(),{once:true});
