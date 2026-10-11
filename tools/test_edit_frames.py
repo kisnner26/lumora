@@ -28,12 +28,16 @@ class EditTest(unittest.TestCase):
 
     def test_baked_freeze(self):
         plan=json.loads((ROOT/'media/frames/gimme-more-edit.json').read_text())
-        shot=next(s for s in plan['shots'] if s['rate']==0)
-        start=round(shot['start']*30)
-        data=subprocess.check_output(['ffmpeg','-v','error','-i',str(ROOT/'media/frames/gimme-more-boost.mp4'),'-vf',f'select=between(n\\,{start+1}\\,{start+2}),scale=160:90','-fps_mode','passthrough','-frames:v','2','-f','rawvideo','-pix_fmt','gray','-'])
-        self.assertEqual(len(data),160*90*2)
-        # compresión predictiva puede introducir diferencias de un nivel.
-        diff=sum(abs(a-b) for a,b in zip(data[:14400],data[14400:]))/14400
-        self.assertLess(diff,.6,'el congelado debe existir en los frames, no solo en el manifiesto')
+        shots=[s for s in plan['shots'] if s['rate']==0]
+        starts=[round(s['start']*30) for s in shots]
+        select='+'.join(f'between(n\\,{start+1}\\,{start+2})' for start in starts)
+        data=subprocess.check_output(['ffmpeg','-v','error','-i',str(ROOT/'media/frames/gimme-more-boost.mp4'),'-vf',f'select={select},scale=160:90','-fps_mode','passthrough','-frames:v',str(len(shots)*2),'-f','rawvideo','-pix_fmt','gray','-'])
+        size=160*90
+        self.assertEqual(len(data),size*len(shots)*2)
+        for i,shot in enumerate(shots):
+            pair=data[i*size*2:(i+1)*size*2]
+            # compresión predictiva puede introducir diferencias de un nivel.
+            diff=sum(abs(a-b) for a,b in zip(pair[:size],pair[size:]))/size
+            self.assertLess(diff,.6,f'el congelado de {shot["start"]} s debe estar en los frames')
 
 if __name__=='__main__':unittest.main()
