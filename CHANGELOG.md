@@ -2,6 +2,8 @@
 
 ## 2026-10-10
 
+- añade filtros musicales de boceto, contornos, puntillismo y píxeles blancos progresivos al gameplay con boost, con fundidos, exportación y letras legibles sobre el resultado.
+
 - mejora las letras sobre gameplay con entradas, pulsación musical, énfasis progresivo y contraste y color adaptados al video; conserva tamaño, traducción, desfase y exportación.
 
 - añade color por frases, bloom selectivo y aberración cromática al ritmo sobre los videos con boost; conserva montaje, letras y grabación, con alternativa canvas y ajustes de accesibilidad.
